@@ -1,0 +1,26 @@
+from typing import Sequence
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.models import db_helper, NotesOrm
+from core.schemas import NoteCreate, NoteDelete, NoteUpdate
+
+
+class NotesRepo:
+    @staticmethod
+    async def get_all_notes() -> Sequence[NotesOrm]:
+        async with db_helper.session_factory() as session:
+            stmt = select(NotesOrm).order_by(NotesOrm.id)
+            result = await session.scalars(stmt)
+            return result.all()
+
+
+    @staticmethod
+    async def create_note(note_to_create: NoteCreate):
+        async with db_helper.session_factory() as session:
+            new_note = NotesOrm(**note_to_create.model_dump())
+            session.add(new_note)
+            await session.commit()
+            await session.refresh(new_note)
+            return new_note
