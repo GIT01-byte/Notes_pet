@@ -8,6 +8,7 @@ from core.models import db_helper
 
 from core.models import Base
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("INFO:     App is started")
