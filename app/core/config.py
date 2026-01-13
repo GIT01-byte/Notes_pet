@@ -32,6 +32,14 @@ class DatabaseSettings(BaseModel):
         "pk": "pk_%(table_name)s",
     }
 
+
+class S3Settings(BaseModel):
+    access_key: str
+    secret_access_key: str
+    endpoint_url: str
+    bucket_name: str
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(".env.template", ".env"),
@@ -42,6 +50,9 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     api: ApiPrefix = ApiPrefix()
     db: DatabaseSettings
+    s3: S3Settings
+
 
 settings = Settings() # type: ignore
 print(f"INFO:     Using Database url: {settings.db.url}")
+print(f"INFO:     Using S3 url: {settings.s3.endpoint_url}/{settings.s3.bucket_name}")
