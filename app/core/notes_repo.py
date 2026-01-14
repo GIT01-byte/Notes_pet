@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.models import db_helper, NotesOrm
-from core.schemas import NoteCreate, NoteDelete, NoteUpdate
+from core.schemas import NoteDelete, NoteUpdate
 
 
 class NotesRepo:
@@ -17,7 +17,7 @@ class NotesRepo:
 
 
     @staticmethod
-    async def create_note(note_to_create: NoteCreate):
+    async def create_note(note_to_create: NoteCreateContent):
         async with db_helper.session_factory() as session:
             new_note = NotesOrm(**note_to_create.model_dump())
             session.add(new_note)

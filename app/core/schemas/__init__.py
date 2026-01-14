@@ -1,13 +1,11 @@
 __all__ = (
-    "NoteSchema",
-    "NoteCreate",
+    "NoteBase",
     "NoteUpdate",
     "NoteDelete",
     "NoteRead",
 )
 
-from .notes import NoteSchema
-from .notes import NoteCreate
+from .notes import NoteBase
 from .notes import NoteUpdate
 from .notes import NoteDelete
 from .notes import NoteRead

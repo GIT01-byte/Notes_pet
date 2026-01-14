@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+from typing import BinaryIO
 
 from aiobotocore.session import get_session
 
@@ -29,16 +30,16 @@ class S3Client:
     
     async def upload_file(
         self,
-        file_path: str,
+        file: BinaryIO,
+        filename: str
     ):
-        object_name = file_path.split("/")[-1]
         async with self.get_client() as client:
-            with open(file_path, "rb") as file:
-                await client.put_object(
-                    Bucket=self.bucket_name,
-                    Key=object_name,
-                    Body=file,
-                ) # type: ignore
+            await client.put_object(
+                Bucket=self.bucket_name,
+                Key=filename,
+                Body=file,
+            ) # type: ignore
+            print(f"Файл: {filename} добавлен в S3")
     
 
 s3_client = S3Client(

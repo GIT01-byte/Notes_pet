@@ -1,31 +1,30 @@
-from fastapi import UploadFile, File
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-)
+from typing import Optional, List
+from pydantic import BaseModel, ConfigDict
 
 
-class NoteSchema(BaseModel):
+class NoteBase(BaseModel):
     title: str
     content: str
 
 
-class NoteCreate(NoteSchema):
+class NoteCreate(NoteBase):
     pass
 
 
-class NoteUpdate():
-    new_title: str
-    new_content: int
+class NoteUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
 
 
-class NoteDelete():
+class NoteRead(NoteBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
 
+    video_urls: List[str] = []
+    photo_urls: List[str] = []
+    audio_urls: List[str] = []
 
-class NoteRead(NoteSchema):
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
-    
+
+class NoteDelete(BaseModel):
     id: int

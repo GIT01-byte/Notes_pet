@@ -1,15 +1,17 @@
 import shutil
+from typing import Optional
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 
+from core.s3_client import s3_client
 from core.config import settings
-from core.schemas import NoteRead, NoteCreate
-
 from core.notes_repo import NotesRepo
+from core.schemas.notes import NoteRead
 
+from .deps import NoteCreateForm
 
 router = APIRouter(
     prefix=settings.api.v1.notes,
@@ -90,9 +92,28 @@ async def get_notes():
     return notes
 
 
-@router.post("/create", response_model=NoteRead)
+@router.post("/create")
 async def create_notes(
-    note_create: NoteCreate,
+    note_create_form: NoteCreateForm = Depends(),
 ):
-    note = await NotesRepo.create_note(note_to_create=note_create)
-    return note
+    # Медиа-файлы отправляем в S3
+    if note_create_form.video_files:
+        for file in note_create_form.video_files:
+            print(f"Обнаружен видео-файл: {file.filename}")
+            await s3_client.upload_file(file=file.file, filename=file.filename) # type: ignore
+            
+    if note_create_form.photo_files:
+        for file in note_create_form.photo_files:
+            print(f"Обнаружен фото-файл: {file.filename}")
+            await s3_client.upload_file(file=file.file, filename=file.filename) # type: ignore
+            
+    if note_create_form.audio_files:
+        for file in note_create_form.audio_files:
+            print(f"Обнаружен айдио-файл: {file.filename}")
+            await s3_client.upload_file(file=file.file, filename=file.filename) # type: ignore
+    
+    # Формируем ссылки
+    
+    # Отправляем в БД
+    # note = await NotesRepo.create_note(...)
+    return note_create_form.title
