@@ -1,15 +1,223 @@
-<! doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" 
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes Pro: Drag & Drop + Lightbox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .drop-zone { transition: all 0.3s ease; border: 2px dashed #cbd5e1; }
+        .drop-zone.drag-over { background: #e2e8f0; border-color: #3b82f6; transform: scale(1.02); }
+        .file-badge { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 4px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.8rem; }
+        
+        /* Стили для Lightbox */
+        #lightbox.active { display: flex; animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
 </head>
-<body>
-    <div>
-        <video src="" />
+<body class="bg-slate-50 min-h-screen pb-20">
+
+    <!-- LIGHTBOX MODAL -->
+    <div id="lightbox" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 cursor-zoom-out" onclick="closeLightbox()">
+        <button class="absolute top-6 right-6 text-white text-5xl font-light hover:text-gray-300 transition">&times;</button>
+        <img id="lightbox-img" src="" class="max-w-full max-h-full rounded-lg shadow-2xl transform transition-transform duration-300 scale-90">
     </div>
-</body> 
+
+    <div class="max-w-4xl mx-auto px-4 pt-10">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-black text-slate-900 tracking-tighter uppercase">Notes<span class="text-blue-600">Cloud</span></h1>
+            <p class="text-slate-500 font-medium">Drag & Drop • Wide View • S3 Storage</p>
+        </header>
+
+        <!-- Форма создания -->
+        <div class="bg-white rounded-3xl shadow-2xl shadow-slate-200/60 p-8 mb-12 border border-slate-100">
+            <form id="noteForm" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Заголовок</label>
+                        <input type="text" id="title" required placeholder="Заголовок..." class="w-full bg-slate-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 transition outline-none font-bold">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Описание</label>
+                        <input type="text" id="content" required placeholder="Текст..." class="w-full bg-slate-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 transition outline-none font-bold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- DROP ЗОНЫ -->
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">🎬 Видео</label>
+                        <div id="drop-video" class="drop-zone rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50" onclick="document.getElementById('input-video').click()">
+                            <span class="text-2xl mb-1">📽️</span>
+                            <span class="text-[10px] font-bold text-slate-500 italic">ДОБАВИТЬ ЕЩЕ</span>
+                            <input type="file" id="input-video" multiple accept="video/*" class="hidden">
+                        </div>
+                        <div id="list-video" class="space-y-1"></div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">🖼️ Фото</label>
+                        <div id="drop-image" class="drop-zone rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50" onclick="document.getElementById('input-image').click()">
+                            <span class="text-2xl mb-1">📸</span>
+                            <span class="text-[10px] font-bold text-slate-500 italic">ДОБАВИТЬ ЕЩЕ</span>
+                            <input type="file" id="input-image" multiple accept="image/*" class="hidden">
+                        </div>
+                        <div id="list-image" class="space-y-1"></div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">🎵 Аудио</label>
+                        <div id="drop-audio" class="drop-zone rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50" onclick="document.getElementById('input-audio').click()">
+                            <span class="text-2xl mb-1">📻</span>
+                            <span class="text-[10px] font-bold text-slate-500 italic">ДОБАВИТЬ ЕЩЕ</span>
+                            <input type="file" id="input-audio" multiple accept="audio/*" class="hidden">
+                        </div>
+                        <div id="list-audio" class="space-y-1"></div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl transition shadow-lg shadow-blue-200 uppercase tracking-widest">
+                    Опубликовать
+                </button>
+            </form>
+        </div>
+
+        <!-- Лента заметок -->
+        <div id="notesList" class="space-y-10"></div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:8090/api/v1/notes";
+        const queue = { video_files: [], image_files: [], audio_files: [] };
+
+        // LIGHTBOX FUNCTIONS
+        function openLightbox(url) {
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = url;
+            lb.classList.remove('hidden');
+            lb.classList.add('active');
+            setTimeout(() => img.style.transform = "scale(1)", 10);
+            document.body.style.overflow = 'hidden'; // Запрет прокрутки
+        }
+
+        function closeLightbox() {
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.style.transform = "scale(0.9)";
+            lb.classList.add('hidden');
+            lb.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Закрытие по ESC
+        window.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeLightbox(); });
+
+        // DROP ZONE LOGIC
+        const setupDropZone = (zoneId, inputId, type) => {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => zone.addEventListener(e, (ev) => ev.preventDefault()));
+            zone.addEventListener('dragover', () => zone.classList.add('drag-over'));
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', (ev) => {
+                zone.classList.remove('drag-over');
+                handleFiles(ev.dataTransfer.files, type);
+            });
+            input.addEventListener('change', (ev) => {
+                handleFiles(ev.target.files, type);
+                input.value = "";
+            });
+        };
+
+        const handleFiles = (files, type) => {
+            Array.from(files).forEach(file => queue[type].push(file));
+            renderQueue(type);
+        };
+
+        const removeFile = (type, index) => {
+            queue[type].splice(index, 1);
+            renderQueue(type);
+        };
+
+        const renderQueue = (type) => {
+            const container = document.getElementById(`list-${type.split('_')[0]}`);
+            container.innerHTML = "";
+            queue[type].forEach((file, idx) => {
+                const item = document.createElement('div');
+                item.className = "file-badge";
+                item.innerHTML = `<span class="truncate">${file.name}</span><button type="button" onclick="removeFile('${type}', ${idx})" class="text-red-500 font-bold ml-2">×</button>`;
+                container.appendChild(item);
+            });
+        };
+
+        setupDropZone('drop-video', 'input-video', 'video_files');
+        setupDropZone('drop-image', 'input-image', 'image_files');
+        setupDropZone('drop-audio', 'input-audio', 'audio_files');
+
+        // RENDERING
+        async function loadNotes() {
+            const res = await fetch(`${API_BASE}/get_all`);
+            const notes = await res.json();
+            const list = document.getElementById('notesList');
+            list.innerHTML = "";
+
+            notes.reverse().forEach(n => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-8 rounded-3xl shadow-sm border border-slate-100";
+                
+                const section = (title, urls, tag) => {
+                    if (!urls?.length) return "";
+                    let content = `<div class="mt-6"><h4 class="text-[10px] font-black text-slate-400 mb-3 tracking-widest uppercase">${title}</h4><div class="flex flex-wrap gap-4">`;
+                    urls.forEach(url => {
+                        if (tag === 'img') content += `<img src="${url}" onclick="openLightbox('${url}')" class="h-32 w-32 object-cover rounded-2xl border cursor-zoom-in hover:opacity-80 transition shadow-sm">`;
+                        if (tag === 'video') content += `<video src="${url}" controls class="w-full rounded-2xl bg-black shadow-lg"></video>`;
+                        if (tag === 'audio') content += `<audio src="${url}" controls class="w-full"></audio>`;
+                    });
+                    return content + "</div></div>";
+                };
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-2xl font-black text-slate-800">${n.title}</h2>
+                        <span class="text-[10px] font-bold text-slate-400">ID: ${n.id}</span>
+                    </div>
+                    <p class="text-slate-600 font-medium">${n.content}</p>
+                    ${section("🖼️ ФОТО", n.image_urls, 'img')}
+                    ${section("🎬 ВИДЕО", n.video_urls, 'video')}
+                    ${section("🎵 АУДИО", n.audio_urls, 'audio')}
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // SUBMIT (Query Params + FormData)
+        document.getElementById('noteForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "СОХРАНЕНИЕ...";
+
+            const url = new URL(`${API_BASE}/create`);
+            url.searchParams.append("title", document.getElementById('title').value);
+            url.searchParams.append("content", document.getElementById('content').value);
+
+            const formData = new FormData();
+            Object.keys(queue).forEach(key => queue[key].forEach(file => formData.append(key, file)));
+
+            try {
+                const response = await fetch(url.toString(), { method: 'POST', body: formData });
+                if (response.ok) {
+                    document.getElementById('noteForm').reset();
+                    Object.keys(queue).forEach(k => queue[k] = []);
+                    ['video', 'image', 'audio'].forEach(t => renderQueue(`${t}_files`));
+                    loadNotes();
+                }
+            } catch (err) { alert("Ошибка сети"); }
+            finally { btn.disabled = false; btn.innerText = "ОПУБЛИКОВАТЬ"; }
+        };
+
+        loadNotes();
+    </script>
+</body>
 </html>

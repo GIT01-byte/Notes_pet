@@ -1,6 +1,9 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
+
 from api import router as api_router
 
 from core.config import settings
@@ -19,6 +22,14 @@ main_app = FastAPI(
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
 )
+
+main_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 main_app.include_router(
     api_router,
 )
