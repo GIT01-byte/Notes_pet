@@ -11,6 +11,7 @@ from core.config import settings
 from core.notes_repo import NotesRepo
 from core.schemas.notes import NoteRead
 
+from core.s3_client import s3_client
 from .deps import NoteCreateForm
 
 router = APIRouter(
@@ -96,24 +97,32 @@ async def get_notes():
 async def create_notes(
     note_create_form: NoteCreateForm = Depends(),
 ):
-    # Медиа-файлы отправляем в S3
+    # Медиа-файлы отправляем в S3 и формируем ссылки
     if note_create_form.video_files:
         for file in note_create_form.video_files:
             print(f"Обнаружен видео-файл: {file.filename}")
             await s3_client.upload_file(file=file.file, filename=file.filename) # type: ignore
+            file_url = await s3_client.get_file_url(filename=file.filename)  # type: ignore
+            if file_url:
+                print(f"Ссылка на файл ({file.filename!r}): {file_url}")
             
     if note_create_form.photo_files:
         for file in note_create_form.photo_files:
             print(f"Обнаружен фото-файл: {file.filename}")
             await s3_client.upload_file(file=file.file, filename=file.filename) # type: ignore
+            file_url = await s3_client.get_file_url(filename=file.filename)  # type: ignore
+            if file_url:
+                print(f"Ссылка на файл ({file.filename=!r}): {file_url}")
             
     if note_create_form.audio_files:
         for file in note_create_form.audio_files:
-            print(f"Обнаружен айдио-файл: {file.filename}")
             await s3_client.upload_file(file=file.file, filename=file.filename) # type: ignore
+            file_url = await s3_client.get_file_url(filename=file.filename)  # type: ignore
+            if file_url:
+                print(f"Ссылка на файл ({file.filename=!r}): {file_url}")
     
-    # Формируем ссылки
-    
+    # 
+
     # Отправляем в БД
     # note = await NotesRepo.create_note(...)
     return note_create_form.title

@@ -41,6 +41,18 @@ class S3Client:
             ) # type: ignore
             print(f"Файл: {filename} добавлен в S3")
     
+    async def get_file_url(
+        self,
+        filename: str,
+    ):
+        async with self.get_client() as client:
+            try:
+            # Генерируем ссылку для скачивания
+                url = f"{self.config["endpoint_url"]}/{filename}"
+                return url
+            except Exception as e:
+                print(f"Ошибка при генерации ссылки: {e}")
+                return None
 
 s3_client = S3Client(
     access_key=settings.s3.access_key,
@@ -48,3 +60,12 @@ s3_client = S3Client(
     endpoint_url=settings.s3.endpoint_url,
     bucket_name=settings.s3.bucket_name,
 )
+
+
+if __name__ == "__main__":
+    async def main():
+        file_url = await s3_client.get_file_url(filename='video.mp4')
+        if file_url:
+            print(f"Временная ссылка для скачивания: {file_url}")
+    
+    asyncio.run(main())
