@@ -24,3 +24,12 @@ class NotesRepo:
             await session.commit()
             await session.refresh(new_note)
             return new_note
+
+
+    @staticmethod
+    async def get_note(note_id: int):
+        async with db_helper.session_factory() as session:
+            stmt = select(NotesOrm).where(NotesOrm.id == note_id)
+            result = await session.scalars(stmt)
+            return result.first()
+    

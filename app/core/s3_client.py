@@ -53,6 +53,7 @@ class S3Client:
             except Exception as e:
                 print(f"Ошибка при генерации ссылки: {e}")
                 return None
+    
 
 s3_client = S3Client(
     access_key=settings.s3.access_key,
