@@ -45,14 +45,28 @@ class S3Client:
         self,
         filename: str,
     ):
-        async with self.get_client() as client:
-            try:
+        try:
             # Генерируем ссылку для скачивания
-                url = f"{self.config["endpoint_url"]}/{filename}"
-                return url
-            except Exception as e:
-                print(f"Ошибка при генерации ссылки: {e}")
-                return None
+            url = f"{self.config["endpoint_url"]}/{filename}"
+            return url
+        except Exception as e:
+            print(f"Ошибка при генерации ссылки: {e}")
+            return None
+    
+    async def delete_file(
+        self,
+        filename: str,
+    ):
+        try:
+            async with self.get_client() as client:
+                response = await client.delete_object(
+                    Bucket=self.bucket_name,
+                    Key=filename
+                ) # type: ignore
+                print(f"Файл {filename} удален из {self.bucket_name}. Ответ: {response}")
+        except Exception as e:
+            print(f"Ошибка при удалении {filename}: {e}")
+
 
 s3_client = S3Client(
     access_key=settings.s3.access_key,

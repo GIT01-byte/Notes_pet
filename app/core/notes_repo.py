@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.models import db_helper, NotesOrm
@@ -24,3 +24,12 @@ class NotesRepo:
             await session.commit()
             await session.refresh(new_note)
             return new_note
+        
+    
+    @staticmethod
+    async def delete_note(note_id: int):
+        async with db_helper.session_factory() as session:
+            stmt = delete(NotesOrm).where(NotesOrm.id == note_id)
+            await session.execute(stmt)
+            await session.commit()
+    
