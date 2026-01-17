@@ -46,13 +46,26 @@ async def create_notes(
 
 @router.delete("/delete/{note_id}")
 async def delete_note(note_id: int):
-    # TODO сделать удаление файлов в S3
+    # Удаление медиа-файлов из S3
+    note = await NotesRepo.get_note(note_id)
+    if note:
+        await s3_client.delete_files(note.video_urls)
+        await s3_client.delete_files(note.image_urls)
+        await s3_client.delete_files(note.audio_urls)
+    else:
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Заметка не найдена",
+        )
+    
     # Удаляем из БД
     await NotesRepo.delete_note(note_id)
+    
     return {"msg": f"Заметка с ID {note_id} успешно удалена"}
 
 
 @router.get("/get_all", response_model=list[NoteRead])
 async def get_notes():
     notes = await NotesRepo.get_all_notes()
+    
     return notes

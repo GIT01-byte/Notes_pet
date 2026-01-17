@@ -1,10 +1,16 @@
 import asyncio
 from contextlib import asynccontextmanager
 from typing import BinaryIO
+from urllib.parse import urlparse
 
 from aiobotocore.session import get_session
 
 from .config import settings
+
+
+def decode_s3_file_url(file_url: str):
+    filename = urlparse(file_url).path
+    return filename
 
 
 class S3Client:
@@ -53,19 +59,21 @@ class S3Client:
             print(f"Ошибка при генерации ссылки: {e}")
             return None
     
-    async def delete_file(
+    async def delete_files(
         self,
-        filename: str,
+        file_urls: list[str],
     ):
         try:
             async with self.get_client() as client:
-                response = await client.delete_object(
-                    Bucket=self.bucket_name,
-                    Key=filename
-                ) # type: ignore
-                print(f"Файл {filename} удален из {self.bucket_name}. Ответ: {response}")
+                for url in file_urls:
+                    filename = decode_s3_file_url(url)
+                    response = await client.delete_object(
+                        Bucket=self.bucket_name,
+                        Key=filename
+                    ) # type: ignore
+                    print(f"Файл {filename} удален из {self.bucket_name}. Ответ: {response}")
         except Exception as e:
-            print(f"Ошибка при удалении {filename}: {e}")
+            print(f"Ошибка при удалении {file_urls}: {e}")
     
 
 s3_client = S3Client(
@@ -78,8 +86,10 @@ s3_client = S3Client(
 
 if __name__ == "__main__":
     async def main():
-        file_url = await s3_client.get_file_url(filename='video.mp4')
-        if file_url:
-            print(f"Временная ссылка для скачивания: {file_url}")
-    
+        urls = [
+            'https://8e731fa2-5524-4d50-823b-1ee7780a3226.selstorage.ru/videos/6def64e1-2cd0-4de6-8ee2-aae5eb7bd23b.mp4',
+            'https://8e731fa2-5524-4d50-823b-1ee7780a3226.selstorage.ru/videos/b2b053c0-8c34-4944-bace-ca0b68ebcfb9.mp4',
+        ]
+        await s3_client.delete_files(urls)
+        
     asyncio.run(main())
