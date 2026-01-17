@@ -7,10 +7,10 @@ BASE_PATH = Path(__file__).parent.parent
 ENV_PATH = BASE_PATH / ".env"
 
 
-class RunConfig(BaseModel):
+class AppConfig(BaseModel):
     mode: str = 'DEV'
     host: str = '0.0.0.0'
-    port: int = 8090
+    port: int = 8000
 
 
 class ApiV1Prefix(BaseModel):
@@ -63,13 +63,13 @@ class Settings(BaseSettings):
         env_nested_delimiter="__",
         env_prefix="APP__CONFIG__",
     )
-    run: RunConfig = RunConfig()
+    app: AppConfig = AppConfig()
     api: ApiPrefix = ApiPrefix()
     db: DatabaseSettings
     s3: S3Settings
 
 
 settings = Settings() # type: ignore
-print(f"INFO:     Run mode: {settings.run.mode}")
+print(f"INFO:     Run mode: {settings.app.mode}")
 print(f"INFO:     Using Database url: {settings.db.DB_URL_asyncpg}")
 print(f"INFO:     Using S3 url: {settings.s3.endpoint_url}/{settings.s3.bucket_name}")

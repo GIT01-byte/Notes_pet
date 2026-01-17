@@ -1,44 +1,47 @@
+# version: '3.8'
+
 services:
-
-  redis:
-    image: redis:8-alpine
-    ports:
-      - "6379:6379"
-
-  pg:
+  postgres:
     image: postgres:17
+    container_name: postgres-notes_service
     environment:
-      POSTGRES_DB: shop
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${APP__CONFIG__DB__NAME}
+      POSTGRES_USER: ${APP__CONFIG__DB__USER}
+      POSTGRES_PASSWORD: ${APP__CONFIG__DB__PWD}
     ports:
       - "5432:5432"
-
-  # maildev:
-  #   image: maildev/maildev
-  #   environment:
-  #     - TZ=Europe/Moscow
-  #     - MAILDEV_WEB_PORT=1080
-  #     - MAILDEV_SMTP_PORT=1025
-  #   ports:
-  #     - "8080:1080"
-  #     - "1025:1025"
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "1m"
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d default_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - postgres_data:/var/lib/postgresql
+    restart: unless-stopped
+
+  notes_service:
+    build: .
+    container_name: notes_service
+    ports:
+      - "8000:8000"
+    environment:
+      APP__CONFIG__RUN__MODE: ${APP__CONFIG__RUN__MODE} 
+
+      APP__CONFIG__DB__HOST: postgres
+      APP__CONFIG__DB__PORT: ${APP__CONFIG__DB__PORT}
+      APP__CONFIG__DB__NAME: ${APP__CONFIG__DB__NAME}
+      APP__CONFIG__DB__USER: ${APP__CONFIG__DB__USER}
+      APP__CONFIG__DB__PWD: ${APP__CONFIG__DB__PWD}
+      APP__CONFIG__DB__ECHO: ${APP__CONFIG__DB__ECHO}
+
+      APP__CONFIG__S3__ACCESS_KEY: ${APP__CONFIG__S3__ACCESS_KEY}
+      APP__CONFIG__S3__SECRET_ACCESS_KEY: ${APP__CONFIG__S3__SECRET_ACCESS_KEY}
+      APP__CONFIG__S3__ENDPOINT_URL: ${APP__CONFIG__S3__ENDPOINT_URL}
+      APP__CONFIG__S3__BUCKET_NAME: ${APP__CONFIG__S3__BUCKET_NAME} 
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["bash", "-c", "alembic upgrade head && python main.py"]
 
 volumes:
-  rabbitmq_data:
+  postgres_data:

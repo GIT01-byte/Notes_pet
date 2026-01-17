@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
+from core.settings import settings
 from core.models.user_admin import setup_admin
 from core.db.db_manager import db_manager
 from api import api_routers
@@ -55,4 +56,9 @@ Instrumentator().instrument(app).expose(app)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=False, workers=1)
+    uvicorn.run(
+        "main:app",
+        host=settings.app.host,
+        port=settings.app.port,
+        reload=True
+    )
