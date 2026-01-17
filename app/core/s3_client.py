@@ -66,7 +66,7 @@ class S3Client:
                 print(f"Файл {filename} удален из {self.bucket_name}. Ответ: {response}")
         except Exception as e:
             print(f"Ошибка при удалении {filename}: {e}")
-
+    
 
 s3_client = S3Client(
     access_key=settings.s3.access_key,
