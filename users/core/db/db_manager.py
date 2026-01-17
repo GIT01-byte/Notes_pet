@@ -1,3 +1,9 @@
+import os
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
@@ -7,10 +13,12 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
 
-from ..config import settings
-from .base import Base
+from core.settings import settings
+from utils.time_decorator import time_all_methods, sync_timed_report, async_timed_report
 
-class DbHelper:
+
+@time_all_methods(async_timed_report())
+class DbManager:
     def __init__(
         self,
         url: str,
@@ -41,7 +49,7 @@ class DbHelper:
             yield session
 
 
-db_helper = DbHelper(
+db_manager = DbManager(
     url=str(settings.db.DB_URL_asyncpg),
     echo=settings.db.echo,
     echo_pool=settings.db.echo_pool,

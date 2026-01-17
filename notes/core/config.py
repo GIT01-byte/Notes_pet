@@ -8,6 +8,7 @@ ENV_PATH = BASE_PATH / ".env"
 
 
 class RunConfig(BaseModel):
+    mode: str = 'DEV'
     host: str = '0.0.0.0'
     port: int = 8090
 
@@ -23,7 +24,13 @@ class ApiPrefix(BaseModel):
 
 
 class DatabaseSettings(BaseModel):
-    url: PostgresDsn
+    # DB URL
+    host: str
+    port: int
+    user: str
+    pwd: str
+    name: str
+    # Other DB settings
     echo: bool = False
     echo_pool: bool = False
     pool_size: int = 50
@@ -36,6 +43,10 @@ class DatabaseSettings(BaseModel):
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
         "pk": "pk_%(table_name)s",
     }
+
+    @property
+    def DB_URL_asyncpg(self):
+        return f"postgresql+asyncpg://{self.user}:{self.pwd}@{self.host}:{self.port}/{self.name}"
 
 
 class S3Settings(BaseModel):
@@ -50,7 +61,7 @@ class Settings(BaseSettings):
         env_file=str(ENV_PATH),
         case_sensitive=False,
         env_nested_delimiter="__",
-        env_prefix="APP_CONFIG__",
+        env_prefix="APP__CONFIG__",
     )
     run: RunConfig = RunConfig()
     api: ApiPrefix = ApiPrefix()
@@ -59,5 +70,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings() # type: ignore
-print(f"INFO:     Using Database url: {settings.db.url}")
+print(f"INFO:     Run mode: {settings.run.mode}")
+print(f"INFO:     Using Database url: {settings.db.DB_URL_asyncpg}")
 print(f"INFO:     Using S3 url: {settings.s3.endpoint_url}/{settings.s3.bucket_name}")

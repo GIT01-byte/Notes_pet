@@ -98,12 +98,8 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
-env/
 venv/
-ENV/
-env.bak/
 venv.bak/
 
 # Spyder project settings
@@ -183,7 +179,6 @@ wheels/
 # Never commit files containing secrets (API keys, passwords, etc.)
 # Create a separate .env file and add it to .gitignore
 # Example:
-.env
 secrets.json
 config.yaml (if it contains secrets)
 
@@ -200,7 +195,6 @@ Thumbs.db
 
 
 # Temp project files
+certs/
 logs/
 reports/
-security_keys/
-.test.env
