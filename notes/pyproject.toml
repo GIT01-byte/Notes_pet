@@ -15,6 +15,7 @@ celery = "^5.6.2"
 kombu = "^5.6.2"
 sqlalchemy-utc = "^0.14.0"
 aiobotocore = "^3.1.0"
+python-multipart = "^0.0.21"
 
 [dependency-groups]
 dev = [

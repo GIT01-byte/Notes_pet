@@ -1,5 +1,10 @@
+from pathlib import Path
+
 from pydantic import BaseModel, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BASE_PATH = Path(__file__).parent.parent
+ENV_PATH = BASE_PATH / ".env"
 
 
 class RunConfig(BaseModel):
@@ -42,7 +47,7 @@ class S3Settings(BaseModel):
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(".env.template", ".env"),
+        env_file=str(ENV_PATH),
         case_sensitive=False,
         env_nested_delimiter="__",
         env_prefix="APP_CONFIG__",
