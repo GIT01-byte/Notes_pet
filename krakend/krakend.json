@@ -1,0 +1,20 @@
+{
+  "$schema": "https://www.krakend.io/schema/v2.12/krakend.json",
+  "version": 3,
+  "debug_endpoint": true,
+  "echo_endpoint": true,
+  "endpoints": [
+    {
+      "endpoint": "/test",
+      "backend": [
+        {
+          "@comment": "Connect KrakenD to KrakenD itself as backend!",
+          "host": [
+            "http://localhost:8080"
+          ],
+          "url_pattern": "/__echo/test"
+        }
+      ]
+    }
+  ]
+}

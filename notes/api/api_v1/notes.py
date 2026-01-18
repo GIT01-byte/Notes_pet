@@ -18,6 +18,11 @@ router = APIRouter(
 )
 
 
+@router.get("/health_check")
+async def health_check():
+    return {"success": "Note service started"}
+
+
 @router.post("/create", response_model=NoteRead)
 async def create_notes(
     note_create_form: NoteCreateForm = Depends(),

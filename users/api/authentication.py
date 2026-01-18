@@ -37,6 +37,11 @@ auth_usage = APIRouter()
 dev_usage = APIRouter()
 
 
+@auth.get("/health_check")
+async def health_check():
+    return {"success": "Note users service started"}
+
+
 # Вход пользователя с выдачей токенов
 @auth.post("/login/", response_model=TokenResponse)
 @async_timed_report()
