@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
+from debug_toolbar.middleware import DebugToolbarMiddleware
 
 from api import router as api_router
 
@@ -33,6 +34,15 @@ main_app.add_middleware(
 main_app.include_router(
     api_router,
 )
+
+
+@main_app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"INFO:    Request: {request.method} {request.url}")
+    print(f"INFO:    Headers: {request.headers}")
+    # Получаем body (только для чтения)
+    response = await call_next(request)
+    return response
 
 
 if __name__ == "__main__":

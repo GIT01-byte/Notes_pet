@@ -69,8 +69,8 @@ async def delete_note(note_id: int):
     return {"msg": f"Заметка с ID {note_id} успешно удалена"}
 
 
-@router.get("/get_all", response_model=list[NoteRead])
+@router.get("/get_all")
 async def get_notes():
     notes = await NotesRepo.get_all_notes()
     
-    return notes
+    return {"data": notes}

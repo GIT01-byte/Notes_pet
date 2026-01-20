@@ -84,7 +84,7 @@
     </div>
 
     <script>
-        const API_BASE = "http://127.0.0.1:8090/api/v1/notes";
+        const API_BASE = "http://127.0.0.1:8080/notes";
         const queue = { video_files: [], image_files: [], audio_files: [] };
 
         // --- LIGHTBOX ---
@@ -146,7 +146,7 @@
         setupDropZone('drop-image', 'input-image', 'image_files');
         setupDropZone('drop-audio', 'input-audio', 'audio_files');
 
-        // --- DELETE (Под твой бэкенд @router.delete("/delete/{note_id}")) ---
+        // --- DELETE ---
         async function deleteNote(id) {
             if (!confirm(`Удалить заметку #${id} и связанные файлы в S3?`)) return;
 
@@ -169,14 +169,22 @@
         async function loadNotes() {
             try {
                 const res = await fetch(`${API_BASE}/get_all`);
-                const notes = await res.json();
+                const responseData = await res.json(); // Parse the JSON response
+
+                // Check if the 'data' field exists in the response
+                if (!responseData.data) {
+                    console.error("Error: 'data' field not found in API response:", responseData);
+                    return; // Exit the function if 'data' is missing
+                }
+
+                const notes = responseData.data; // Access the 'data' array
                 const list = document.getElementById('notesList');
                 list.innerHTML = "";
 
                 notes.reverse().forEach(n => {
                     const card = document.createElement('div');
                     card.className = "bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 relative group transition-all hover:shadow-xl";
-                    
+
                     const renderMedia = (title, urls, type) => {
                         if (!urls?.length) return "";
                         let html = `<div class="mt-6"><h4 class="text-[9px] font-black text-slate-300 mb-3 tracking-[0.2em] uppercase">${title}</h4><div class="flex flex-wrap gap-4">`;
@@ -185,13 +193,13 @@
                             const dir = url.split('/').slice(-2, -1)[0];
                             if (type === 'img') {
                                 html += `<div class="text-center"><img src="${url}" onclick="openLightbox('${url}')" class="h-24 w-24 object-cover rounded-2xl border cursor-zoom-in hover:scale-105 transition shadow-sm">
-                                         <p class="text-[7px] text-slate-400 mt-1 truncate w-24">${dir}/${name}</p></div>`;
+                                            <p class="text-[7px] text-slate-400 mt-1 truncate w-24">${dir}/${name}</p></div>`;
                             } else if (type === 'video') {
                                 html += `<div class="w-full"><video src="${url}" controls class="w-full rounded-2xl bg-slate-900"></video>
-                                         <p class="text-[7px] text-slate-400 mt-1">${dir}/${name}</p></div>`;
+                                            <p class="text-[7px] text-slate-400 mt-1">${dir}/${name}</p></div>`;
                             } else if (type === 'audio') {
                                 html += `<div class="w-full"><audio src="${url}" controls class="w-full"></audio>
-                                         <p class="text-[7px] text-slate-400 mt-1">${dir}/${name}</p></div>`;
+                                            <p class="text-[7px] text-slate-400 mt-1">${dir}/${name}</p></div>`;
                             }
                         });
                         return html + "</div></div>";
@@ -212,7 +220,9 @@
                     `;
                     list.appendChild(card);
                 });
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         // --- SUBMIT ---

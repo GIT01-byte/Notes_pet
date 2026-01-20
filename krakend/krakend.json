@@ -1,20 +1,101 @@
 {
-  "$schema": "https://www.krakend.io/schema/v2.12/krakend.json",
+  "$schema": "https://www.krakend.io/schema/v3.json",
   "version": 3,
-  "debug_endpoint": true,
-  "echo_endpoint": true,
+  "timeout": "3000ms",
+  "port": 8080,
+  "cache_ttl": "0s",
   "endpoints": [
     {
-      "endpoint": "/test",
+      "endpoint": "/notes/health_check",
+      "method": "GET",
       "backend": [
         {
-          "@comment": "Connect KrakenD to KrakenD itself as backend!",
+          "url_pattern": "/api/v1/notes/health_check",
           "host": [
-            "http://localhost:8080"
-          ],
-          "url_pattern": "/__echo/test"
+            "http://notes_service:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/notes/create",
+      "method": "POST",
+      "input_query_strings": ["*"],
+      "input_headers": ["*"],
+      "timeout": "10s",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/notes/create",
+          "method": "POST",
+          "host": [
+            "http://notes_service:8000"
+          ]
+        }
+      ],
+      "output_encoding": "json"
+    },
+    {
+      "endpoint": "/notes/delete/{note_id}",
+      "method": "DELETE",
+      "input_query_strings": ["*"],
+      "input_headers": ["*"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/notes/delete/{note_id}",
+          "host": [
+            "http://notes_service:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/notes/get_all",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/notes/get_all",
+          "host": [
+            "http://notes_service:8000"
+          ]
+        }
+      ]
+      },
+    {
+      "endpoint": "/users/health_check",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/users/health_check",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/users/login",
+      "method": "POST",
+      "input_query_strings": ["*"],
+      "input_headers": ["*"],
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/users/login",
+          "host": [
+            "http://notes_users:8001"
+          ]
         }
       ]
     }
-  ]
+  ],
+  "extra_config": {
+      "security/cors": {
+        "allow_origins": ["*"],
+        "allow_methods": ["POST", "GET", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        "allow_headers": ["Origin", "Authorization", "Content-Type"],
+        "expose_headers": ["Content-Length"],
+        "allow_credentials": true,
+        "max_age": "72h"
+    }
+  }
 }
