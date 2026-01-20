@@ -32,9 +32,9 @@ from utils.time_decorator import async_timed_report
 from utils.security import ACCESS_TOKEN_TYPE, decode_access_token
 
 # Роутеры для аутентификации и разработки
-auth = APIRouter()
-auth_usage = APIRouter()
-dev_usage = APIRouter()
+auth = APIRouter(redirect_slashes=False)
+auth_usage = APIRouter(redirect_slashes=False)
+dev_usage = APIRouter(redirect_slashes=False)
 
 
 @auth.get("/health_check")

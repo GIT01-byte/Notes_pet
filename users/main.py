@@ -6,7 +6,7 @@ sys.path.append(current_dir)
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
@@ -52,6 +52,15 @@ Instrumentator().instrument(app).expose(app)
 
 # # Подключаем админ панель
 # setup_admin(app, db_manager.engine)
+
+# # Подключаем middleware для просмотра содержимого http запроса
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"INFO:    Request: {request.method} {request.url}")
+    print(f"INFO:    Headers: {request.headers}")
+    # Получаем body (только для чтения)
+    response = await call_next(request)
+    return response
 
 
 if __name__ == "__main__":

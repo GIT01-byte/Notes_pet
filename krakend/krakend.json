@@ -73,14 +73,14 @@
       ]
     },
     {
-      "endpoint": "/users/login",
+      "endpoint": "/users/login/",
       "method": "POST",
       "input_query_strings": ["*"],
       "input_headers": ["*"],
       "output_encoding": "json",
       "backend": [
         {
-          "url_pattern": "/users/login",
+          "url_pattern": "/users/login/",
           "host": [
             "http://notes_users:8001"
           ]
