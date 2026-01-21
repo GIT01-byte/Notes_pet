@@ -73,7 +73,7 @@
       ]
     },
     {
-      "endpoint": "/users/login/",
+      "endpoint": "/notes/login/",
       "method": "POST",
       "input_query_strings": ["*"],
       "input_headers": ["*"],

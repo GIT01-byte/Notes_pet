@@ -48,13 +48,13 @@ services:
       - "8001:8001"
     environment:
       APP__CONFIG__DB__HOST: postgres
-      APP__CONFIG__DB__PORT: ${APP__CONFIG__DB__PORT}
+      APP__CONFIG__DB__PORT: 5433
       APP__CONFIG__DB__NAME: ${APP__CONFIG__DB__NAME}
       APP__CONFIG__DB__USER: ${APP__CONFIG__DB__USER}
       APP__CONFIG__DB__PWD: ${APP__CONFIG__DB__PWD}
 
       APP__CONFIG__REDIS__HOST: redis
-      APP__CONFIG__REDIS__PORT: ${APP__CONFIG__REDIS__PORT}
+      APP__CONFIG__REDIS__PORT: 6380
 
       APP__CONFIG__MODE: ${APP__CONFIG__MODE}
     depends_on:

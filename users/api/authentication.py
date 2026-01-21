@@ -167,7 +167,10 @@ async def auth_user_check_self_info(
     current_user: dict = Depends(get_current_active_user),
 ):
     return {
+        "user_id": current_user["user_id"],
         "username": current_user["username"],
         "email": current_user["email"],
-        "logged_in_at": current_user["iat"],  # Время входа
+        "is_active": current_user["is_active"],
+        "jti": current_user["jti"],
+        "iat": current_user["iat"],
     }
