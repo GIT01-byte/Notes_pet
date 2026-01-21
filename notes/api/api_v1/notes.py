@@ -6,7 +6,7 @@ from core.notes_repo import NotesRepo
 from core.schemas import NoteCreate, NoteRead
 
 from .service import NoteService
-from .deps import NoteCreateForm
+from .deps import NoteCreateForm, get_current_user
 
 router = APIRouter(
     prefix=settings.api.v1.notes,
@@ -51,6 +51,7 @@ async def health_check():
 @router.post("/create", response_model=NoteRead)
 async def create_notes(
     note_create_form: NoteCreateForm = Depends(),
+    current_user = Depends(get_current_user),
 ):
     # Загружаем все типы медиа через вспомогательную функцию
     note_service = NoteService()
@@ -61,6 +62,7 @@ async def create_notes(
     
     # Теперь подготавливаем данные для БД
     note_data = NoteCreate(
+        user=current_user.username,
         title=note_create_form.title,
         content=note_create_form.content,
         video_urls=video_urls,
@@ -75,7 +77,10 @@ async def create_notes(
 
 
 @router.delete("/delete/{note_id}")
-async def delete_note(note_id: int):
+async def delete_note(
+    note_id: int,
+    current_user = Depends(get_current_user),
+    ):
     # Удаление медиа-файлов из S3
     note = await NotesRepo.get_note(note_id)
     if note:

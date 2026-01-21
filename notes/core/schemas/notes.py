@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class NoteBase(BaseModel):
+    user: str
     title: str
     content: str
     video_urls: list[str]

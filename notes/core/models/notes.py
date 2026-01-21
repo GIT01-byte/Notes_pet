@@ -9,6 +9,8 @@ from .base import Base
 
 
 class NotesOrm(Base):
+    user: Mapped[str] = mapped_column(unique=True, nullable=False)
+    
     title: Mapped[str] = mapped_column(unique=True, nullable=False)
     content: Mapped[str] = mapped_column(nullable=False)
     
@@ -19,6 +21,3 @@ class NotesOrm(Base):
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
     
-    # user: Mapped["UsersOrm"] = relationship(
-    #     back_populates="notes",
-    # )
