@@ -24,6 +24,36 @@ async def health_check():
     return {"success": "Note service started"}
 
 
+@router.post("/login")
+async def login_note(request: LoginRequest):
+    async with httpx.AsyncClient() as client:
+        req_data = {
+            "username": request.username, 
+            "password": request.password,
+        }
+
+        try:
+            login_response = await client.post(
+                "http://krakend:8080/users/login/", 
+                data=req_data,
+                follow_redirects=True,
+            )
+            
+            if login_response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, 
+                    detail=f"Authorization failed: {login_response.text}"
+                )
+
+            response_data = login_response.json()
+            
+            # Исправлены кавычки в f-строке
+            return {"message": f"Добро пожаловать. Токен: {response_data['access_token']}"}
+            
+        except httpx.RequestError as exc:
+            raise HTTPException(status_code=503, detail=f"Gateway unavailable: {exc}")
+        
+
 @router.post("/create", response_model=NoteRead)
 async def create_notes(
     note_create_form: NoteCreateForm = Depends(),
