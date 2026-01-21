@@ -3,11 +3,12 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+import httpx
 
 from core.s3_client import s3_client
 from core.config import settings
 from core.notes_repo import NotesRepo
-from core.schemas.notes import NoteCreate, NoteRead
+from core.schemas import NoteCreate, NoteRead, LoginRequest
 
 from .service import NoteService
 from .deps import NoteCreateForm
