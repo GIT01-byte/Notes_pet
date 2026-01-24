@@ -44,19 +44,26 @@ middleware = [
 main_app = FastAPI(
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
+    middleware=middleware,
 )
+
+
+origins = [
+    "http://127.0.0.1:5500",
+    "http://localhost:8080",
+]
+
 
 main_app.add_middleware(
     CORSMiddleware,
+    allow_origins=origins,
     allow_credentials=True,
-    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-main_app.include_router(
-    api_router,
-)
+
+main_app.include_router(api_router)
 
 
 @main_app.middleware("http")
@@ -70,8 +77,6 @@ async def log_requests(request: Request, call_next):
         print(f"WARNING: Could not decode JSON body: {e}")
     response = await call_next(request)
     return response
-
-
 
 
 if __name__ == "__main__":

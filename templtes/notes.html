@@ -189,8 +189,10 @@
             if (!confirm(`Удалить заметку #${id} и связанные файлы в S3?`)) return;
 
             try {
+                const access_cookie = getCookie("access");
                 const response = await fetch(`${API_BASE}/notes/delete/${id}`, {
-                    method: 'DELETE' // Соответствует твоему @router.delete
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${access_cookie}` },
                 });
 
                 if (response.ok) {
@@ -206,7 +208,11 @@
         // --- RENDER ---
         async function loadNotes() {
             try {
-                const res = await fetch(`${API_BASE}/notes/get_notes`);
+                const access_cookie = getCookie("access");
+                const res = await fetch(`${API_BASE}/notes/get_notes/`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${access_cookie}` },
+                });
                 const responseData = await res.json(); // Parse the JSON response
 
                 // Check if the 'data' field exists in the response
@@ -281,7 +287,7 @@
                 const access_cookie = getCookie("access");
                 const response = await fetch(url.toString(), {
                     method: 'POST', 
-                    headers: { 'Autorization': `Bearer ${access_cookie}` },
+                    headers: { 'Authorization': `Bearer ${access_cookie}` },
                     body: formData 
                 });
                 if (response.ok) {
@@ -323,13 +329,11 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const url = new URL(`${API_BASE}/user/login/`);
             // Указываем тип контента как FormData
             const formData = new FormData();
             formData.append("grant_type", "password");
             formData.append("username", document.getElementById('loginUsername').value);
             formData.append("password", document.getElementById('loginPassword').value);
-
 
             try {
                 const response = await fetch(`${API_BASE}/user/login/`, {
@@ -355,7 +359,7 @@
                 }
             } catch (error) {
                 console.error('Ошибка сети:', error);
-                alert(`Ошибка сети при входе: ${error}`);
+                alert(`Ошибка сети при входе`);
             }
         });
 

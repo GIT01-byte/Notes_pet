@@ -39,7 +39,7 @@ services:
       context: ./notes
     container_name: notes_service
     ports:
-      - "8000:8000"
+      - "8002:8002"
     environment:
       APP_MODE: ${NOTES_APP_MODE}
       NOTES_DB_HOST: postgres-notes

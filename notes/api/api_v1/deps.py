@@ -29,7 +29,7 @@ class NoteCreateForm:
 async def get_current_user(request: Request):
     async with httpx.AsyncClient() as client:
         try:
-            auth_token = request.headers["authorization"]
+            auth_token = request.headers.get("authorization")
             print(f"INFO:    get_current_user получил - {auth_token}")
             
             if auth_token:

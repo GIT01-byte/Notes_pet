@@ -74,7 +74,7 @@ async def delete_note(
             )
         
         # Удаляем из БД
-        await NotesRepo.delete_note(note_id)
+        await NotesRepo.delete_user_note(username=current_user.username, note_id=note_id)
         
         return {"msg": f"Заметка с ID {note_id} успешно удалена"}
     
@@ -93,6 +93,7 @@ async def get_user_notes(current_user = Depends(get_current_user),):
     return {"data": notes}
 
 
+# TODO сделать доступ тролько для админа
 @router.get("/get_all")
 async def get_notes():
     notes = await NotesRepo.get_all_notes()

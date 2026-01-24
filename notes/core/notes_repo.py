@@ -11,7 +11,10 @@ class NotesRepo:
     @staticmethod
     async def get_all_notes() -> Sequence[NotesOrm]:
         async with db_helper.session_factory() as session:
-            stmt = select(NotesOrm).order_by(NotesOrm.id)
+            stmt = (
+                select(NotesOrm)
+                .order_by(NotesOrm.id)
+            )
             result = await session.scalars(stmt)
             return result.all()
     
@@ -19,7 +22,10 @@ class NotesRepo:
     @staticmethod
     async def get_user_notes(username: str):
         async with db_helper.session_factory() as session:
-            stmt = select(NotesOrm).where(NotesOrm.user == username)
+            stmt = (
+                select(NotesOrm)
+                .where(NotesOrm.user == username)
+            )
             result = await session.scalars(stmt)
             return result.all()
 
@@ -27,7 +33,10 @@ class NotesRepo:
     @staticmethod
     async def get_note(note_id: int):
         async with db_helper.session_factory() as session:
-            stmt = select(NotesOrm).where(NotesOrm.id == note_id)
+            stmt = (
+                select(NotesOrm)
+                .where(NotesOrm.id == note_id)
+            )
             result = await session.scalars(stmt)
             return result.first()
     
@@ -43,9 +52,13 @@ class NotesRepo:
         
     
     @staticmethod
-    async def delete_note(note_id: int):
+    async def delete_user_note(username: str, note_id: int):
         async with db_helper.session_factory() as session:
-            stmt = delete(NotesOrm).where(NotesOrm.id == note_id)
+            stmt = (
+                delete(NotesOrm)
+                .where(NotesOrm.id == note_id)
+                .where(NotesOrm.user == username)
+            )
             await session.execute(stmt)
             await session.commit()
     
