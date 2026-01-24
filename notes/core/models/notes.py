@@ -9,7 +9,7 @@ from .base import Base
 
 
 class NotesOrm(Base):
-    user: Mapped[str] = mapped_column(unique=True, nullable=False)
+    user: Mapped[str] = mapped_column(nullable=False)
     
     title: Mapped[str] = mapped_column(unique=True, nullable=False)
     content: Mapped[str] = mapped_column(nullable=False)

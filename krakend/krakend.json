@@ -29,10 +29,7 @@
           "method": "POST",
           "host": [
             "http://notes_service:8000"
-          ],
-          "mapping": {
-            "user": "note"
-          }
+          ]
         }
       ],
       "output_encoding": "json",

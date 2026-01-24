@@ -29,30 +29,32 @@ class NoteCreateForm:
 async def get_current_user(request: Request):
     async with httpx.AsyncClient() as client:
         try:
-            access_token = request.cookies.get(ACCESS_TOKEN_TYPE)
-            refresh_token = request.cookies.get(REFRESH_TOKEN_TYPE)
+            auth_token = request.headers["authorization"]
+            print(f"INFO:    get_current_user получил - {auth_token}")
             
-            if access_token and refresh_token:
-                tokens_cookies = {
-                    ACCESS_TOKEN_TYPE: access_token,
-                    REFRESH_TOKEN_TYPE: refresh_token,
+            if auth_token:
+                auth_header = {
+                    "Authorization": f"{auth_token}"
                 }
                 
                 login_response = await client.get(
                     "http://krakend:8080/user/self_info/", 
-                    cookies=tokens_cookies,
+                    headers=auth_header,
                     follow_redirects=True,
                 )
             else:
+                print("EXC:   get_current_user    Get cookie fail")
                 raise HTTPException(status_code=500, detail=f"Get cookie fail")
             
             if login_response.status_code != 200:
+                print(f"EXC:   get_current_user    Authorization failed: {login_response.text}") 
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, 
                     detail=f"Authorization failed: {login_response.text}"
                 )
 
             response_data = login_response.json()
+            print(f"INFO:    get_current_user обработал - {response_data}")
             
             return RequestUserData(
                 user_id=response_data["user_id"],
@@ -64,5 +66,6 @@ async def get_current_user(request: Request):
             )
             
         except httpx.RequestError as exc:
+            print(f"EXC:   get_current_user    Gateway unavailable: {exc}") 
             raise HTTPException(status_code=503, detail=f"Gateway unavailable: {exc}")
         
