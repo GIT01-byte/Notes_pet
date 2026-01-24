@@ -4,7 +4,7 @@ from fastapi import Request, UploadFile, HTTPException, status
 
 import httpx
 
-from notes.core.schemas.users import RequestUserData
+from core.schemas.users import RequestUserData
 
 ACCESS_TOKEN_TYPE = "access"
 REFRESH_TOKEN_TYPE = "refresh"
@@ -39,7 +39,7 @@ async def get_current_user(request: Request):
                 }
                 
                 login_response = await client.get(
-                    "http://krakend:8080/users/me/", 
+                    "http://krakend:8080/user/self_info/", 
                     cookies=tokens_cookies,
                     follow_redirects=True,
                 )

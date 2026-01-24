@@ -50,18 +50,18 @@ class DatabaseSettings(BaseModel):
 
 
 class S3Settings(BaseModel):
-    access_key: str
-    secret_access_key: str
-    endpoint_url: str
-    bucket_name: str
+    accesskey: str
+    secretkey: str
+    endpointurl: str
+    bucketname: str
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=str(ENV_PATH),
         case_sensitive=False,
-        env_nested_delimiter="__",
-        env_prefix="APP__CONFIG__",
+        env_nested_delimiter="_",
+        env_prefix="NOTES_",
     )
     app: AppConfig = AppConfig()
     api: ApiPrefix = ApiPrefix()
@@ -72,4 +72,4 @@ class Settings(BaseSettings):
 settings = Settings() # type: ignore
 print(f"INFO:     Run mode: {settings.app.mode}")
 print(f"INFO:     Using Database url: {settings.db.DB_URL_asyncpg}")
-print(f"INFO:     Using S3 url: {settings.s3.endpoint_url}/{settings.s3.bucket_name}")
+print(f"INFO:     Using S3 url: {settings.s3.endpointurl}/{settings.s3.bucketname}")

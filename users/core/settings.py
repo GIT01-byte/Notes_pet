@@ -61,8 +61,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=str(DOTENV_FILE_PATH),
         case_sensitive=False,
-        env_nested_delimiter="__",
-        env_prefix="APP__CONFIG__",
+        env_nested_delimiter="_",
+        env_prefix="USERS_",
     )
 
     app: AppSettings = AppSettings() 

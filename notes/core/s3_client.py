@@ -77,10 +77,10 @@ class S3Client:
     
 
 s3_client = S3Client(
-    access_key=settings.s3.access_key,
-    secret_key=settings.s3.secret_access_key,
-    endpoint_url=settings.s3.endpoint_url,
-    bucket_name=settings.s3.bucket_name,
+    access_key=settings.s3.accesskey,
+    secret_key=settings.s3.secretkey,
+    endpoint_url=settings.s3.endpointurl,
+    bucket_name=settings.s3.bucketname,
 )
 
 

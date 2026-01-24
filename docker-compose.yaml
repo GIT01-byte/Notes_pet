@@ -1,0 +1,141 @@
+# version: '3.8'
+# TODO: доделать /notes/create (с логином)
+services:
+  # --- API ШЛЮЗ (Krakend) ---
+  krakend:
+    image: devopsfaith/krakend:2.4.0 
+    container_name: krakend-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./krakend/krakend.json:/etc/krakend/krakend.json
+    networks:
+      - app-network
+    restart: always
+  
+  # --- СЕРВИС ЗАМЕТОК (Notes Service) ---
+  postgres-notes:
+    image: postgres:17
+    container_name: postgres-notes_service
+    environment:
+      POSTGRES_DB: ${NOTES_DB_NAME}
+      POSTGRES_USER: ${NOTES_DB_USER}
+      POSTGRES_PASSWORD: ${NOTES_DB_PWD}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data_notes:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  notes-service:
+    build:
+      context: ./notes
+    container_name: notes_service
+    ports:
+      - "8000:8000"
+    environment:
+      APP_MODE: ${NOTES_APP_MODE}
+      NOTES_DB_HOST: postgres-notes
+      NOTES_DB_PORT: 5432
+      NOTES_DB_NAME: ${NOTES_DB_NAME}
+      NOTES_DB_USER: ${NOTES_DB_USER}
+      NOTES_DB_PWD: ${NOTES_DB_PWD}
+      NOTES_DB_ECHO: ${NOTES_DB_ECHO}
+      S3_ACCESS_KEY: ${NOTES_S3_ACCESSKEY}
+      S3_SECRET_KEY: ${NOTES_S3_SECRETKEY}
+      S3_ENDPOINT_URL: ${NOTES_S3_ENDPOINTURL}
+      S3_BUCKET_NAME: ${NOTES_S3_BUCKETNAME}
+    depends_on:
+      postgres-notes:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    command: ["bash", "-c", "alembic upgrade head && python main.py"]
+    networks:
+      - app-network
+
+  # --- СЕРВИС ПОЛЬЗОВАТЕЛЕЙ (Users Service) ---
+  postgres-users:
+    image: postgres:17
+    command: -p 5433
+    container_name: postgres-notes_users
+    environment:
+      POSTGRES_DB: ${USERS_DB_NAME}
+      POSTGRES_USER: ${USERS_DB_USER}
+      POSTGRES_PASSWORD: ${USERS_DB_PWD}
+    ports:
+      - "5433:5433"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p 5433 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data_users:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  redis-users:
+    image: redis:7-alpine
+    container_name: redis-notes_users
+    ports:
+      - "6380:6380"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - redis_data_users:/data
+    command: redis-server --port 6380 --appendonly yes --appendfsync everysec
+    networks:
+      - app-network
+
+  users-service:
+    build:
+      context: ./users
+    container_name: notes_users
+    ports:
+      - "8001:8001"
+    environment:
+      USERS_DB_HOST: postgres-users
+      USERS_DB_PORT: 5433
+      USERS_DB_NAME: ${USERS_DB_NAME}
+      USERS_DB_USER: ${USERS_DB_USER}
+      USERS_DB_PWD: ${USERS_DB_PWD}
+      USERS_REDIS_HOST: redis-users
+      USERS_REDIS_PORT: 6380
+      APP_MODE: ${USERS_APP_MODE}
+    depends_on:
+      postgres-users:
+        condition: service_healthy
+      redis-users:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    command: ["bash", "-c", "alembic upgrade head && python main.py"]
+    restart: always
+    networks:
+      - app-network
+
+volumes:
+  postgres_data_notes:
+  postgres_data_users:
+  redis_data_users:
+
+networks:
+  app-network:
+    external: true

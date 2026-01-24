@@ -1,6 +1,8 @@
 import os
 import sys
 
+from pydantic import ValidationError
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
@@ -48,21 +50,25 @@ async def health_check():
 async def auth_login(
     response: Response, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
-    auth_service = AuthService()
-    if not form_data.password:
-        raise PasswordRequiredError()
+    try:
+        auth_service = AuthService()
+        if not form_data.password:
+            raise PasswordRequiredError()
 
-    # Авторизация пользователя
-    user = await auth_service.authenticate_user(
-        response, form_data.username, form_data.password
-    )
-    if not user:
-        raise InvalidCredentialsError()
+        # Авторизация пользователя
+        user = await auth_service.authenticate_user(
+            response, form_data.username, form_data.password
+        )
+        if not user:
+            raise InvalidCredentialsError()
 
-    return TokenResponse(
-        access_token=user.access_token,
-        refresh_token=user.refresh_token,
-    )
+        return TokenResponse(
+            access_token=user.access_token,
+            refresh_token=user.refresh_token,
+        )
+
+    except ValidationError as e:
+        logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
 
 
 # Регистрация нового пользователя
@@ -110,7 +116,9 @@ async def auth_register_user(
 
         return {"message": f"Регистрация пользователя: {new_user!r} прошла успешно!"}
 
-    # Обрабатываем уникальные ошибки регистрации
+    # Обрабатываем уникальные ошибки регистрации и ошибки валидации
+    except ValidationError as e:
+        logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
     except ValueError as e:
         err_msg = str(e)
         if "уже существует" in err_msg:
@@ -139,6 +147,8 @@ async def auth_refresh_jwt(data: RefreshRequest, response: Response):
             access_token=pair.access_token,
             refresh_token=pair.refresh_token,
         )
+    except ValidationError as e:
+        logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
     except Exception as ex:
         logger.error(f"Обновление токенов прошло неудачно: {ex}")
         raise RefreshUserTokensFailedError()

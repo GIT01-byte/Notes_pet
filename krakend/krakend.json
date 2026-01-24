@@ -6,7 +6,7 @@
   "cache_ttl": "0s",
   "endpoints": [
     {
-      "endpoint": "/notes/health_check",
+      "endpoint": "/notes_service/health_check/",
       "method": "GET",
       "backend": [
         {
@@ -18,24 +18,32 @@
       ]
     },
     {
-      "endpoint": "/notes/create",
+      "endpoint": "/notes/create/",
       "method": "POST",
       "input_query_strings": ["*"],
       "input_headers": ["*"],
-      "timeout": "10s",
+      "timeout": "5s",
       "backend": [
         {
           "url_pattern": "/api/v1/notes/create",
           "method": "POST",
           "host": [
             "http://notes_service:8000"
-          ]
+          ],
+          "mapping": {
+            "user": "note"
+          }
         }
       ],
-      "output_encoding": "json"
+      "output_encoding": "json",
+          "extra_config": {
+        "proxy": {
+            "sequential": true
+        }
+    }
     },
     {
-      "endpoint": "/notes/delete/{note_id}",
+      "endpoint": "/notes/delete/{note_id}/",
       "method": "DELETE",
       "input_query_strings": ["*"],
       "input_headers": ["*"],
@@ -49,11 +57,11 @@
       ]
     },
     {
-      "endpoint": "/notes/get_all",
+      "endpoint": "/notes/get_notes/",
       "method": "GET",
       "backend": [
         {
-          "url_pattern": "/api/v1/notes/get_all",
+          "url_pattern": "/api/v1/notes/get_user_notes",
           "host": [
             "http://notes_service:8000"
           ]
@@ -61,7 +69,7 @@
       ]
       },
     {
-      "endpoint": "/users/health_check",
+      "endpoint": "/users_service/health_check/",
       "method": "GET",
       "backend": [
         {
@@ -73,7 +81,22 @@
       ]
     },
     {
-      "endpoint": "/notes/login/",
+      "endpoint": "/user/register/",
+      "method": "POST",
+      "input_query_strings": ["*"],
+      "input_headers": ["*"],
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/users/register/",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/user/login/",
       "method": "POST",
       "input_query_strings": ["*"],
       "input_headers": ["*"],
@@ -81,6 +104,19 @@
       "backend": [
         {
           "url_pattern": "/users/login/",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/user/self_info/",
+      "method": "GET",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/users/me/",
           "host": [
             "http://notes_users:8001"
           ]

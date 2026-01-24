@@ -14,7 +14,23 @@ class NotesRepo:
             stmt = select(NotesOrm).order_by(NotesOrm.id)
             result = await session.scalars(stmt)
             return result.all()
+    
+    
+    @staticmethod
+    async def get_user_notes(username: str):
+        async with db_helper.session_factory() as session:
+            stmt = select(NotesOrm).where(NotesOrm.user == username)
+            result = await session.scalars(stmt)
+            return result.all()
 
+
+    @staticmethod
+    async def get_note(note_id: int):
+        async with db_helper.session_factory() as session:
+            stmt = select(NotesOrm).where(NotesOrm.id == note_id)
+            result = await session.scalars(stmt)
+            return result.first()
+    
 
     @staticmethod
     async def create_note(note_to_create: NoteCreate):
@@ -32,13 +48,4 @@ class NotesRepo:
             stmt = delete(NotesOrm).where(NotesOrm.id == note_id)
             await session.execute(stmt)
             await session.commit()
-    
-
-
-    @staticmethod
-    async def get_note(note_id: int):
-        async with db_helper.session_factory() as session:
-            stmt = select(NotesOrm).where(NotesOrm.id == note_id)
-            result = await session.scalars(stmt)
-            return result.first()
     
