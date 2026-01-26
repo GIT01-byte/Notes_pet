@@ -3,11 +3,11 @@
     <h1>Welcome!</h1>
     <button @click="handleLogout">Logout</button>
     <button @click="handleGetUserInfo">Get User Info</button>
-      <div v-if="userInfo">
-        <p>User ID: {{ userInfo.user_id }}</p>
-        <p>Username: {{ userInfo.username }}</p>
-        <p>Email: {{ userInfo.email }}</p>
-      </div>
+    <div v-if="userInfo">
+      <p>User ID: {{ userInfo.user_id }}</p>
+      <p>Username: {{ userInfo.username }}</p>
+      <p>Email: {{ userInfo.email }}</p>
+    </div>
     <p v-if="error" class="error-message">{{ error }}</p>
   </div>
 </template>
@@ -34,7 +34,7 @@ export default {
       }
     }
 
-    onMounted(async ()  => {
+    onMounted(async () => {
       try {
         userInfo.value = await getUser(); //Автоматически получаем информацию о пользователе при загрузке компонента
       } catch (e) {
@@ -52,3 +52,7 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/*Можем задать цвета/размеры на отдельные элементы home-container*/
+</style>

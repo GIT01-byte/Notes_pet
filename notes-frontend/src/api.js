@@ -187,8 +187,7 @@ const createNote = async (title, content, files) => {
         const response = await fetch(`${API_BASE_URL}/notes/create/?title=${title}&content=${content}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({video_urls, image_urls, audio_urls}),
         });

@@ -1,11 +1,25 @@
 <template>
   <div class="register-container">
-    <h1>Register</h1>
-    <input type="text" v-model="username" placeholder="Username">
-    <input type="email" v-model="email" placeholder="Email">
-    <input type="password" v-model="password" placeholder="Password">
-    <button @click="register">Register</button>
-    <p v-if="error" class="error-message">{{ error }}</p>
+    <div class="auth-card">
+      <h1>Register</h1>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" v-model="username" placeholder="Enter username" />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" v-model="email" placeholder="Enter email" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" v-model="password" placeholder="Enter password" />
+      </div>
+
+      <button @click="handleRegister">Register</button>
+      <p v-if="error" class="error-message">{{ error }}</p>
+    </div>
   </div>
 </template>
 
@@ -28,9 +42,13 @@ export default {
       username,
       email,
       password,
-      register: handleRegister,
+      handleRegister,
       error,
     };
   },
 };
 </script>
+
+<style scoped>
+
+</style>

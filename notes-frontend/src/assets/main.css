@@ -1,163 +1,120 @@
-/* Общие стили */
+/* src/assets/css/global.css */
+
+/* Общие стили для всего приложения */
 body {
-  font-family: sans-serif;
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f4;
   margin: 0;
   padding: 0;
-  background-color: #f5f7fa;
-  color: #333;
-}
-
-/* Стили для контейнера аутентификации */
-.auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
 }
 
-/* Стили для карточки аутентификации */
+/* Контейнер для центрирования контента карточки */
+.auth-container, .register-container, .home-container {
+  width: 100%;
+  max-width: 400px; /*Ограничиваем максимальную ширину для больших экранов*/
+  padding: 20px;
+  box-sizing: border-box; /*Включаем box-sizing, чтобы padding не увеличивал ширину*/
+  margin: 20px auto;
+  text-align: center;
+}
+
+/* Карточка авторизации/регистрации */
 .auth-card {
   background-color: #fff;
-  padding: 2rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 350px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.auth-card h1 {
-  text-align: center;
-  margin-bottom: 1.5rem;
+/* Заголовки */
+h1 {
   color: #333;
+  margin-bottom: 20px;
 }
 
-/* Стили для групп форм */
+/* Формы */
 .form-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: 15px;
+  text-align: left;
 }
 
-.form-group label {
+label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
+  margin-bottom: 5px;
   color: #555;
 }
 
-/* Стили для инпутов */
-.form-group input {
+input[type="text"],
+input[type="email"],
+input[type="password"] {
   width: 100%;
-  padding: 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 0.3rem;
-  font-size: 1rem;
-  transition: border-color 0.2s ease-in-out;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
 }
 
-.form-group input:focus {
-  border-color: #6366f1;
-  outline: none;
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-}
-
-/* Стили для главной кнопки */
-.primary-button {
-  width: 100%;
-  padding: 0.9rem;
-  background-color: #6366f1;
+/* Кнопки */
+button {
+  background-color: #007bff;
   color: white;
+  padding: 12px 20px;
   border: none;
-  border-radius: 0.3rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  font-size: 16px;
+  transition: background-color 0.3s;
+  width: 100%; /*Занимает всю ширину контейнера*/
+  margin-top: 10px; /*Отступ сверху*/
 }
 
-.primary-button:hover {
-  background-color: #4f46e5;
+button:hover {
+  background-color: #0056b3;
 }
-
-/* Стили для ссылок */
-a {
-  color: #6366f1;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
+button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
 }
 
 /* Сообщения об ошибках */
 .error-message {
-  color: #e3342f;
-  margin-top: 0.8rem;
-  font-size: 0.9rem;
+  color: #dc3545;
+  margin-top: 10px;
 }
 
-/* Стили для контейнера главной страницы */
+/* Ссылки */
+.auth-link {
+  margin-top: 15px;
+}
+
+.auth-link a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
+/* Дополнительные стили для домашней страницы */
 .home-container {
-  padding: 2rem;
+  text-align: center;
 }
 
-/* Стили для табов заметок */
-.note-tabs {
-  display: flex;
-  overflow-x: auto; /* Горизонтальная прокрутка */
-  margin-bottom: 1rem;
+.home-container button {
+  margin: 10px;
 }
 
-.note-tabs button {
-  background-color: #e2e8f0;
-  color: #374151;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-right: 0.5rem;
-  white-space: nowrap; /* Предотвращает перенос текста */
-}
-
-.note-tabs button:hover {
-  background-color: #cbd5e1;
-}
-
-.note-tabs button.active {
-  background-color: #6366f1;
-  color: white;
-}
-
-/* Стили для контента заметок */
-.note-content {
-  background-color: #fff;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.note-content h2 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  color: #333;
-}
-
-.note-content p {
-  color: #555;
-  line-height: 1.6;
-}
-
-/* Стили для списка файлов */
-.file-list {
-  margin-top: 1rem;
-}
-
-/* Стили для элемента файла */
-.file-item {
-  background-color: #f9f9f9;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.25rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: #444;
+/* Адаптивный дизайн */
+@media (max-width: 600px) {
+  .auth-container, .register-container, .home-container {
+    padding: 10px; /*Меньше padding на маленьких экранах*/
+  }
 }
