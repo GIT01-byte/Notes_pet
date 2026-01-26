@@ -204,3 +204,4 @@ logs/
 reports/
 security_keys/
 .test.env
+node_modules/

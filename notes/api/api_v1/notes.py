@@ -45,7 +45,7 @@ async def create_notes(
         # Сохраняем в БД 
         new_note = await NotesRepo.create_note(note_data)
         
-        return new_note
+        return {"message": f"Создание заметки {new_note.title!r} прошла успешно!"}
 
     except Exception as e:
         print(f"EXC:    exception in notes/create endpoint: {e}")
@@ -76,7 +76,7 @@ async def delete_note(
         # Удаляем из БД
         await NotesRepo.delete_user_note(username=current_user.username, note_id=note_id)
         
-        return {"msg": f"Заметка с ID {note_id} успешно удалена"}
+        return {"message": f"Заметка с ID {note_id} успешно удалена"}
     
     except Exception as e:
         print(f"EXC:    exception in notes/delete endpoint: {e}")
@@ -86,7 +86,7 @@ async def delete_note(
         )
 
 
-@router.get("/get_user_notes")
+@router.get("/get_user_notes/")
 async def get_user_notes(current_user = Depends(get_current_user),):
     notes = await NotesRepo.get_user_notes(current_user.username)
     

@@ -10,7 +10,8 @@
     },
     "security/cors": {
       "allow_origins": [
-        "http://127.0.0.1:5500"
+        "http://127.0.0.1:5500",
+        "http://127.0.0.1:8082"
       ],
       "allow_methods": [
         "GET",
@@ -47,7 +48,6 @@
     {
       "endpoint": "/notes/create/",
       "method": "POST",
-      "input_query_strings": ["*"],
       "input_headers": ["Authorization", "Content-Type"],
       "timeout": "10s",
       "backend": [
@@ -64,7 +64,6 @@
     {
       "endpoint": "/notes/delete/{note_id}/",
       "method": "DELETE",
-      "input_query_strings": ["*"],
       "input_headers": ["Authorization"],
       "backend": [
         {
@@ -78,11 +77,10 @@
     {
       "endpoint": "/notes/get_notes/",
       "method": "GET",
-      "input_query_strings": ["*"],
       "input_headers": ["Authorization"],
       "backend": [
         {
-          "url_pattern": "/api/v1/notes/get_user_notes",
+          "url_pattern": "/api/v1/notes/get_user_notes/",
           "host": [
             "http://notes_service:8002"
           ]
@@ -104,8 +102,6 @@
     {
       "endpoint": "/user/register/",
       "method": "POST",
-      "input_query_strings": ["*"],
-      "input_headers": ["*"],
       "output_encoding": "json",
       "backend": [
         {
@@ -119,12 +115,36 @@
     {
       "endpoint": "/user/login/",
       "method": "POST",
-      "input_query_strings": ["*"],
-      "input_headers": ["*"],
       "output_encoding": "json",
       "backend": [
         {
           "url_pattern": "/users/login/",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/user/refresh_tokens/",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/users/refresh/",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/user/logout/",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/users/logout/",
           "host": [
             "http://notes_users:8001"
           ]

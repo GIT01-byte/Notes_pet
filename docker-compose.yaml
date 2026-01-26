@@ -1,5 +1,5 @@
 # version: '3.8'
-# TODO: доделать /notes/create (с логином)
+# TODO: сделать /user/refresh_tokens/, /user/logout/ Krakend
 services:
   # --- API ШЛЮЗ (Krakend) ---
   krakend:

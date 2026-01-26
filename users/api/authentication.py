@@ -44,7 +44,7 @@ async def health_check():
     return {"success": "Note users service started"}
 
 
-# Вход пользователя с выдачей токенов
+# Вход пользователя с выдачей токенов 
 @auth.post("/login/", response_model=TokenResponse)
 @async_timed_report()
 async def auth_login(
