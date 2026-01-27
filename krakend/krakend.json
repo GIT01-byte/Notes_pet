@@ -46,8 +46,9 @@
       ]
     },
     {
-      "endpoint": "/notes/create/",
+      "endpoint": "/notes/create",
       "method": "POST",
+      "input_query_strings": ["title", "content"],
       "input_headers": ["Authorization", "Content-Type"],
       "timeout": "10s",
       "backend": [
@@ -75,12 +76,25 @@
       ]
     },
     {
-      "endpoint": "/notes/get_notes/",
+      "endpoint": "/notes/get_all_notes/",
       "method": "GET",
       "input_headers": ["Authorization"],
       "backend": [
         {
-          "url_pattern": "/api/v1/notes/get_user_notes/",
+          "url_pattern": "/api/v1/notes/get_all_user_notes/",
+          "host": [
+            "http://notes_service:8002"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/notes/get_note/{note_id}/",
+      "method": "GET",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/notes/get_user_note/{note_id}/",
           "host": [
             "http://notes_service:8002"
           ]
@@ -129,9 +143,10 @@
       "endpoint": "/user/refresh_tokens/",
       "method": "POST",
       "output_encoding": "json",
+      "input_headers": ["Authorization"],
       "backend": [
         {
-          "url_pattern": "/users/refresh/",
+          "url_pattern": "/users/tokens/refresh/",
           "host": [
             "http://notes_users:8001"
           ]
@@ -142,6 +157,7 @@
       "endpoint": "/user/logout/",
       "method": "POST",
       "output_encoding": "json",
+      "input_headers": ["Authorization"],
       "backend": [
         {
           "url_pattern": "/users/logout/",

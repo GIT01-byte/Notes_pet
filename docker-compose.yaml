@@ -1,5 +1,5 @@
 # version: '3.8'
-# TODO: сделать /user/refresh_tokens/, /user/logout/ Krakend
+# TODO: сделать /user/refresh_tokens/ Krakend
 services:
   # --- API ШЛЮЗ (Krakend) ---
   krakend:
@@ -10,7 +10,7 @@ services:
     volumes:
       - ./krakend/krakend.json:/etc/krakend/krakend.json
     networks:
-      - app-network
+      - app-network 
     restart: always
   
   # --- СЕРВИС ЗАМЕТОК (Notes Service) ---

@@ -18,8 +18,8 @@ router = APIRouter(
 async def health_check():
     return {"success": "Note service started"}
 
-
-@router.post("/create", response_model=NoteRead)
+# TODO добавить обработку ошибок (уже имеющиеся заметки, не валидыне данные)
+@router.post("/create")
 async def create_notes(
     note_create_form: NoteCreateForm = Depends(),
     current_user = Depends(get_current_user),
@@ -59,10 +59,10 @@ async def create_notes(
 async def delete_note(
     note_id: int,
     current_user = Depends(get_current_user),
-    ):
+):
     try:
         # Удаление медиа-файлов из S3
-        note = await NotesRepo.get_note(note_id)
+        note = await NotesRepo.get_note(note_id=note_id, username=current_user.username)
         if note:
             await s3_client.delete_files(note.video_urls)
             await s3_client.delete_files(note.image_urls)
@@ -74,7 +74,7 @@ async def delete_note(
             )
         
         # Удаляем из БД
-        await NotesRepo.delete_user_note(username=current_user.username, note_id=note_id)
+        await NotesRepo.delete_user_note(note_id=note_id, username=current_user.username)
         
         return {"message": f"Заметка с ID {note_id} успешно удалена"}
     
@@ -86,11 +86,21 @@ async def delete_note(
         )
 
 
-@router.get("/get_user_notes/")
-async def get_user_notes(current_user = Depends(get_current_user),):
+@router.get("/get_all_user_notes/")
+async def get_all_user_notes(current_user = Depends(get_current_user)):
     notes = await NotesRepo.get_user_notes(current_user.username)
     
     return {"data": notes}
+
+
+@router.get("/get_user_note/{note_id}")
+async def get_user_note(
+    note_id: int,
+    current_user = Depends(get_current_user),
+):
+    note = await NotesRepo.get_note(note_id=note_id, username=current_user.username)
+    
+    return {"data": note}
 
 
 # TODO сделать доступ тролько для админа

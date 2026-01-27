@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import Request, UploadFile, HTTPException, status
+from fastapi import Query, Request, UploadFile, HTTPException, status
 
 import httpx
 
@@ -13,8 +13,8 @@ REFRESH_TOKEN_TYPE = "refresh"
 class NoteCreateForm:
     def __init__(
         self,
-        title: str,
-        content: str,
+        title: str = Query(str),
+        content: str = Query(str),
         video_files: List[UploadFile] | None = None,
         image_files: List[UploadFile] | None = None,
         audio_files: List[UploadFile] | None = None,

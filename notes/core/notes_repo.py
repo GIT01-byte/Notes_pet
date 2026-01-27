@@ -31,11 +31,12 @@ class NotesRepo:
 
 
     @staticmethod
-    async def get_note(note_id: int):
+    async def get_note(note_id: int ,username: str):
         async with db_helper.session_factory() as session:
             stmt = (
                 select(NotesOrm)
                 .where(NotesOrm.id == note_id)
+                .where(NotesOrm.user == username)
             )
             result = await session.scalars(stmt)
             return result.first()
