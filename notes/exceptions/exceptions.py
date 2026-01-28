@@ -1,4 +1,3 @@
-import notes.exceptions.exceptions
 import os
 import sys
 
@@ -44,13 +43,27 @@ class NoteAlreadyExistsError(BaseAPIException):
 
 
 class NoteNotFoundError(BaseAPIException):
-    def __init__(self, detail: str = "Note not found"):
+    def __init__(self, detail: str = "Note(s) not found"):
         super().__init__(detail=detail, status_code=status.HTTP_404_NOT_FOUND)
 
 
 # Исключения сервисов о проваленной работе
 class NoteCreateFailedError(BaseAPIException):
     def __init__(self, detail: str = "Note create failed"):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+class NoteDeleteFailedError(BaseAPIException):
+    def __init__(self, detail: str = "Note delete failed"):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+class NoteSelectFailedError(BaseAPIException):
+    def __init__(self, detail: str = "Note select failed"):
         super().__init__(
             detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

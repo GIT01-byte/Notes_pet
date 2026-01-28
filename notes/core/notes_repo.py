@@ -8,12 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.models import db_helper, NotesOrm
 from core.schemas import NoteCreate, NoteDelete, NoteUpdate
 
-from notes.exceptions.exceptions import (
+from exceptions.exceptions import (
     DeleteNoteError,
     NoteNotFoundError,
     NoteAlreadyExistsError,
     RepositoryInternalError,
 )
+
 from utils.logging import logger
 
 

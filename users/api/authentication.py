@@ -32,7 +32,7 @@ from exceptions.exceptions import (
 from utils.logging import logger
 from utils.time_decorator import async_timed_report
 from utils.security import ACCESS_TOKEN_TYPE, decode_access_token
-from users.exceptions.exceptions import UserNotFoundError
+from exceptions.exceptions import UserNotFoundError
 
 # Роутеры для аутентификации и разработки
 auth = APIRouter(redirect_slashes=False)
