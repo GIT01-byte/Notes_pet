@@ -11,12 +11,15 @@ class NotesRepo:
     @staticmethod
     async def get_all_notes() -> Sequence[NotesOrm]:
         async with db_helper.session_factory() as session:
-            stmt = (
-                select(NotesOrm)
-                .order_by(NotesOrm.id)
-            )
-            result = await session.scalars(stmt)
-            return result.all()
+            try:
+                stmt = (
+                    select(NotesOrm)
+                    .order_by(NotesOrm.id)
+                )
+                result = await session.scalars(stmt)
+                return result.all()
+            except Exception as ex:
+                
     
     
     @staticmethod
