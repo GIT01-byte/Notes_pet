@@ -7,7 +7,7 @@ sys.path.append(current_dir)
 from pathlib import Path
 import sys
 import loguru
-from core.settings import settings
+from core.config import settings
 
 # Определяем путь к директории для логов
 BASE_DIR = Path(__file__).parent.parent
