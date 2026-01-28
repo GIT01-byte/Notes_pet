@@ -79,8 +79,6 @@ class UsersRepo:
             async with db_manager.session_factory() as session:
                 user = await session.scalar(select(User).where(User.id == user_id))
                 if not user:
-                    # Можно выбрать, возвращать None или поднимать NotFoundError
-                    # Здесь я поднимаю, чтобы показать обработку
                     logger.debug(f"Пользователь с ID: {user_id} не найден.")
                     raise EntityNotFoundError(f"Пользователь с ID {user_id} не найден.")
                 logger.debug(

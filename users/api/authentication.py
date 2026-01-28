@@ -1,10 +1,10 @@
 import os
 import sys
 
-from pydantic import ValidationError
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
+
+from pydantic import ValidationError
 
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response
@@ -32,6 +32,7 @@ from exceptions.exceptions import (
 from utils.logging import logger
 from utils.time_decorator import async_timed_report
 from utils.security import ACCESS_TOKEN_TYPE, decode_access_token
+from users.exceptions.exceptions import UserNotFoundError
 
 # Роутеры для аутентификации и разработки
 auth = APIRouter(redirect_slashes=False)
@@ -67,15 +68,18 @@ async def auth_login(
             refresh_token=user.refresh_token,
         )
 
+    except UserNotFoundError as e:
+        raise e
     except ValidationError as e:
         logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
-
 
 # Регистрация нового пользователя
 @auth.post("/register/")
 @async_timed_report()
 async def auth_register_user(
-    request: Request, response: Response, register_request: RegisterRequest
+    request: Request, 
+    response: Response, 
+    register_request: RegisterRequest,
 ):
     try:
         auth_service = AuthService()
@@ -136,7 +140,10 @@ async def auth_register_user(
 # Обновление JWT-токенов
 @auth.post("/tokens/refresh/", response_model=TokenResponse)
 @async_timed_report()
-async def auth_refresh_jwt(data: RefreshRequest, response: Response):
+async def auth_refresh_jwt(
+    data: RefreshRequest, 
+    response: Response,
+):
     try:
         auth_service = AuthService()
         # Выполняем обновление токенов
@@ -159,11 +166,11 @@ async def auth_refresh_jwt(data: RefreshRequest, response: Response):
 @async_timed_report()
 async def auth_logout_user(
     response: Response,
-    user=Depends(get_current_active_user),
+    current_user=Depends(get_current_active_user),
 ):
     auth_service = AuthService()
-    access_jti = user["jti"]
-    user_id = user["user_id"]
+    access_jti = current_user["jti"]
+    user_id = current_user["user_id"]
     await auth_service.loggout_user_logic(
         response=response, access_jti=access_jti, user_id=user_id
     )

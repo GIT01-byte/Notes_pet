@@ -31,3 +31,4 @@ class NoteRead(NoteBase):
 
 class NoteDelete(BaseModel):
     id: int
+    username: str

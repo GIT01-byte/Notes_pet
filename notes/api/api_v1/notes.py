@@ -4,6 +4,7 @@ from core.s3_client import s3_client
 from core.config import settings
 from core.notes_repo import NotesRepo
 from core.schemas import NoteCreate, NoteRead
+from notes.core.schemas.notes import NoteDelete
 
 from .service import NoteService
 from .deps import NoteCreateForm, get_current_user
@@ -44,8 +45,13 @@ async def create_notes(
         
         # Сохраняем в БД 
         new_note = await NotesRepo.create_note(note_data)
+        if new_note:
+            return {"message": f"Создание заметки {new_note.title!r} прошла успешно!"}
         
-        return {"message": f"Создание заметки {new_note.title!r} прошла успешно!"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Note create failed"
+        )
 
     except Exception as e:
         print(f"EXC:    exception in notes/create endpoint: {e}")
@@ -73,8 +79,13 @@ async def delete_note(
                 detail="Заметка не найдена",
             )
         
+        # Подгатавливаем данные для БД
+        note_delete_data = NoteDelete(
+            id=note_id,
+            username=current_user.username
+        )
         # Удаляем из БД
-        await NotesRepo.delete_user_note(note_id=note_id, username=current_user.username)
+        await NotesRepo.delete_user_note(note_delete_data)
         
         return {"message": f"Заметка с ID {note_id} успешно удалена"}
     
