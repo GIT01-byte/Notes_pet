@@ -10,38 +10,38 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { 
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         .glass { 
             backdrop-filter: blur(20px); 
-            background: rgba(0,0,0,0.85); 
-            border: 1px solid rgba(255,193,7,0.3);
-            box-shadow: 0 8px 32px rgba(255,193,7,0.2);
+            background: rgba(15, 15, 35, 0.85); 
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
         }
         .glass-dark { 
             backdrop-filter: blur(20px); 
-            background: rgba(0,0,0,0.9); 
-            border: 1px solid rgba(255,193,7,0.2);
+            background: rgba(15, 15, 35, 0.95); 
+            border: 1px solid rgba(0, 255, 255, 0.15);
         }
         .drop-zone { 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 2px dashed #d1d5db;
-            background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+            border: 2px dashed #374151;
+            background: linear-gradient(145deg, #1f2937, #111827);
         }
         .drop-zone.active { 
-            border-color: #ffc107; 
-            background: rgba(255, 193, 7, 0.1); 
+            border-color: #00ffff; 
+            background: rgba(0, 255, 255, 0.1); 
             transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
         }
         .file-item {
-            background: linear-gradient(145deg, #ffffff, #f8fafc);
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            background: linear-gradient(145deg, #1f2937, #111827);
+            border: 1px solid #374151;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .modal-backdrop {
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(8px);
         }
         .fade-enter-active, .fade-leave-active { transition: all 0.3s ease; }
@@ -50,8 +50,8 @@
         .slide-enter-from, .slide-leave-to { transform: translateX(-100%); }
         .bounce { animation: bounce 0.5s ease-in-out; }
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .gradient-text { background: linear-gradient(135deg, #ffc107, #ffeb3b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .shadow-glow { box-shadow: 0 0 30px rgba(255, 193, 7, 0.3); }
+        .gradient-text { background: linear-gradient(135deg, #00ffff, #ff00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .shadow-glow { box-shadow: 0 0 30px rgba(0, 255, 255, 0.3); }
         
         @media (max-width: 400px) {
             .glass { padding: 1rem !important; }

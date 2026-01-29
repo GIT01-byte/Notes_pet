@@ -28,7 +28,9 @@ createApp({
             showNoteDetail: false,
             noteDetail: null,
             imageZoom: false,
-            zoomedImageUrl: ''
+            zoomedImageUrl: '',
+            confirmDelete: false,
+            deleteNoteId: null
         });
 
         // Forms
@@ -302,22 +304,29 @@ createApp({
         };
 
         const deleteNote = async (id) => {
-            if (!confirm('Удалить заметку?')) return;
-            
+            modals.deleteNoteId = id;
+            modals.confirmDelete = true;
+        };
+
+        const confirmDeleteNote = async () => {
             try {
                 const token = localStorage.getItem('access_token');
-                const res = await fetch(`${API}/notes/delete/${id}/`, {
+                const res = await fetch(`${API}/notes/delete/${modals.deleteNoteId}/`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (res.ok) {
                     await loadNotes();
+                    showNotification('Заметка удалена', 'success');
                 } else {
-                    alert('Ошибка удаления');
+                    showNotification('Ошибка удаления', 'error');
                 }
             } catch (error) {
-                alert('Ошибка сети');
+                showNotification('Ошибка сети', 'error');
+            } finally {
+                modals.confirmDelete = false;
+                modals.deleteNoteId = null;
             }
         };
 
@@ -444,7 +453,7 @@ createApp({
 
         return {
             currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy,
-            login, register, logout, loadNotes, createNote, deleteNote,
+            login, register, logout, loadNotes, createNote, deleteNote, confirmDeleteNote,
             addFiles, dropFiles, removeFile, openLightbox, getUserInfo, viewNote, openImageZoom,
             handleZoomWheel, startDrag, drag, endDrag, imageZoomLevel, imageTranslateX, imageTranslateY, isDragging
         };
@@ -472,17 +481,17 @@ createApp({
                         <h1 class="text-4xl font-black gradient-text mb-2">
                             <i class="fas fa-sticky-note mr-2"></i>NotesCloud
                         </h1>
-                        <p class="text-gray-600">Ваши заметки в облаке</p>
+                        <p class="text-gray-300">Ваши заметки в облаке</p>
                     </div>
 
-                    <div class="flex mb-6 bg-gray-100 rounded-2xl p-1">
+                    <div class="flex mb-6 bg-gray-800 rounded-2xl p-1">
                         <button @click="forms.showRegister = false" 
-                                :class="!forms.showRegister ? 'bg-white shadow-md' : ''"
+                                :class="!forms.showRegister ? 'bg-gray-700 shadow-md text-white' : 'text-gray-300'"
                                 class="flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition">
                             <i class="fas fa-sign-in-alt mr-2"></i>Вход
                         </button>
                         <button @click="forms.showRegister = true" 
-                                :class="forms.showRegister ? 'bg-white shadow-md' : ''"
+                                :class="forms.showRegister ? 'bg-gray-700 shadow-md text-white' : 'text-gray-300'"
                                 class="flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition">
                             <i class="fas fa-user-plus mr-2"></i>Регистрация
                         </button>
@@ -491,17 +500,17 @@ createApp({
                     <!-- Login Form -->
                     <form v-if="!forms.showRegister" @submit.prevent="login" class="space-y-4">
                         <div class="relative">
-                            <i class="fas fa-user absolute left-4 top-4 text-gray-400"></i>
+                            <i class="fas fa-user absolute left-4 top-4 text-gray-300"></i>
                             <input v-model="forms.login.username" type="text" placeholder="Имя пользователя" required
-                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-0 outline-none focus:ring-2 focus:ring-blue-500 transition">
+                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-cyan-400 transition placeholder-gray-400">
                         </div>
                         <div class="relative">
-                            <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                            <i class="fas fa-lock absolute left-4 top-4 text-gray-300"></i>
                             <input v-model="forms.login.password" type="password" placeholder="Пароль" required
-                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-0 outline-none focus:ring-2 focus:ring-blue-500 transition">
+                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-cyan-400 transition placeholder-gray-400">
                         </div>
                         <button type="submit" :disabled="loading || !isHealthy"
-                                class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 rounded-2xl transition hover:shadow-lg disabled:opacity-50">
+                                class="w-full bg-gradient-to-r from-cyan-400 to-purple-500 text-white font-bold py-4 rounded-2xl transition hover:shadow-lg disabled:opacity-50">
                             <i class="fas fa-spinner fa-spin mr-2" v-if="loading"></i>
                             {{ loading ? 'Вход...' : 'Войти' }}
                         </button>
@@ -513,26 +522,26 @@ createApp({
                             <i class="fas fa-user absolute left-4 top-4 text-gray-400"></i>
                             <input v-model="forms.register.username" type="text" placeholder="Имя пользователя (3-64 символа)" required
                                    minlength="3" maxlength="64"
-                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-0 outline-none focus:ring-2 focus:ring-green-500 transition">
+                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-purple-400 transition placeholder-gray-400">
                         </div>
                         <div class="relative">
-                            <i class="fas fa-envelope absolute left-4 top-4 text-gray-400"></i>
+                            <i class="fas fa-envelope absolute left-4 top-4 text-gray-300"></i>
                             <input v-model="forms.register.email" type="email" placeholder="Email" required
-                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-0 outline-none focus:ring-2 focus:ring-green-500 transition">
+                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-purple-400 transition placeholder-gray-400">
                         </div>
                         <div class="relative">
-                            <i class="fas fa-image absolute left-4 top-4 text-gray-400"></i>
+                            <i class="fas fa-image absolute left-4 top-4 text-gray-300"></i>
                             <input v-model="forms.register.profile" type="url" placeholder="Ссылка на фото профиля (опционально)"
-                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-0 outline-none focus:ring-2 focus:ring-green-500 transition">
+                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-purple-400 transition placeholder-gray-400">
                         </div>
                         <div class="relative">
-                            <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                            <i class="fas fa-lock absolute left-4 top-4 text-gray-300"></i>
                             <input v-model="forms.register.password" type="password" placeholder="Пароль (минимум 8 символов)" required
                                    minlength="8"
-                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-0 outline-none focus:ring-2 focus:ring-green-500 transition">
+                                   class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-purple-400 transition placeholder-gray-400">
                         </div>
                         <button type="submit" :disabled="loading || !isHealthy"
-                                class="w-full bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold py-4 rounded-2xl transition hover:shadow-lg disabled:opacity-50">
+                                class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-4 rounded-2xl transition hover:shadow-lg disabled:opacity-50">
                             <i class="fas fa-spinner fa-spin mr-2" v-if="loading"></i>
                             {{ loading ? 'Регистрация...' : 'Зарегистрироваться' }}
                         </button>
@@ -588,7 +597,7 @@ createApp({
                             <h1 class="text-4xl font-black text-white">
                                 <i class="fas fa-sticky-note mr-3"></i>Мои заметки
                             </h1>
-                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-2xl font-bold">
+                            <div class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold">
                                 {{ user?.username || 'Пользователь' }}
                             </div>
                         </div>
@@ -605,14 +614,14 @@ createApp({
                                      @click="viewNote(note.id)"
                                      class="glass rounded-3xl p-6 hover:shadow-glow transition-all duration-300 group cursor-pointer">
                                     <div class="flex justify-between items-start mb-4">
-                                        <h3 class="text-xl font-bold text-gray-800 truncate">{{ note.title }}</h3>
+                                        <h3 class="text-xl font-bold text-white truncate">{{ note.title }}</h3>
                                         <button @click.stop="deleteNote(note.id)" 
                                                 class="opacity-0 group-hover:opacity-100 bg-red-100 hover:bg-red-500 text-red-500 hover:text-white p-2 rounded-full transition-all">
                                             <i class="fas fa-trash text-sm"></i>
                                         </button>
                                     </div>
                                     
-                                    <p class="text-gray-600 mb-4 line-clamp-3">{{ note.content }}</p>
+                                    <p class="text-gray-300 mb-4 line-clamp-3">{{ note.content }}</p>
 
                                     <!-- Media Summary -->
                                     <div v-if="note.image_urls?.length || note.video_urls?.length || note.audio_urls?.length" class="mb-4 flex flex-wrap gap-2">
@@ -630,7 +639,7 @@ createApp({
                                         </div>
                                     </div>
 
-                                    <div class="text-xs text-gray-400 border-t pt-3">
+                                    <div class="text-xs text-gray-400 border-t border-gray-600 pt-3">
                                         ID: {{ note.id }}
                                     </div>
                                 </div>
@@ -641,7 +650,7 @@ createApp({
                             <i class="fas fa-sticky-note text-6xl text-white/30 mb-4"></i>
                             <p class="text-white/70 text-xl">Заметок пока нет</p>
                             <button @click="modals.createNote = true" 
-                                    class="mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-2xl font-bold">
+                                    class="mt-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold">
                                 Создать первую заметку
                             </button>
                         </div>
@@ -657,12 +666,12 @@ createApp({
                     <!-- Header -->
                     <div class="sticky top-0 glass rounded-t-3xl p-6 border-b border-gray-200/50 flex justify-between items-center">
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-xl flex items-center justify-center">
                                 <i class="fas fa-plus text-white text-lg"></i>
                             </div>
                             <div>
-                                <h2 class="text-2xl font-bold text-gray-800">Создать заметку</h2>
-                                <p class="text-sm text-gray-500">Добавьте текст и медиафайлы</p>
+                                <h2 class="text-2xl font-bold text-white">Создать заметку</h2>
+                                <p class="text-sm text-gray-300">Добавьте текст и медиафайлы</p>
                             </div>
                         </div>
                         <button @click="modals.createNote = false" 
@@ -675,18 +684,18 @@ createApp({
                         <!-- Text Fields -->
                         <div class="grid md:grid-cols-2 gap-6">
                             <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-gray-700">
-                                    <i class="fas fa-heading mr-2 text-blue-500"></i>Заголовок
+                                <label class="block text-sm font-semibold text-gray-300">
+                                    <i class="fas fa-heading mr-2 text-cyan-400"></i>Заголовок
                                 </label>
                                 <input v-model="forms.note.title" type="text" placeholder="Введите заголовок заметки..." required
-                                       class="w-full p-4 rounded-2xl bg-gray-50 border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition font-medium">
+                                       class="w-full p-4 rounded-2xl bg-gray-800 text-white border-2 border-transparent outline-none focus:border-cyan-400 transition font-medium placeholder-gray-400">
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-gray-700">
-                                    <i class="fas fa-align-left mr-2 text-green-500"></i>Описание
+                                <label class="block text-sm font-semibold text-gray-300">
+                                    <i class="fas fa-align-left mr-2 text-purple-400"></i>Описание
                                 </label>
                                 <textarea v-model="forms.note.content" placeholder="Добавьте описание заметки..." required rows="3"
-                                          class="w-full p-4 rounded-2xl bg-gray-50 border-2 border-transparent outline-none focus:border-green-500 focus:bg-white transition font-medium resize-none"></textarea>
+                                          class="w-full p-4 rounded-2xl bg-gray-800 text-white border-2 border-transparent outline-none focus:border-purple-400 transition font-medium resize-none placeholder-gray-400"></textarea>
                             </div>
                         </div>
 
@@ -699,8 +708,8 @@ createApp({
                                         <i class="fas fa-video text-blue-600"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-semibold text-gray-800">Видео</h4>
-                                        <p class="text-xs text-gray-500">MP4, AVI, WebM</p>
+                                        <h4 class="font-semibold text-white">Видео</h4>
+                                        <p class="text-xs text-gray-300">MP4, AVI, WebM</p>
                                     </div>
                                 </div>
                                 <div @click="$refs.videoInput.click()" 
@@ -709,7 +718,7 @@ createApp({
                                      @dragleave="$event.target.classList.remove('active')"
                                      class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
-                                    <p class="text-sm font-medium text-gray-600">Загрузить видео</p>
+                                    <p class="text-sm font-medium text-gray-300">Загрузить видео</p>
                                     <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
                                 </div>
                                 <input ref="videoInput" @change="addFiles($event, 'video_files')" 
@@ -719,7 +728,7 @@ createApp({
                                          class="file-item flex items-center justify-between p-3 rounded-xl">
                                         <div class="flex items-center space-x-3 flex-1 min-w-0">
                                             <i class="fas fa-file-video text-blue-500 flex-shrink-0"></i>
-                                            <span class="text-sm font-medium truncate" :title="file.name">{{ file.name }}</span>
+                                            <span class="text-sm font-medium truncate" style="color: white;" :title="file.name">{{ file.name }}</span>
                                         </div>
                                         <button @click="removeFile('video_files', i)" type="button"
                                                 class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
@@ -736,8 +745,8 @@ createApp({
                                         <i class="fas fa-image text-green-600"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-semibold text-gray-800">Изображения</h4>
-                                        <p class="text-xs text-gray-500">JPEG, PNG, WebP</p>
+                                        <h4 class="font-semibold text-white">Изображения</h4>
+                                        <p class="text-xs text-gray-300">JPEG, PNG, WebP</p>
                                     </div>
                                 </div>
                                 <div @click="$refs.imageInput.click()" 
@@ -746,7 +755,7 @@ createApp({
                                      @dragleave="$event.target.classList.remove('active')"
                                      class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
-                                    <p class="text-sm font-medium text-gray-600">Загрузить фото</p>
+                                    <p class="text-sm font-medium text-gray-300">Загрузить фото</p>
                                     <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
                                 </div>
                                 <input ref="imageInput" @change="addFiles($event, 'image_files')" 
@@ -756,7 +765,7 @@ createApp({
                                          class="file-item flex items-center justify-between p-3 rounded-xl">
                                         <div class="flex items-center space-x-3 flex-1 min-w-0">
                                             <i class="fas fa-file-image text-green-500 flex-shrink-0"></i>
-                                            <span class="text-sm font-medium truncate" :title="file.name">{{ file.name }}</span>
+                                            <span class="text-sm font-medium truncate" style="color: white;" :title="file.name">{{ file.name }}</span>
                                         </div>
                                         <button @click="removeFile('image_files', i)" type="button"
                                                 class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
@@ -773,8 +782,8 @@ createApp({
                                         <i class="fas fa-music text-purple-600"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-semibold text-gray-800">Аудио</h4>
-                                        <p class="text-xs text-gray-500">MP3, OGG, WAV</p>
+                                        <h4 class="font-semibold text-white">Аудио</h4>
+                                        <p class="text-xs text-gray-300">MP3, OGG, WAV</p>
                                     </div>
                                 </div>
                                 <div @click="$refs.audioInput.click()" 
@@ -783,7 +792,7 @@ createApp({
                                      @dragleave="$event.target.classList.remove('active')"
                                      class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
-                                    <p class="text-sm font-medium text-gray-600">Загрузить аудио</p>
+                                    <p class="text-sm font-medium text-gray-300">Загрузить аудио</p>
                                     <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
                                 </div>
                                 <input ref="audioInput" @change="addFiles($event, 'audio_files')" 
@@ -793,7 +802,7 @@ createApp({
                                          class="file-item flex items-center justify-between p-3 rounded-xl">
                                         <div class="flex items-center space-x-3 flex-1 min-w-0">
                                             <i class="fas fa-file-audio text-purple-500 flex-shrink-0"></i>
-                                            <span class="text-sm font-medium truncate" :title="file.name">{{ file.name }}</span>
+                                            <span class="text-sm font-medium truncate" style="color: white;" :title="file.name">{{ file.name }}</span>
                                         </div>
                                         <button @click="removeFile('audio_files', i)" type="button"
                                                 class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
@@ -811,7 +820,7 @@ createApp({
                                 <i class="fas fa-times mr-2"></i>Отмена
                             </button>
                             <button type="submit" :disabled="loading"
-                                    class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 rounded-2xl transition shadow-lg disabled:opacity-50">
+                                    class="flex-1 bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-500 hover:to-purple-600 text-white font-bold py-4 rounded-2xl transition shadow-lg disabled:opacity-50">
                                 <i class="fas fa-spinner fa-spin mr-2" v-if="loading"></i>
                                 <i class="fas fa-save mr-2" v-else></i>
                                 {{ loading ? 'Создание...' : 'Создать заметку' }}
@@ -827,34 +836,34 @@ createApp({
             <div v-if="modals.profile" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                 <div class="glass rounded-3xl p-8 w-full max-w-md">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold">
+                        <h2 class="text-2xl font-bold text-white">
                             <i class="fas fa-user mr-2"></i>Профиль
                         </h2>
-                        <button @click="modals.profile = false" class="text-gray-500 hover:text-gray-700">
+                        <button @click="modals.profile = false" class="text-gray-300 hover:text-white">
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
 
                     <div v-if="user" class="text-center">
-                        <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
+                        <div class="w-20 h-20 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
                             {{ user.username.charAt(0).toUpperCase() }}
                         </div>
-                        <h3 class="text-xl font-bold mb-2">{{ user.username }}</h3>
-                        <p class="text-gray-600 mb-4">{{ user.email }}</p>
-                        <div class="bg-gray-50 rounded-2xl p-4 text-left space-y-2">
+                        <h3 class="text-xl font-bold mb-2 text-white">{{ user.username }}</h3>
+                        <p class="text-gray-300 mb-4">{{ user.email }}</p>
+                        <div class="bg-gray-800 rounded-2xl p-4 text-left space-y-2">
                             <div class="flex justify-between">
-                                <span class="text-gray-600">ID:</span>
-                                <span class="font-mono">{{ user.user_id }}</span>
+                                <span class="text-gray-300">ID:</span>
+                                <span class="font-mono text-white">{{ user.user_id }}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Статус:</span>
-                                <span :class="user.is_active ? 'text-green-600' : 'text-red-600'">
+                                <span class="text-gray-300">Статус:</span>
+                                <span :class="user.is_active ? 'text-green-400' : 'text-red-400'">
                                     {{ user.is_active ? 'Активен' : 'Неактивен' }}
                                 </span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Заметок:</span>
-                                <span class="font-bold">{{ notes.length }}</span>
+                                <span class="text-gray-300">Заметок:</span>
+                                <span class="font-bold text-white">{{ notes.length }}</span>
                             </div>
                         </div>
                     </div>
@@ -869,12 +878,12 @@ createApp({
                     <!-- Header -->
                     <div class="sticky top-0 glass rounded-t-3xl p-6 border-b border-gray-200/50 flex justify-between items-center">
                         <div class="flex items-center space-x-3 flex-1 min-w-0 pr-4">
-                            <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-600 rounded-xl flex items-center justify-center">
+                            <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-400 rounded-xl flex items-center justify-center">
                                 <i class="fas fa-eye text-white text-lg"></i>
                             </div>
                             <div class="min-w-0 flex-1 mr-4">
-                                <h2 class="text-2xl font-bold text-gray-800 truncate">{{ modals.noteDetail?.title || 'Заметка' }}</h2>
-                                <p class="text-sm text-gray-500">Просмотр заметки</p>
+                                <h2 class="text-2xl font-bold text-white truncate">{{ modals.noteDetail?.title || 'Заметка' }}</h2>
+                                <p class="text-sm text-gray-300">Просмотр заметки</p>
                             </div>
                         </div>
                         <button @click="modals.showNoteDetail = false" 
@@ -887,18 +896,18 @@ createApp({
                         <!-- Text Content -->
                         <div class="space-y-6">
                             <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-gray-700">
-                                    <i class="fas fa-heading mr-2 text-blue-500"></i>Заголовок
+                                <label class="block text-sm font-semibold text-gray-300">
+                                    <i class="fas fa-heading mr-2 text-cyan-400"></i>Заголовок
                                 </label>
-                                <div class="w-full p-4 rounded-2xl bg-gray-50 border-2 border-transparent font-medium text-gray-800 break-words">
+                                <div class="w-full p-4 rounded-2xl bg-gray-800 border-2 border-transparent font-medium text-white break-words">
                                     {{ modals.noteDetail.title || 'Без заголовка' }}
                                 </div>
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-gray-700">
-                                    <i class="fas fa-align-left mr-2 text-green-500"></i>Описание
+                                <label class="block text-sm font-semibold text-gray-300">
+                                    <i class="fas fa-align-left mr-2 text-purple-400"></i>Описание
                                 </label>
-                                <div class="w-full p-4 rounded-2xl bg-gray-50 border-2 border-transparent font-medium text-gray-800 whitespace-pre-wrap break-words">
+                                <div class="w-full p-4 rounded-2xl bg-gray-800 border-2 border-transparent font-medium text-white whitespace-pre-wrap break-words">
                                     {{ modals.noteDetail.content || 'Нет содержимого' }}
                                 </div>
                             </div>
@@ -913,8 +922,8 @@ createApp({
                                         <i class="fas fa-video text-blue-600"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-semibold text-gray-800">Видео</h4>
-                                        <p class="text-xs text-gray-500">{{ modals.noteDetail.video_urls.length }} файлов</p>
+                                        <h4 class="font-semibold text-white">Видео</h4>
+                                        <p class="text-xs text-gray-300">{{ modals.noteDetail.video_urls.length }} файл(ов)</p>
                                     </div>
                                 </div>
                                 <div class="space-y-4 max-h-64 overflow-y-auto">
@@ -931,8 +940,8 @@ createApp({
                                         <i class="fas fa-image text-green-600"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-semibold text-gray-800">Изображения</h4>
-                                        <p class="text-xs text-gray-500">{{ modals.noteDetail.image_urls.length }} файлов</p>
+                                        <h4 class="font-semibold text-white">Изображения</h4>
+                                        <p class="text-xs text-gray-300">{{ modals.noteDetail.image_urls.length }} файл(ов)</p>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4 max-h-64 overflow-y-auto">
@@ -953,8 +962,8 @@ createApp({
                                         <i class="fas fa-music text-purple-600"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-semibold text-gray-800">Аудио</h4>
-                                        <p class="text-xs text-gray-500">{{ modals.noteDetail.audio_urls.length }} файлов</p>
+                                        <h4 class="font-semibold text-white">Аудио</h4>
+                                        <p class="text-xs text-gray-300">{{ modals.noteDetail.audio_urls.length }} файл(ов)</p>
                                     </div>
                                 </div>
                                 <div class="space-y-3 max-h-64 overflow-y-auto">
@@ -966,7 +975,7 @@ createApp({
                         </div>
                     </div>
                     <div v-else class="p-6">
-                        <p class="text-gray-500">Загрузка данных...</p>
+                        <p class="text-gray-300">Загрузка данных...</p>
                     </div>
                 </div>
             </div>
@@ -993,6 +1002,31 @@ createApp({
                      :style="{ transform: 'scale(' + imageZoomLevel + ') translate(' + imageTranslateX + 'px, ' + imageTranslateY + 'px)', cursor: isDragging ? 'grabbing' : 'grab' }"
                      class="max-w-none max-h-none object-contain transition-transform duration-300"
                      @dragstart.prevent>
+            </div>
+        </transition>
+
+        <!-- Confirm Delete Modal -->
+        <transition name="fade">
+            <div v-if="modals.confirmDelete" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div class="glass rounded-3xl p-6 w-full max-w-sm">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <i class="fas fa-trash text-red-500 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-white">Удалить заметку?</h3>
+                        <p class="text-gray-300 mb-6">Это действие нельзя отменить</p>
+                        <div class="flex space-x-3">
+                            <button @click="modals.confirmDelete = false" 
+                                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-xl transition">
+                                Отмена
+                            </button>
+                            <button @click="confirmDeleteNote" 
+                                    class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-xl transition">
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </transition>
 
