@@ -32,7 +32,6 @@ from exceptions.exceptions import (
 from utils.logging import logger
 from utils.time_decorator import async_timed_report
 from utils.security import ACCESS_TOKEN_TYPE, decode_access_token
-from exceptions.exceptions import UserNotFoundError
 
 # Роутеры для аутентификации и разработки
 auth = APIRouter(redirect_slashes=False)
@@ -68,8 +67,6 @@ async def auth_login(
             refresh_token=user.refresh_token,
         )
 
-    except UserNotFoundError as e:
-        raise e
     except ValidationError as e:
         logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
 

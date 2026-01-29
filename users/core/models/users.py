@@ -22,7 +22,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from core.models.base import (
+from .base import (
     Base,
     str_64,
 )
@@ -30,7 +30,6 @@ from core.models.base import (
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
@@ -48,7 +47,6 @@ class User(Base):
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
-    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
