@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 
 from core.s3_client import s3_client
 from core.config import settings
 from core.notes_repo import NotesRepo
-from core.schemas import NoteCreate, NoteRead
-from core.schemas.notes import NoteDelete
+from core.schemas import NoteCreate
 
 from exceptions.exceptions import (
+    FilesHandlingError,
+    FilesUploadError,
     NoteNotFoundError,
     NoteAlreadyExistsError,
     NoteCreateFailedError,
@@ -37,7 +38,7 @@ async def create_notes(
             f"Попытка создания новой заметки {note_create_form.title!r} пользователя {current_user.username!r}"
             f"с помощью {settings.api.v1.notes}/create"
         )
-        
+
         # Загружаем все типы медиа через вспомогательную функцию
         note_service = NoteService()
 
@@ -63,6 +64,10 @@ async def create_notes(
             return {"message": f"Создание заметки {new_note.title!r} прошла успешно!"}
 
         raise NoteCreateFailedError
+    except FilesHandlingError:
+        raise
+    except FilesUploadError:
+        raise
     except NoteAlreadyExistsError:
         raise
     except NoteCreateFailedError:
@@ -80,7 +85,7 @@ async def delete_note(
             f"Попытка удаления заметки ID {note_id} пользователя {current_user.username!r}"
             f"с помощью {settings.api.v1.notes}/delete/{note_id}"
         )
-        
+
         # Удаление медиа-файлов из S3
         note = await NotesRepo.get_note(note_id=note_id, username=current_user.username)
         if note:
@@ -88,17 +93,14 @@ async def delete_note(
             await s3_client.delete_files(note.image_urls)
             await s3_client.delete_files(note.audio_urls)
         else:
-            raise NoteNotFoundError 
-        
-        # Подготавливаем данные для БД
-        note_delete_data = NoteDelete(id=note_id, username=current_user.username)
-        
+            raise NoteNotFoundError
+
         # Удаляем из БД
-        delete_result = await NotesRepo.delete_user_note(note_delete_data)
-        if delete_result:
+        delete_result = await NotesRepo.delete_note(note)
+        if delete_result is None:
             logger.info(f"Заметка с ID {note_id} успешно удалена")
             return {"message": f"Заметка с ID {note_id} успешно удалена"}
-        
+
         raise NoteDeleteFailedError
     except NoteNotFoundError:
         raise
@@ -114,17 +116,19 @@ async def get_all_user_notes(current_user=Depends(get_current_user)):
             f"Получение всех заметок пользователя {current_user.username!r}"
             f"с помощью {settings.api.v1.notes}/get_all_user_notes/"
         )
-        
+
         notes = await NotesRepo.get_user_notes(current_user.username)
-        
+
         if notes:
-            logger.info(f"Получение заметок пользователя {current_user.username!r} прошло успешно!")
+            logger.info(
+                f"Получение заметок пользователя {current_user.username!r} прошло успешно!"
+            )
             return {"data": notes}
-        
+
         raise NoteNotFoundError
     except NoteNotFoundError:
-        logger.exception("Заметки пользователя не найдены!")
-        raise
+        logger.info("Заметки пользователя не найдены либо их нет!")
+        return {"data": []}
 
 
 @router.get("/get_user_note/{note_id}")
@@ -137,13 +141,13 @@ async def get_user_note(
             f"Получение заметки ID {note_id} пользователя {current_user.username!r}"
             f"с помощью {settings.api.v1.notes}/get_user_note/{note_id}"
         )
-        
+
         note = await NotesRepo.get_note(note_id=note_id, username=current_user.username)
-        
+
         if note:
             logger.info(f"Получение заметки ID {note_id} прошло успешно!")
             return {"data": note}
-        
+
         raise NoteNotFoundError
     except NoteNotFoundError:
         logger.exception("Заметка не найдена!")
@@ -154,16 +158,17 @@ async def get_user_note(
 @router.get("/get_all/")
 async def get_notes():
     try:
-        logger.debug(f"Получение всех заметок с помощью {settings.api.v1.notes}/get_all/")
-        
+        logger.debug(
+            f"Получение всех заметок с помощью {settings.api.v1.notes}/get_all/"
+        )
+
         notes = await NotesRepo.get_all_notes()
-        
+
         if notes:
             logger.info("Получение заметок прошло успешно!")
             return {"data": notes}
-        
+
         raise NoteNotFoundError
     except NoteNotFoundError:
         logger.exception("Заметки не найдены!")
         raise
-    

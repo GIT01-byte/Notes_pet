@@ -1,12 +1,10 @@
-import sqlalchemy.exc
 from typing import Sequence, NoReturn
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.models import db_helper, NotesOrm
-from core.schemas import NoteCreate, NoteDelete, NoteUpdate
+from core.schemas import NoteCreate, NoteDelete
 
 from exceptions.exceptions import (
     DeleteNoteError,
@@ -137,7 +135,10 @@ class NotesRepo:
                 )
 
                 existing_note = await session.scalar(
-                    select(NotesOrm).filter(or_(NotesOrm.title == note_to_create.title))
+                    select(NotesOrm)
+                    .filter(
+                        or_(NotesOrm.title == note_to_create.title)
+                    )
                 )
                 if existing_note:
                     error_msg = f"Заметка с заголовком: {note_to_create.title!r} уже существует."
@@ -215,4 +216,25 @@ class NotesRepo:
             )
             raise RepositoryInternalError(
                 f"Не удалось удалить заметку с ID {note_to_delete.id} пользоваетеля из-за неожиданной ошибки."
+            ) from e
+
+    @staticmethod
+    async def delete_note(note_obj: NotesOrm) -> None:
+        try:
+            async with db_helper.session_factory() as session:
+                await session.delete(note_obj)
+                await session.commit()
+        except SQLAlchemyError as e:
+            logger.exception(
+                f"Ошибка базы данных при удалении заметки {note_obj}: {e}"
+            )
+            raise RepositoryInternalError(
+                f"Не удалось удалить заметку {note_obj} из-за ошибки базы данных."
+            ) from e
+        except Exception as e:
+            logger.exception(
+                f"Неожиданная ошибка при удалении заметки {note_obj}: {e}"
+            )
+            raise RepositoryInternalError(
+                f"Не удалось удалить заметку {note_obj} из-за неожиданной ошибки."
             ) from e

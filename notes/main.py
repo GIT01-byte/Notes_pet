@@ -69,13 +69,14 @@ main_app.include_router(api_router)
 
 @main_app.middleware("http")
 async def log_requests(request: Request, call_next):
+    print(f"\n----------- INFO:    New request -----------")
     print(f"INFO:    Request: {request.method} {request.url}")
     print(f"INFO:    Headers: {request.headers}")
     try:
         body = await request.json()
-        print(f"INFO:    Body: {body}")
+        print(f"INFO:    Body: {body}\n")
     except Exception as e:
-        print(f"WARNING: Could not decode JSON body: {e}")
+        print(f"WARNING: Could not decode JSON body: {e}\n")
     response = await call_next(request)
     return response
 
