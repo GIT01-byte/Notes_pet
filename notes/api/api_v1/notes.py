@@ -27,7 +27,7 @@ async def health_check():
     return {"success": "Note service started"}
 
 
-# TODO добавить обработку ошибок (уже имеющиеся заметки, не валидыне данные)
+# TODO добавить обработку ошибок связанную с куки
 @router.post("/create")
 async def create_notes(
     note_create_form: NoteCreateForm = Depends(),

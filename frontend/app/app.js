@@ -1,6 +1,6 @@
 const { createApp, ref, reactive, onMounted, computed, watch } = Vue;
 
-const API = "http://127.0.0.1:8080";
+const API = "http://127.0.0.1:80";
 
 createApp({
     setup() {
