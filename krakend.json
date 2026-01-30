@@ -3,7 +3,6 @@
   "version": 3,
   "timeout": "3000ms",
   "port": 8080,
-  "host": ["/api"],
   "cache_ttl": "0s",
   "extra_config": {
     "router": {
@@ -11,8 +10,7 @@
     },
     "security/cors": {
       "allow_origins": [
-        "http://127.0.0.1:5500",
-        "http://127.0.0.1:8082"
+        "http://127.0.0.1:80"
       ],
       "allow_methods": [
         "GET",

@@ -181,13 +181,315 @@
         </div>
       </div>
     </transition>
+
+    <!-- Modals -->
+    <!-- Create Note Modal -->
+    <div v-if="modals.createNote" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50" @click="modals.createNote = false">
+      <div @click.stop class="glass rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-auto shadow-2xl">
+        <div class="sticky top-0 glass rounded-t-3xl p-6 border-b border-gray-200/50 flex justify-between items-center">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-xl flex items-center justify-center">
+              <i class="fas fa-plus text-white text-lg"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-white">Создать заметку</h2>
+              <p class="text-sm text-gray-300">Добавьте текст и медиафайлы</p>
+            </div>
+          </div>
+          <button @click="modals.createNote = false" class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
+            <i class="fas fa-times text-gray-600"></i>
+          </button>
+        </div>
+        <form @submit.prevent="createNote" class="p-6 space-y-8">
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-300">
+                <i class="fas fa-heading mr-2 text-cyan-400"></i>Заголовок
+              </label>
+              <input v-model="forms.note.title" type="text" placeholder="Введите заголовок заметки..." required class="w-full p-4 rounded-2xl bg-gray-800 text-white border-2 border-transparent outline-none focus:border-cyan-400 transition font-medium placeholder-gray-400">
+            </div>
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-300">
+                <i class="fas fa-align-left mr-2 text-purple-400"></i>Описание
+              </label>
+              <textarea v-model="forms.note.content" placeholder="Добавьте описание заметки..." required rows="3" class="w-full p-4 rounded-2xl bg-gray-800 text-white border-2 border-transparent outline-none focus:border-purple-400 transition font-medium resize-none placeholder-gray-400"></textarea>
+            </div>
+          </div>
+          <div class="grid lg:grid-cols-3 gap-6">
+            <div class="space-y-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-video text-blue-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white">Видео</h4>
+                  <p class="text-xs text-gray-300">MP4, AVI, WebM</p>
+                </div>
+              </div>
+              <div @click="$refs.videoInput.click()" @dragover.prevent @drop="dropFiles($event, 'video_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
+                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
+                <p class="text-sm font-medium text-gray-300">Загрузить видео</p>
+                <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
+              </div>
+              <input ref="videoInput" @change="addFiles($event, 'video_files')" type="file" multiple accept=".mp4,.avi,.webm" class="hidden">
+              <div v-if="files.video_files.length" class="space-y-2 max-h-32 overflow-y-auto">
+                <div v-for="(file, i) in files.video_files" :key="i" class="file-item flex items-center justify-between p-3 rounded-xl">
+                  <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    <i class="fas fa-file-video text-blue-500 flex-shrink-0"></i>
+                    <span class="text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
+                  </div>
+                  <button @click="removeFile('video_files', i)" type="button" class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
+                    <i class="fas fa-times text-red-500 text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-image text-green-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white">Изображения</h4>
+                  <p class="text-xs text-gray-300">JPEG, PNG, WebP</p>
+                </div>
+              </div>
+              <div @click="$refs.imageInput.click()" @dragover.prevent @drop="dropFiles($event, 'image_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
+                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
+                <p class="text-sm font-medium text-gray-300">Загрузить фото</p>
+                <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
+              </div>
+              <input ref="imageInput" @change="addFiles($event, 'image_files')" type="file" multiple accept=".jpeg,.jpg,.png,.webp" class="hidden">
+              <div v-if="files.image_files.length" class="space-y-2 max-h-32 overflow-y-auto">
+                <div v-for="(file, i) in files.image_files" :key="i" class="file-item flex items-center justify-between p-3 rounded-xl">
+                  <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    <i class="fas fa-file-image text-green-500 flex-shrink-0"></i>
+                    <span class="text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
+                  </div>
+                  <button @click="removeFile('image_files', i)" type="button" class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
+                    <i class="fas fa-times text-red-500 text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-music text-purple-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white">Аудио</h4>
+                  <p class="text-xs text-gray-300">MP3, OGG, WAV</p>
+                </div>
+              </div>
+              <div @click="$refs.audioInput.click()" @dragover.prevent @drop="dropFiles($event, 'audio_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
+                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
+                <p class="text-sm font-medium text-gray-300">Загрузить аудио</p>
+                <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
+              </div>
+              <input ref="audioInput" @change="addFiles($event, 'audio_files')" type="file" multiple accept=".mp3,.ogg,.wav" class="hidden">
+              <div v-if="files.audio_files.length" class="space-y-2 max-h-32 overflow-y-auto">
+                <div v-for="(file, i) in files.audio_files" :key="i" class="file-item flex items-center justify-between p-3 rounded-xl">
+                  <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    <i class="fas fa-file-audio text-purple-500 flex-shrink-0"></i>
+                    <span class="text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
+                  </div>
+                  <button @click="removeFile('audio_files', i)" type="button" class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
+                    <i class="fas fa-times text-red-500 text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sticky bottom-0 glass rounded-b-3xl p-6 border-t border-gray-200/50 flex space-x-4">
+            <button type="button" @click="modals.createNote = false" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 rounded-2xl transition">
+              <i class="fas fa-times mr-2"></i>Отмена
+            </button>
+            <button type="submit" :disabled="loading" class="flex-1 bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-500 hover:to-purple-600 text-white font-bold py-4 rounded-2xl transition shadow-lg disabled:opacity-50">
+              <i class="fas fa-spinner fa-spin mr-2" v-if="loading"></i>
+              <i class="fas fa-save mr-2" v-else></i>
+              {{ loading ? 'Создание...' : 'Создать заметку' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div v-if="modals.profile" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="modals.profile = false">
+      <div @click.stop class="glass rounded-3xl p-8 w-full max-w-md">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-white">
+            <i class="fas fa-user mr-2"></i>Профиль
+          </h2>
+          <button @click="modals.profile = false" class="text-gray-300 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div v-if="user" class="text-center">
+          <div class="w-20 h-20 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
+            {{ user.username.charAt(0).toUpperCase() }}
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-white">{{ user.username }}</h3>
+          <p class="text-gray-300 mb-4">{{ user.email }}</p>
+          <div class="bg-gray-800 rounded-2xl p-4 text-left space-y-2">
+            <div class="flex justify-between">
+              <span class="text-gray-300">ID:</span>
+              <span class="font-mono text-white">{{ user.user_id }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-300">Статус:</span>
+              <span :class="user.is_active ? 'text-green-400' : 'text-red-400'">
+                {{ user.is_active ? 'Активен' : 'Неактивен' }}
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-300">Заметок:</span>
+              <span class="font-bold text-white">{{ notes.length }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Note Detail Modal -->
+    <div v-if="modals.showNoteDetail" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50" @click="modals.showNoteDetail = false">
+      <div @click.stop class="glass rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-auto shadow-2xl">
+        <div class="sticky top-0 glass rounded-t-3xl p-6 border-b border-gray-200/50 flex justify-between items-center">
+          <div class="flex items-center space-x-3 flex-1 min-w-0 pr-4">
+            <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-400 rounded-xl flex items-center justify-center">
+              <i class="fas fa-eye text-white text-lg"></i>
+            </div>
+            <div class="min-w-0 flex-1 mr-4">
+              <h2 class="text-2xl font-bold text-white truncate">{{ modals.noteDetail?.title || 'Заметка' }}</h2>
+              <p class="text-sm text-gray-300">Просмотр заметки</p>
+            </div>
+          </div>
+          <button @click="modals.showNoteDetail = false" class="w-10 h-10 rounded-xl bg-red-500 hover:bg-red-600 flex items-center justify-center transition">
+            <i class="fas fa-times text-white"></i>
+          </button>
+        </div>
+        <div v-if="modals.noteDetail" class="p-6 space-y-8">
+          <div class="space-y-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-300">
+                <i class="fas fa-heading mr-2 text-cyan-400"></i>Заголовок
+              </label>
+              <div class="w-full p-4 rounded-2xl bg-gray-800 border-2 border-transparent font-medium text-white break-words">
+                {{ modals.noteDetail.title || 'Без заголовка' }}
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-300">
+                <i class="fas fa-align-left mr-2 text-purple-400"></i>Описание
+              </label>
+              <div class="w-full p-4 rounded-2xl bg-gray-800 border-2 border-transparent font-medium text-white whitespace-pre-wrap break-words">
+                {{ modals.noteDetail.content || 'Нет содержимого' }}
+              </div>
+            </div>
+          </div>
+          <div class="grid lg:grid-cols-3 gap-6">
+            <div v-if="modals.noteDetail.video_urls && modals.noteDetail.video_urls.length" class="space-y-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-video text-blue-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white">Видео</h4>
+                  <p class="text-xs text-gray-300">{{ modals.noteDetail.video_urls.length }} файл(ов)</p>
+                </div>
+              </div>
+              <div class="space-y-4 max-h-64 overflow-y-auto">
+                <video v-for="url in modals.noteDetail.video_urls" :key="url" :src="url" controls class="w-full rounded-xl shadow-md"></video>
+              </div>
+            </div>
+            <div v-if="modals.noteDetail.image_urls && modals.noteDetail.image_urls.length" class="space-y-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-image text-green-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white">Изображения</h4>
+                  <p class="text-xs text-gray-300">{{ modals.noteDetail.image_urls.length }} файл(ов)</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4 max-h-64 overflow-y-auto">
+                <div v-for="url in modals.noteDetail.image_urls" :key="url" class="relative group">
+                  <img :src="url" @click="openImageZoom(url)" class="w-full h-24 object-cover rounded-xl cursor-zoom-in hover:opacity-80 transition shadow-md">
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition flex items-center justify-center pointer-events-none">
+                    <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition text-xl"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-if="modals.noteDetail.audio_urls && modals.noteDetail.audio_urls.length" class="space-y-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-music text-purple-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-white">Аудио</h4>
+                  <p class="text-xs text-gray-300">{{ modals.noteDetail.audio_urls.length }} файл(ов)</p>
+                </div>
+              </div>
+              <div class="space-y-3 max-h-64 overflow-y-auto">
+                <audio v-for="url in modals.noteDetail.audio_urls" :key="url" :src="url" controls class="w-full"></audio>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="p-6">
+          <p class="text-gray-300">Загрузка данных...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Zoom Modal -->
+    <div v-if="modals.imageZoom" class="fixed inset-0 bg-black/95 flex items-center justify-center z-[60]" @wheel="handleZoomWheel" @mousedown="startDrag" @mousemove="drag" @mouseup="endDrag" @mouseleave="endDrag" @click="modals.imageZoom = false">
+      <button @click="modals.imageZoom = false" class="absolute top-6 right-6 w-12 h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition text-xl z-10">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="absolute top-6 left-6 bg-black/70 text-white px-4 py-2 rounded-full text-sm z-10">
+        {{ Math.round(imageZoomLevel * 100) }}%
+      </div>
+      <img :src="modals.zoomedImageUrl" :style="{ transform: 'scale(' + imageZoomLevel + ') translate(' + imageTranslateX + 'px, ' + imageTranslateY + 'px)', cursor: isDragging ? 'grabbing' : 'grab' }" class="max-w-none max-h-none object-contain transition-transform duration-300" @dragstart.prevent @click.stop>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="modals.confirmDelete" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="modals.confirmDelete = false">
+      <div @click.stop class="glass rounded-3xl p-6 w-full max-w-sm">
+        <div class="text-center">
+          <div class="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <i class="fas fa-trash text-red-500 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-white">Удалить заметку?</h3>
+          <p class="text-gray-300 mb-6">Это действие нельзя отменить</p>
+          <div class="flex space-x-3">
+            <button @click="modals.confirmDelete = false" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-xl transition">
+              Отмена
+            </button>
+            <button @click="confirmDeleteNote" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-xl transition">
+              Удалить
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div v-if="modals.lightbox" @click="modals.lightbox = false" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 cursor-zoom-out">
+      <img :src="modals.lightboxUrl" class="max-w-full max-h-full rounded-2xl shadow-2xl">
+      <button @click="modals.lightbox = false" class="absolute top-6 right-6 text-white text-3xl hover:text-red-400 transition">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
   </div>
 </template>
 
 <script>
 import { ref, reactive, onMounted, computed } from 'vue'
 
-const API = "http://127.0.0.1:8080"
+const API = "http://127.0.0.1:80/api-gateway"
 
 export default {
   name: 'App',
@@ -198,11 +500,23 @@ export default {
     const loading = ref(false)
     const sidebarOpen = ref(false)
     
+    // Image zoom state
+    const imageZoomLevel = ref(1)
+    const imageTranslateX = ref(0)
+    const imageTranslateY = ref(0)
+    const isDragging = ref(false)
+    const dragStartX = ref(0)
+    const dragStartY = ref(0)
+    
     const modals = reactive({
       profile: false,
       createNote: false,
+      lightbox: false,
+      lightboxUrl: '',
       showNoteDetail: false,
       noteDetail: null,
+      imageZoom: false,
+      zoomedImageUrl: '',
       confirmDelete: false,
       deleteNoteId: null
     })
@@ -376,7 +690,7 @@ export default {
       loading.value = true
       try {
         const token = localStorage.getItem('access_token')
-        const res = await fetch(`${API}/notes/get_all_notes`, {
+        const res = await fetch(`${API}/notes/get_all_notes/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
 
@@ -394,6 +708,44 @@ export default {
     const deleteNote = (id) => {
       modals.deleteNoteId = id
       modals.confirmDelete = true
+    }
+
+    const createNote = async () => {
+      loading.value = true
+      try {
+        const url = new URL(`${API}/notes/create`)
+        url.searchParams.append("title", forms.note.title)
+        url.searchParams.append("content", forms.note.content)
+
+        const formData = new FormData()
+        files.video_files.forEach(f => formData.append('video_files', f))
+        files.image_files.forEach(f => formData.append('image_files', f))
+        files.audio_files.forEach(f => formData.append('audio_files', f))
+
+        const token = localStorage.getItem('access_token')
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        })
+
+        if (res.ok) {
+          forms.note.title = ''
+          forms.note.content = ''
+          files.video_files = []
+          files.image_files = []
+          files.audio_files = []
+          modals.createNote = false
+          await loadNotes()
+          showNotification('Заметка создана', 'success')
+        } else {
+          showNotification('Ошибка создания', 'error')
+        }
+      } catch (error) {
+        showNotification('Ошибка сети', 'error')
+      } finally {
+        loading.value = false
+      }
     }
 
     const confirmDeleteNote = async () => {
@@ -416,6 +768,74 @@ export default {
         modals.confirmDelete = false
         modals.deleteNoteId = null
       }
+    }
+
+    const addFiles = (event, type) => {
+      const selectedFiles = Array.from(event.target.files)
+      const validFiles = selectedFiles.filter(file => {
+        if (type === 'video_files') return file.type.startsWith('video/')
+        if (type === 'image_files') return file.type.startsWith('image/')
+        if (type === 'audio_files') return file.type.startsWith('audio/')
+        return false
+      })
+      files[type].push(...validFiles)
+      event.target.value = ''
+    }
+
+    const dropFiles = (event, type) => {
+      event.preventDefault()
+      const droppedFiles = Array.from(event.dataTransfer.files)
+      const validFiles = droppedFiles.filter(file => {
+        if (type === 'video_files') return file.type.startsWith('video/')
+        if (type === 'image_files') return file.type.startsWith('image/')
+        if (type === 'audio_files') return file.type.startsWith('audio/')
+        return false
+      })
+      files[type].push(...validFiles)
+      event.target.classList.remove('active')
+    }
+
+    const removeFile = (type, index) => {
+      files[type].splice(index, 1)
+    }
+
+    const openLightbox = (url) => {
+      modals.lightboxUrl = url
+      modals.lightbox = true
+    }
+
+    const openImageZoom = (url) => {
+      modals.zoomedImageUrl = url
+      modals.imageZoom = true
+      imageZoomLevel.value = 1
+      imageTranslateX.value = 0
+      imageTranslateY.value = 0
+    }
+
+    const handleZoomWheel = (event) => {
+      event.preventDefault()
+      const delta = event.deltaY > 0 ? -0.05 : 0.05
+      const newZoom = Math.max(0.5, Math.min(5, imageZoomLevel.value + delta))
+      imageZoomLevel.value = newZoom
+    }
+
+    const startDrag = (event) => {
+      if (imageZoomLevel.value > 1) {
+        isDragging.value = true
+        dragStartX.value = event.clientX - imageTranslateX.value
+        dragStartY.value = event.clientY - imageTranslateY.value
+      }
+    }
+
+    const drag = (event) => {
+      if (isDragging.value && imageZoomLevel.value > 1) {
+        imageTranslateX.value = event.clientX - dragStartX.value
+        imageTranslateY.value = event.clientY - dragStartY.value
+      }
+    }
+
+    const endDrag = () => {
+      isDragging.value = false
     }
 
     const viewNote = async (id) => {
@@ -454,7 +874,9 @@ export default {
 
     return {
       currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy,
-      login, register, logout, loadNotes, deleteNote, confirmDeleteNote, viewNote
+      login, register, logout, loadNotes, deleteNote, confirmDeleteNote, viewNote, createNote,
+      addFiles, dropFiles, removeFile, openLightbox, openImageZoom,
+      handleZoomWheel, startDrag, drag, endDrag, imageZoomLevel, imageTranslateX, imageTranslateY, isDragging
     }
   }
 }
@@ -477,6 +899,23 @@ body {
   backdrop-filter: blur(20px); 
   background: rgba(15, 15, 35, 0.95); 
   border: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+.drop-zone {
+  border: 2px dashed rgba(156, 163, 175, 0.5);
+  background: rgba(31, 41, 55, 0.5);
+  transition: all 0.3s ease;
+}
+
+.drop-zone:hover,
+.drop-zone.active {
+  border-color: rgba(34, 197, 94, 0.8);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.file-item {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.5);
 }
 
 .modal-backdrop {
