@@ -8,7 +8,7 @@ services:
       - "80:80"
     volumes:
       - "./nginx.conf:/etc/nginx/nginx.conf"
-      - '/etc/letsencrypt:/etc/letsencrypt'
+      - "/etc/letsencrypt:/etc/letsencrypt"
     depends_on:
       - krakend
     networks:
@@ -25,6 +25,16 @@ services:
     depends_on:
       - notes-service
       - notes-users-service
+    networks:
+      - app-network
+
+  # --- ФРОНТЕНД ЗАМЕТОК ---
+  frontend:
+    build:
+      context: ./frontend
+    container_name: notes_frontend
+    ports:
+      - "3000:3000"
     networks:
       - app-network
 

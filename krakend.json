@@ -3,6 +3,7 @@
   "version": 3,
   "timeout": "3000ms",
   "port": 8080,
+  "host": ["/api"],
   "cache_ttl": "0s",
   "extra_config": {
     "router": {
