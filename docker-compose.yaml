@@ -4,6 +4,7 @@ services:
   # --- БАЛАНСИРОВЩИК (Nginx) ---
   nginx:
     image: nginx:stable-alpine
+    container_name: nginx-load-balancer
     ports:
       - "80:80"
     volumes:

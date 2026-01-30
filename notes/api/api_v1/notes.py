@@ -28,6 +28,7 @@ async def health_check():
 
 
 # TODO добавить обработку ошибок связанную с куки
+# TODO добавить ограничение обработки файлов макс 200 МБ
 @router.post("/create")
 async def create_notes(
     note_create_form: NoteCreateForm = Depends(),

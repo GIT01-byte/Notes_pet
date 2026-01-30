@@ -96,10 +96,24 @@
 
     <!-- Dashboard View -->
     <transition name="slide">
-      <div v-if="currentView === 'dashboard'" class="flex h-screen pt-8">
+      <div v-if="currentView === 'dashboard'" class="flex flex-col md:flex-row h-screen pt-8">
+        <!-- Mobile Header -->
+        <div class="md:hidden bg-gray-900/95 backdrop-blur-sm p-4 flex justify-between items-center border-b border-gray-700">
+          <button @click="sidebarOpen = !sidebarOpen" class="text-white p-2">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+          <h1 class="text-lg font-bold text-white">NotesCloud</h1>
+          <button @click="modals.profile = true" class="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            {{ user?.username?.charAt(0)?.toUpperCase() || 'U' }}
+          </button>
+        </div>
+
         <!-- Sidebar -->
-        <div :class="sidebarOpen ? 'w-80' : 'w-20'" class="glass-dark text-white transition-all duration-300 flex flex-col">
-          <div class="p-4 border-b border-white/20">
+        <div :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full', 'md:translate-x-0', sidebarOpen ? 'w-80' : 'md:w-20', 'fixed md:relative z-40 md:z-auto h-full md:h-auto']" class="glass-dark text-white transition-all duration-300 flex flex-col">
+          <!-- Overlay for mobile -->
+          <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 md:hidden z-[-1]"></div>
+          
+          <div class="p-4 border-b border-white/20 hidden md:block">
             <button @click="sidebarOpen = !sidebarOpen" class="w-full text-left pl-4">
               <i class="fas fa-bars text-xl"></i>
               <span v-if="sidebarOpen" class="ml-4 font-bold">NotesCloud</span>
@@ -107,38 +121,41 @@
           </div>
 
           <nav class="flex-1 p-4 space-y-2">
-            <button @click="loadNotes" class="w-full flex items-center p-3 rounded-xl hover:bg-white/10 transition">
-              <i class="fas fa-home text-xl" :class="!sidebarOpen ? 'mx-auto' : ''"></i>
-              <span v-if="sidebarOpen" class="ml-4">Главная</span>
+            <button @click="loadNotes(); sidebarOpen = false" class="w-full flex items-center p-3 rounded-xl hover:bg-white/10 transition">
+              <i class="fas fa-home text-xl" :class="!sidebarOpen ? 'mx-auto md:mx-0' : ''"></i>
+              <span v-if="sidebarOpen" class="ml-4 block md:block">Главная</span>
             </button>
-            <button @click="modals.createNote = true" class="w-full flex items-center p-3 rounded-xl hover:bg-white/10 transition">
-              <i class="fas fa-plus text-xl" :class="!sidebarOpen ? 'mx-auto' : ''"></i>
-              <span v-if="sidebarOpen" class="ml-4">Создать заметку</span>
-            </button>
-            <button @click="modals.profile = true" class="w-full flex items-center p-3 rounded-xl hover:bg-white/10 transition">
-              <i class="fas fa-user text-xl" :class="!sidebarOpen ? 'mx-auto' : ''"></i>
-              <span v-if="sidebarOpen" class="ml-4">Профиль</span>
+            <button @click="modals.createNote = true; sidebarOpen = false" class="w-full flex items-center p-3 rounded-xl hover:bg-white/10 transition">
+              <i class="fas fa-plus text-xl" :class="!sidebarOpen ? 'mx-auto md:mx-0' : ''"></i>
+              <span v-if="sidebarOpen" class="ml-4 block md:block">Создать заметку</span>
             </button>
           </nav>
 
-          <div class="p-4 border-t border-white/20">
-            <button @click="logout" class="w-full flex items-center p-3 rounded-xl hover:bg-red-500/20 transition text-red-300">
-              <i class="fas fa-sign-out-alt text-xl" :class="!sidebarOpen ? 'mx-auto' : ''"></i>
-              <span v-if="sidebarOpen" class="ml-4">Выйти</span>
+          <div class="p-4 border-t border-white/20 hidden md:block">
+            <button @click="modals.profile = true; sidebarOpen = false" class="w-full flex items-center p-3 rounded-xl hover:bg-white/10 transition">
+              <i class="fas fa-user text-xl" :class="!sidebarOpen ? 'mx-auto md:mx-0' : ''"></i>
+              <span v-if="sidebarOpen" class="ml-4 block md:block">Профиль</span>
             </button>
           </div>
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 overflow-auto p-8">
+        <div class="flex-1 overflow-auto p-4 md:p-8">
           <div class="max-w-6xl mx-auto">
-            <div class="flex justify-between items-center mb-8">
+            <div class="hidden md:flex justify-between items-center mb-8">
               <h1 class="text-4xl font-black text-white">
                 <i class="fas fa-sticky-note mr-3"></i>Мои заметки
               </h1>
-              <div class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold">
+              <button @click="modals.profile = true" class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-lg transition">
                 {{ user?.username || 'Пользователь' }}
-              </div>
+              </button>
+            </div>
+
+            <!-- Mobile Title -->
+            <div class="md:hidden mb-6">
+              <h1 class="text-2xl font-black text-white">
+                <i class="fas fa-sticky-note mr-2"></i>Мои заметки
+              </h1>
             </div>
 
             <!-- Notes Grid -->
@@ -147,22 +164,38 @@
               <p class="text-white/70">Загрузка заметок...</p>
             </div>
 
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               <transition-group name="fade">
                 <div v-for="note in notes" :key="note.id" 
                      @click="viewNote(note.id)"
-                     class="glass rounded-3xl p-6 hover:shadow-glow transition-all duration-300 group cursor-pointer">
-                  <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-bold text-white truncate">{{ note.title }}</h3>
+                     class="glass rounded-2xl md:rounded-3xl p-4 md:p-6 hover:shadow-glow transition-all duration-300 group cursor-pointer">
+                  <div class="flex justify-between items-start mb-3 md:mb-4">
+                    <h3 class="text-lg md:text-xl font-bold text-white truncate pr-2">{{ note.title }}</h3>
                     <button @click.stop="deleteNote(note.id)" 
-                            class="opacity-0 group-hover:opacity-100 bg-red-100 hover:bg-red-500 text-red-500 hover:text-white p-2 rounded-full transition-all">
+                            class="opacity-0 group-hover:opacity-100 bg-red-100 hover:bg-red-500 text-red-500 hover:text-white p-2 rounded-full transition-all flex-shrink-0">
                       <i class="fas fa-trash text-sm"></i>
                     </button>
                   </div>
                   
-                  <p class="text-gray-300 mb-4 line-clamp-3">{{ note.content }}</p>
+                  <p class="text-gray-300 mb-3 md:mb-4 line-clamp-3 text-sm md:text-base">{{ note.content }}</p>
 
-                  <div class="text-xs text-gray-400 border-t border-gray-600 pt-3">
+                  <!-- Media Summary -->
+                  <div v-if="note.image_urls?.length || note.video_urls?.length || note.audio_urls?.length" class="mb-3 md:mb-4 flex flex-wrap gap-1 md:gap-2">
+                    <div v-if="note.image_urls?.length" class="flex items-center bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                      <i class="fas fa-image mr-1"></i>
+                      {{ note.image_urls.length }} фото
+                    </div>
+                    <div v-if="note.video_urls?.length" class="flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                      <i class="fas fa-video mr-1"></i>
+                      {{ note.video_urls.length }} видео
+                    </div>
+                    <div v-if="note.audio_urls?.length" class="flex items-center bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
+                      <i class="fas fa-music mr-1"></i>
+                      {{ note.audio_urls.length }} аудио
+                    </div>
+                  </div>
+
+                  <div class="text-xs text-gray-400 border-t border-gray-600 pt-2 md:pt-3">
                     ID: {{ note.id }}
                   </div>
                 </div>
@@ -170,10 +203,10 @@
             </div>
 
             <div v-if="!loading && notes.length === 0" class="text-center py-12">
-              <i class="fas fa-sticky-note text-6xl text-white/30 mb-4"></i>
-              <p class="text-white/70 text-xl">Заметок пока нет</p>
+              <i class="fas fa-sticky-note text-4xl md:text-6xl text-white/30 mb-4"></i>
+              <p class="text-white/70 text-lg md:text-xl mb-4">Заметок пока нет</p>
               <button @click="modals.createNote = true" 
-                      class="mt-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold">
+                      class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold">
                 Создать первую заметку
               </button>
             </div>
@@ -184,128 +217,128 @@
 
     <!-- Modals -->
     <!-- Create Note Modal -->
-    <div v-if="modals.createNote" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50" @click="modals.createNote = false">
-      <div @click.stop class="glass rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-auto shadow-2xl">
-        <div class="sticky top-0 glass rounded-t-3xl p-6 border-b border-gray-200/50 flex justify-between items-center">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-xl flex items-center justify-center">
-              <i class="fas fa-plus text-white text-lg"></i>
+    <div v-if="modals.createNote" class="fixed inset-0 modal-backdrop flex items-center justify-center p-2 md:p-4 z-50" @click="modals.createNote = false">
+      <div @click.stop class="glass rounded-2xl md:rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-auto shadow-2xl">
+        <div class="sticky top-0 glass rounded-t-2xl md:rounded-t-3xl p-4 md:p-6 border-b border-gray-200/50 flex justify-between items-center">
+          <div class="flex items-center space-x-2 md:space-x-3">
+            <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg md:rounded-xl flex items-center justify-center">
+              <i class="fas fa-plus text-white text-sm md:text-lg"></i>
             </div>
             <div>
-              <h2 class="text-2xl font-bold text-white">Создать заметку</h2>
-              <p class="text-sm text-gray-300">Добавьте текст и медиафайлы</p>
+              <h2 class="text-lg md:text-2xl font-bold text-white">Создать заметку</h2>
+              <p class="text-xs md:text-sm text-gray-300">Добавьте текст и медиафайлы</p>
             </div>
           </div>
-          <button @click="modals.createNote = false" class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
-            <i class="fas fa-times text-gray-600"></i>
+          <button @click="modals.createNote = false" class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
+            <i class="fas fa-times text-gray-600 text-sm md:text-base"></i>
           </button>
         </div>
-        <form @submit.prevent="createNote" class="p-6 space-y-8">
-          <div class="grid md:grid-cols-2 gap-6">
+        <form @submit.prevent="createNote" class="p-4 md:p-6 space-y-6 md:space-y-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-300">
                 <i class="fas fa-heading mr-2 text-cyan-400"></i>Заголовок
               </label>
-              <input v-model="forms.note.title" type="text" placeholder="Введите заголовок заметки..." required class="w-full p-4 rounded-2xl bg-gray-800 text-white border-2 border-transparent outline-none focus:border-cyan-400 transition font-medium placeholder-gray-400">
+              <input v-model="forms.note.title" type="text" placeholder="Введите заголовок заметки..." required class="w-full p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-800 text-white border-2 border-transparent outline-none focus:border-cyan-400 transition font-medium placeholder-gray-400 text-sm md:text-base">
             </div>
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-300">
                 <i class="fas fa-align-left mr-2 text-purple-400"></i>Описание
               </label>
-              <textarea v-model="forms.note.content" placeholder="Добавьте описание заметки..." required rows="3" class="w-full p-4 rounded-2xl bg-gray-800 text-white border-2 border-transparent outline-none focus:border-purple-400 transition font-medium resize-none placeholder-gray-400"></textarea>
+              <textarea v-model="forms.note.content" placeholder="Добавьте описание заметки..." required rows="3" class="w-full p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-800 text-white border-2 border-transparent outline-none focus:border-purple-400 transition font-medium resize-none placeholder-gray-400 text-sm md:text-base"></textarea>
             </div>
           </div>
-          <div class="grid lg:grid-cols-3 gap-6">
-            <div class="space-y-4">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+            <div class="space-y-3 md:space-y-4">
               <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-video text-blue-600"></i>
+                <div class="w-6 h-6 md:w-8 md:h-8 bg-blue-100 rounded-md md:rounded-lg flex items-center justify-center">
+                  <i class="fas fa-video text-blue-600 text-sm md:text-base"></i>
                 </div>
                 <div>
-                  <h4 class="font-semibold text-white">Видео</h4>
+                  <h4 class="font-semibold text-white text-sm md:text-base">Видео</h4>
                   <p class="text-xs text-gray-300">MP4, AVI, WebM</p>
                 </div>
               </div>
-              <div @click="$refs.videoInput.click()" @dragover.prevent @drop="dropFiles($event, 'video_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
-                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
-                <p class="text-sm font-medium text-gray-300">Загрузить видео</p>
+              <div @click="$refs.videoInput.click()" @dragover.prevent @drop="dropFiles($event, 'video_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-xl md:rounded-2xl p-6 md:p-8 text-center cursor-pointer min-h-[100px] md:min-h-[120px] flex flex-col items-center justify-center">
+                <i class="fas fa-cloud-upload-alt text-2xl md:text-3xl text-gray-400 mb-2 md:mb-3"></i>
+                <p class="text-xs md:text-sm font-medium text-gray-300">Загрузить видео</p>
                 <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
               </div>
               <input ref="videoInput" @change="addFiles($event, 'video_files')" type="file" multiple accept=".mp4,.avi,.webm" class="hidden">
-              <div v-if="files.video_files.length" class="space-y-2 max-h-32 overflow-y-auto">
-                <div v-for="(file, i) in files.video_files" :key="i" class="file-item flex items-center justify-between p-3 rounded-xl">
-                  <div class="flex items-center space-x-3 flex-1 min-w-0">
-                    <i class="fas fa-file-video text-blue-500 flex-shrink-0"></i>
-                    <span class="text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
+              <div v-if="files.video_files.length" class="space-y-2 max-h-24 md:max-h-32 overflow-y-auto">
+                <div v-for="(file, i) in files.video_files" :key="i" class="file-item flex items-center justify-between p-2 md:p-3 rounded-lg md:rounded-xl">
+                  <div class="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+                    <i class="fas fa-file-video text-blue-500 flex-shrink-0 text-sm md:text-base"></i>
+                    <span class="text-xs md:text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
                   </div>
-                  <button @click="removeFile('video_files', i)" type="button" class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
+                  <button @click="removeFile('video_files', i)" type="button" class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
                     <i class="fas fa-times text-red-500 text-xs"></i>
                   </button>
                 </div>
               </div>
             </div>
-            <div class="space-y-4">
+            <div class="space-y-3 md:space-y-4">
               <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-image text-green-600"></i>
+                <div class="w-6 h-6 md:w-8 md:h-8 bg-green-100 rounded-md md:rounded-lg flex items-center justify-center">
+                  <i class="fas fa-image text-green-600 text-sm md:text-base"></i>
                 </div>
                 <div>
-                  <h4 class="font-semibold text-white">Изображения</h4>
+                  <h4 class="font-semibold text-white text-sm md:text-base">Изображения</h4>
                   <p class="text-xs text-gray-300">JPEG, PNG, WebP</p>
                 </div>
               </div>
-              <div @click="$refs.imageInput.click()" @dragover.prevent @drop="dropFiles($event, 'image_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
-                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
-                <p class="text-sm font-medium text-gray-300">Загрузить фото</p>
+              <div @click="$refs.imageInput.click()" @dragover.prevent @drop="dropFiles($event, 'image_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-xl md:rounded-2xl p-6 md:p-8 text-center cursor-pointer min-h-[100px] md:min-h-[120px] flex flex-col items-center justify-center">
+                <i class="fas fa-cloud-upload-alt text-2xl md:text-3xl text-gray-400 mb-2 md:mb-3"></i>
+                <p class="text-xs md:text-sm font-medium text-gray-300">Загрузить фото</p>
                 <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
               </div>
               <input ref="imageInput" @change="addFiles($event, 'image_files')" type="file" multiple accept=".jpeg,.jpg,.png,.webp" class="hidden">
-              <div v-if="files.image_files.length" class="space-y-2 max-h-32 overflow-y-auto">
-                <div v-for="(file, i) in files.image_files" :key="i" class="file-item flex items-center justify-between p-3 rounded-xl">
-                  <div class="flex items-center space-x-3 flex-1 min-w-0">
-                    <i class="fas fa-file-image text-green-500 flex-shrink-0"></i>
-                    <span class="text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
+              <div v-if="files.image_files.length" class="space-y-2 max-h-24 md:max-h-32 overflow-y-auto">
+                <div v-for="(file, i) in files.image_files" :key="i" class="file-item flex items-center justify-between p-2 md:p-3 rounded-lg md:rounded-xl">
+                  <div class="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+                    <i class="fas fa-file-image text-green-500 flex-shrink-0 text-sm md:text-base"></i>
+                    <span class="text-xs md:text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
                   </div>
-                  <button @click="removeFile('image_files', i)" type="button" class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
+                  <button @click="removeFile('image_files', i)" type="button" class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
                     <i class="fas fa-times text-red-500 text-xs"></i>
                   </button>
                 </div>
               </div>
             </div>
-            <div class="space-y-4">
+            <div class="space-y-3 md:space-y-4">
               <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-music text-purple-600"></i>
+                <div class="w-6 h-6 md:w-8 md:h-8 bg-purple-100 rounded-md md:rounded-lg flex items-center justify-center">
+                  <i class="fas fa-music text-purple-600 text-sm md:text-base"></i>
                 </div>
                 <div>
-                  <h4 class="font-semibold text-white">Аудио</h4>
+                  <h4 class="font-semibold text-white text-sm md:text-base">Аудио</h4>
                   <p class="text-xs text-gray-300">MP3, OGG, WAV</p>
                 </div>
               </div>
-              <div @click="$refs.audioInput.click()" @dragover.prevent @drop="dropFiles($event, 'audio_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
-                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
-                <p class="text-sm font-medium text-gray-300">Загрузить аудио</p>
+              <div @click="$refs.audioInput.click()" @dragover.prevent @drop="dropFiles($event, 'audio_files')" @dragenter="$event.target.classList.add('active')" @dragleave="$event.target.classList.remove('active')" class="drop-zone rounded-xl md:rounded-2xl p-6 md:p-8 text-center cursor-pointer min-h-[100px] md:min-h-[120px] flex flex-col items-center justify-center">
+                <i class="fas fa-cloud-upload-alt text-2xl md:text-3xl text-gray-400 mb-2 md:mb-3"></i>
+                <p class="text-xs md:text-sm font-medium text-gray-300">Загрузить аудио</p>
                 <p class="text-xs text-gray-400 mt-1">или перетащите сюда</p>
               </div>
               <input ref="audioInput" @change="addFiles($event, 'audio_files')" type="file" multiple accept=".mp3,.ogg,.wav" class="hidden">
-              <div v-if="files.audio_files.length" class="space-y-2 max-h-32 overflow-y-auto">
-                <div v-for="(file, i) in files.audio_files" :key="i" class="file-item flex items-center justify-between p-3 rounded-xl">
-                  <div class="flex items-center space-x-3 flex-1 min-w-0">
-                    <i class="fas fa-file-audio text-purple-500 flex-shrink-0"></i>
-                    <span class="text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
+              <div v-if="files.audio_files.length" class="space-y-2 max-h-24 md:max-h-32 overflow-y-auto">
+                <div v-for="(file, i) in files.audio_files" :key="i" class="file-item flex items-center justify-between p-2 md:p-3 rounded-lg md:rounded-xl">
+                  <div class="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+                    <i class="fas fa-file-audio text-purple-500 flex-shrink-0 text-sm md:text-base"></i>
+                    <span class="text-xs md:text-sm font-medium truncate text-white" :title="file.name">{{ file.name }}</span>
                   </div>
-                  <button @click="removeFile('audio_files', i)" type="button" class="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
+                  <button @click="removeFile('audio_files', i)" type="button" class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition flex-shrink-0 ml-2">
                     <i class="fas fa-times text-red-500 text-xs"></i>
                   </button>
                 </div>
               </div>
             </div>
           </div>
-          <div class="sticky bottom-0 glass rounded-b-3xl p-6 border-t border-gray-200/50 flex space-x-4">
-            <button type="button" @click="modals.createNote = false" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 rounded-2xl transition">
+          <div class="sticky bottom-0 glass rounded-b-2xl md:rounded-b-3xl p-4 md:p-6 border-t border-gray-200/50 flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
+            <button type="button" @click="modals.createNote = false" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 md:py-4 rounded-xl md:rounded-2xl transition text-sm md:text-base">
               <i class="fas fa-times mr-2"></i>Отмена
             </button>
-            <button type="submit" :disabled="loading" class="flex-1 bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-500 hover:to-purple-600 text-white font-bold py-4 rounded-2xl transition shadow-lg disabled:opacity-50">
+            <button type="submit" :disabled="loading" class="flex-1 bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-500 hover:to-purple-600 text-white font-bold py-3 md:py-4 rounded-xl md:rounded-2xl transition shadow-lg disabled:opacity-50 text-sm md:text-base">
               <i class="fas fa-spinner fa-spin mr-2" v-if="loading"></i>
               <i class="fas fa-save mr-2" v-else></i>
               {{ loading ? 'Создание...' : 'Создать заметку' }}
@@ -348,34 +381,37 @@
               <span class="font-bold text-white">{{ notes.length }}</span>
             </div>
           </div>
+          <button @click="logout(); modals.profile = false" class="w-full mt-4 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition">
+            <i class="fas fa-sign-out-alt mr-2"></i>Выйти
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Note Detail Modal -->
-    <div v-if="modals.showNoteDetail" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50" @click="modals.showNoteDetail = false">
-      <div @click.stop class="glass rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-auto shadow-2xl">
-        <div class="sticky top-0 glass rounded-t-3xl p-6 border-b border-gray-200/50 flex justify-between items-center">
-          <div class="flex items-center space-x-3 flex-1 min-w-0 pr-4">
-            <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-400 rounded-xl flex items-center justify-center">
-              <i class="fas fa-eye text-white text-lg"></i>
+    <div v-if="modals.showNoteDetail" class="fixed inset-0 modal-backdrop flex items-center justify-center p-2 md:p-4 z-50" @click="modals.showNoteDetail = false">
+      <div @click.stop class="glass rounded-2xl md:rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-auto shadow-2xl">
+        <div class="sticky top-0 glass rounded-t-2xl md:rounded-t-3xl p-4 md:p-6 border-b border-gray-200/50 flex justify-between items-center">
+          <div class="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0 pr-2 md:pr-4">
+            <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-green-400 to-teal-400 rounded-lg md:rounded-xl flex items-center justify-center">
+              <i class="fas fa-eye text-white text-sm md:text-lg"></i>
             </div>
-            <div class="min-w-0 flex-1 mr-4">
-              <h2 class="text-2xl font-bold text-white truncate">{{ modals.noteDetail?.title || 'Заметка' }}</h2>
-              <p class="text-sm text-gray-300">Просмотр заметки</p>
+            <div class="min-w-0 flex-1 mr-2 md:mr-4">
+              <h2 class="text-lg md:text-2xl font-bold text-white truncate">{{ modals.noteDetail?.title || 'Заметка' }}</h2>
+              <p class="text-xs md:text-sm text-gray-300">Просмотр заметки</p>
             </div>
           </div>
-          <button @click="modals.showNoteDetail = false" class="w-10 h-10 rounded-xl bg-red-500 hover:bg-red-600 flex items-center justify-center transition">
-            <i class="fas fa-times text-white"></i>
+          <button @click="modals.showNoteDetail = false" class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-red-500 hover:bg-red-600 flex items-center justify-center transition">
+            <i class="fas fa-times text-white text-sm md:text-base"></i>
           </button>
         </div>
-        <div v-if="modals.noteDetail" class="p-6 space-y-8">
-          <div class="space-y-6">
+        <div v-if="modals.noteDetail" class="p-4 md:p-6 space-y-6 md:space-y-8">
+          <div class="space-y-4 md:space-y-6">
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-300">
                 <i class="fas fa-heading mr-2 text-cyan-400"></i>Заголовок
               </label>
-              <div class="w-full p-4 rounded-2xl bg-gray-800 border-2 border-transparent font-medium text-white break-words">
+              <div class="w-full p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-800 border-2 border-transparent font-medium text-white break-words text-sm md:text-base">
                 {{ modals.noteDetail.title || 'Без заголовка' }}
               </div>
             </div>
@@ -383,103 +419,85 @@
               <label class="block text-sm font-semibold text-gray-300">
                 <i class="fas fa-align-left mr-2 text-purple-400"></i>Описание
               </label>
-              <div class="w-full p-4 rounded-2xl bg-gray-800 border-2 border-transparent font-medium text-white whitespace-pre-wrap break-words">
+              <div class="w-full p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-800 border-2 border-transparent font-medium text-white whitespace-pre-wrap break-words text-sm md:text-base">
                 {{ modals.noteDetail.content || 'Нет содержимого' }}
               </div>
             </div>
           </div>
-          <div class="grid lg:grid-cols-3 gap-6">
-            <div v-if="modals.noteDetail.video_urls && modals.noteDetail.video_urls.length" class="space-y-4">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+            <div v-if="modals.noteDetail.video_urls && modals.noteDetail.video_urls.length" class="space-y-3 md:space-y-4">
               <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-video text-blue-600"></i>
+                <div class="w-6 h-6 md:w-8 md:h-8 bg-blue-100 rounded-md md:rounded-lg flex items-center justify-center">
+                  <i class="fas fa-video text-blue-600 text-sm md:text-base"></i>
                 </div>
                 <div>
-                  <h4 class="font-semibold text-white">Видео</h4>
+                  <h4 class="font-semibold text-white text-sm md:text-base">Видео</h4>
                   <p class="text-xs text-gray-300">{{ modals.noteDetail.video_urls.length }} файл(ов)</p>
                 </div>
               </div>
-              <div class="space-y-4 max-h-64 overflow-y-auto">
-                <video v-for="url in modals.noteDetail.video_urls" :key="url" :src="url" controls class="w-full rounded-xl shadow-md"></video>
+              <div class="space-y-3 md:space-y-4 max-h-48 md:max-h-64 overflow-y-auto">
+                <video v-for="url in modals.noteDetail.video_urls" :key="url" :src="url" controls class="w-full rounded-lg md:rounded-xl shadow-md"></video>
               </div>
             </div>
-            <div v-if="modals.noteDetail.image_urls && modals.noteDetail.image_urls.length" class="space-y-4">
+            <div v-if="modals.noteDetail.image_urls && modals.noteDetail.image_urls.length" class="space-y-3 md:space-y-4">
               <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-image text-green-600"></i>
+                <div class="w-6 h-6 md:w-8 md:h-8 bg-green-100 rounded-md md:rounded-lg flex items-center justify-center">
+                  <i class="fas fa-image text-green-600 text-sm md:text-base"></i>
                 </div>
                 <div>
-                  <h4 class="font-semibold text-white">Изображения</h4>
+                  <h4 class="font-semibold text-white text-sm md:text-base">Изображения</h4>
                   <p class="text-xs text-gray-300">{{ modals.noteDetail.image_urls.length }} файл(ов)</p>
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-4 max-h-64 overflow-y-auto">
+              <div class="grid grid-cols-2 gap-2 md:gap-4 max-h-48 md:max-h-64 overflow-y-auto">
                 <div v-for="url in modals.noteDetail.image_urls" :key="url" class="relative group">
-                  <img :src="url" @click="openImageZoom(url)" class="w-full h-24 object-cover rounded-xl cursor-zoom-in hover:opacity-80 transition shadow-md">
-                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition flex items-center justify-center pointer-events-none">
-                    <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition text-xl"></i>
+                  <img :src="url" @click="openImageZoom(url)" class="w-full h-20 md:h-24 object-cover rounded-lg md:rounded-xl cursor-zoom-in hover:opacity-80 transition shadow-md">
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg md:rounded-xl transition flex items-center justify-center pointer-events-none">
+                    <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition text-lg md:text-xl"></i>
                   </div>
                 </div>
               </div>
             </div>
-            <div v-if="modals.noteDetail.audio_urls && modals.noteDetail.audio_urls.length" class="space-y-4">
+            <div v-if="modals.noteDetail.audio_urls && modals.noteDetail.audio_urls.length" class="space-y-3 md:space-y-4">
               <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-music text-purple-600"></i>
+                <div class="w-6 h-6 md:w-8 md:h-8 bg-purple-100 rounded-md md:rounded-lg flex items-center justify-center">
+                  <i class="fas fa-music text-purple-600 text-sm md:text-base"></i>
                 </div>
                 <div>
-                  <h4 class="font-semibold text-white">Аудио</h4>
+                  <h4 class="font-semibold text-white text-sm md:text-base">Аудио</h4>
                   <p class="text-xs text-gray-300">{{ modals.noteDetail.audio_urls.length }} файл(ов)</p>
                 </div>
               </div>
-              <div class="space-y-3 max-h-64 overflow-y-auto">
+              <div class="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                 <audio v-for="url in modals.noteDetail.audio_urls" :key="url" :src="url" controls class="w-full"></audio>
               </div>
             </div>
           </div>
         </div>
-        <div v-else class="p-6">
-          <p class="text-gray-300">Загрузка данных...</p>
+        <div v-else class="p-4 md:p-6">
+          <p class="text-gray-300 text-sm md:text-base">Загрузка данных...</p>
         </div>
       </div>
     </div>
 
     <!-- Image Zoom Modal -->
-    <div v-if="modals.imageZoom" class="fixed inset-0 bg-black/95 flex items-center justify-center z-[60]" @wheel="handleZoomWheel" @mousedown="startDrag" @mousemove="drag" @mouseup="endDrag" @mouseleave="endDrag" @click="modals.imageZoom = false">
-      <button @click="modals.imageZoom = false" class="absolute top-6 right-6 w-12 h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition text-xl z-10">
+    <div v-if="modals.imageZoom" class="fixed inset-0 bg-black/95 flex items-center justify-center z-[60]" @wheel="handleZoomWheel" @mousedown="startDrag" @mousemove="drag" @mouseup="endDrag" @mouseleave="endDrag" @touchstart="startDrag" @touchmove="handleTouchZoom" @touchend="handleTouchEnd" @click.self="modals.imageZoom = false">
+      <button @click="modals.imageZoom = false" class="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 md:w-12 md:h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition text-lg md:text-xl z-10">
         <i class="fas fa-times"></i>
       </button>
-      <div class="absolute top-6 left-6 bg-black/70 text-white px-4 py-2 rounded-full text-sm z-10">
+      <div class="absolute top-4 left-4 md:top-6 md:left-6 bg-black/70 text-white px-3 py-1 md:px-4 md:py-2 rounded-full text-xs md:text-sm z-10">
         {{ Math.round(imageZoomLevel * 100) }}%
       </div>
-      <img :src="modals.zoomedImageUrl" :style="{ transform: 'scale(' + imageZoomLevel + ') translate(' + imageTranslateX + 'px, ' + imageTranslateY + 'px)', cursor: isDragging ? 'grabbing' : 'grab' }" class="max-w-none max-h-none object-contain transition-transform duration-300" @dragstart.prevent @click.stop>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div v-if="modals.confirmDelete" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="modals.confirmDelete = false">
-      <div @click.stop class="glass rounded-3xl p-6 w-full max-w-sm">
-        <div class="text-center">
-          <div class="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <i class="fas fa-trash text-red-500 text-2xl"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2 text-white">Удалить заметку?</h3>
-          <p class="text-gray-300 mb-6">Это действие нельзя отменить</p>
-          <div class="flex space-x-3">
-            <button @click="modals.confirmDelete = false" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-xl transition">
-              Отмена
-            </button>
-            <button @click="confirmDeleteNote" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-xl transition">
-              Удалить
-            </button>
-          </div>
-        </div>
+      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs z-10 md:hidden">
+        Щипок для зума
       </div>
+      <img :src="modals.zoomedImageUrl" :style="{ transform: 'scale(' + imageZoomLevel + ') translate(' + imageTranslateX + 'px, ' + imageTranslateY + 'px)', cursor: isDragging ? 'grabbing' : 'grab' }" class="max-w-none max-h-none object-contain transition-transform duration-300 select-none" @dragstart.prevent @click.stop>
     </div>
 
     <!-- Lightbox -->
-    <div v-if="modals.lightbox" @click="modals.lightbox = false" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 cursor-zoom-out">
-      <img :src="modals.lightboxUrl" class="max-w-full max-h-full rounded-2xl shadow-2xl">
-      <button @click="modals.lightbox = false" class="absolute top-6 right-6 text-white text-3xl hover:text-red-400 transition">
+    <div v-if="modals.lightbox" @click="modals.lightbox = false" class="fixed inset-0 bg-black/90 flex items-center justify-center p-2 md:p-4 z-50 cursor-zoom-out">
+      <img :src="modals.lightboxUrl" class="max-w-full max-h-full rounded-xl md:rounded-2xl shadow-2xl">
+      <button @click="modals.lightbox = false" class="absolute top-4 right-4 md:top-6 md:right-6 text-white text-2xl md:text-3xl hover:text-red-400 transition">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -500,6 +518,16 @@ export default {
     const loading = ref(false)
     const sidebarOpen = ref(false)
     
+    // Mobile sidebar auto-close
+    const isMobile = () => window.innerWidth < 768
+    
+    // Auto-close sidebar on mobile after navigation
+    const closeMobileSidebar = () => {
+      if (isMobile()) {
+        sidebarOpen.value = false
+      }
+    }
+    
     // Image zoom state
     const imageZoomLevel = ref(1)
     const imageTranslateX = ref(0)
@@ -507,6 +535,7 @@ export default {
     const isDragging = ref(false)
     const dragStartX = ref(0)
     const dragStartY = ref(0)
+    const lastTouchDistance = ref(null)
     
     const modals = reactive({
       profile: false,
@@ -565,7 +594,11 @@ export default {
       
       setTimeout(() => {
         notification.style.transform = 'translateX(100%)'
-        setTimeout(() => document.body.removeChild(notification), 300)
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification)
+          }
+        }, 300)
       }, 3000)
     }
 
@@ -690,6 +723,11 @@ export default {
       loading.value = true
       try {
         const token = localStorage.getItem('access_token')
+        if (!token) {
+          currentView.value = 'login'
+          return
+        }
+        
         const res = await fetch(`${API}/notes/get_all_notes/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -697,6 +735,9 @@ export default {
         if (res.ok) {
           const data = await res.json()
           notes.value = data.data || []
+        } else if (res.status === 401) {
+          localStorage.clear()
+          currentView.value = 'login'
         }
       } catch (error) {
         console.error('Failed to load notes:', error)
@@ -814,23 +855,53 @@ export default {
 
     const handleZoomWheel = (event) => {
       event.preventDefault()
-      const delta = event.deltaY > 0 ? -0.05 : 0.05
+      const delta = event.deltaY > 0 ? -0.1 : 0.1
       const newZoom = Math.max(0.5, Math.min(5, imageZoomLevel.value + delta))
       imageZoomLevel.value = newZoom
+    }
+
+    const handleTouchZoom = (event) => {
+      if (event.touches.length === 2) {
+        event.preventDefault()
+        const touch1 = event.touches[0]
+        const touch2 = event.touches[1]
+        const distance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) + 
+          Math.pow(touch2.clientY - touch1.clientY, 2)
+        )
+        
+        if (lastTouchDistance.value) {
+          const delta = (distance - lastTouchDistance.value) * 0.01
+          const newZoom = Math.max(0.5, Math.min(5, imageZoomLevel.value + delta))
+          imageZoomLevel.value = newZoom
+        }
+        lastTouchDistance.value = distance
+      } else if (event.touches.length === 1 && isDragging.value) {
+        drag(event)
+      }
+    }
+
+    const handleTouchEnd = () => {
+      lastTouchDistance.value = null
+      isDragging.value = false
     }
 
     const startDrag = (event) => {
       if (imageZoomLevel.value > 1) {
         isDragging.value = true
-        dragStartX.value = event.clientX - imageTranslateX.value
-        dragStartY.value = event.clientY - imageTranslateY.value
+        const clientX = event.touches ? event.touches[0].clientX : event.clientX
+        const clientY = event.touches ? event.touches[0].clientY : event.clientY
+        dragStartX.value = clientX - imageTranslateX.value
+        dragStartY.value = clientY - imageTranslateY.value
       }
     }
 
     const drag = (event) => {
       if (isDragging.value && imageZoomLevel.value > 1) {
-        imageTranslateX.value = event.clientX - dragStartX.value
-        imageTranslateY.value = event.clientY - dragStartY.value
+        const clientX = event.touches ? event.touches[0].clientX : event.clientX
+        const clientY = event.touches ? event.touches[0].clientY : event.clientY
+        imageTranslateX.value = clientX - dragStartX.value
+        imageTranslateY.value = clientY - dragStartY.value
       }
     }
 
@@ -862,10 +933,15 @@ export default {
       
       const token = localStorage.getItem('access_token')
       if (token) {
-        await getUserInfo()
-        if (user.value) {
-          currentView.value = 'dashboard'
-          await loadNotes()
+        try {
+          await getUserInfo()
+          if (user.value) {
+            currentView.value = 'dashboard'
+            await loadNotes()
+          }
+        } catch (error) {
+          console.error('Failed to initialize user:', error)
+          localStorage.clear()
         }
       }
     })
@@ -876,7 +952,8 @@ export default {
       currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy,
       login, register, logout, loadNotes, deleteNote, confirmDeleteNote, viewNote, createNote,
       addFiles, dropFiles, removeFile, openLightbox, openImageZoom,
-      handleZoomWheel, startDrag, drag, endDrag, imageZoomLevel, imageTranslateX, imageTranslateY, isDragging
+      handleZoomWheel, handleTouchZoom, handleTouchEnd, startDrag, drag, endDrag, 
+      imageZoomLevel, imageTranslateX, imageTranslateY, isDragging, closeMobileSidebar
     }
   }
 }
