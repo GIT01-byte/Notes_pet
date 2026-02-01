@@ -1,5 +1,5 @@
-# version: '3.8'
-
+# BUG /refresh_tokens time фронтенд
+# TODO ДОБАВИТЬ БОЛЬШЕ ФУНКЦИОНАЛА (АВЫ)
 services:
   # --- БАЛАНСИРОВЩИК (Nginx) ---
   nginx:

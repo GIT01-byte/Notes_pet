@@ -103,13 +103,21 @@
             <i class="fas fa-bars text-xl"></i>
           </button>
           <h1 class="text-lg font-bold text-white">NotesCloud</h1>
-          <button @click="modals.profile = true" class="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            {{ user?.username?.charAt(0)?.toUpperCase() || 'U' }}
-          </button>
+          <div class="flex items-center space-x-2">
+            <button @click="modals.createNote = true" class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-3 py-1.5 rounded-lg font-medium text-sm">
+              <i class="fas fa-plus mr-1"></i>Создать
+            </button>
+            <button @click="modals.profile = true" class="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+              <img v-if="user?.profile?.avatar_url" :src="user.profile.avatar_url" class="w-full h-full object-cover" :alt="user.username">
+              <div v-else class="w-full h-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
+                {{ user?.username?.charAt(0)?.toUpperCase() || 'U' }}
+              </div>
+            </button>
+          </div>
         </div>
 
         <!-- Sidebar -->
-        <div :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full', 'md:translate-x-0', sidebarOpen ? 'w-80' : 'md:w-20', 'fixed md:relative z-40 md:z-auto h-full md:h-auto']" class="glass-dark text-white transition-all duration-300 flex flex-col">
+        <div :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full', 'md:translate-x-0', sidebarOpen ? 'w-64 md:w-80' : 'md:w-20', 'fixed md:relative z-40 md:z-auto h-full md:h-auto']" class="glass-dark text-white transition-all duration-300 flex flex-col">
           <!-- Overlay for mobile -->
           <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 md:hidden z-[-1]"></div>
           
@@ -146,9 +154,17 @@
               <h1 class="text-4xl font-black text-white">
                 <i class="fas fa-sticky-note mr-3"></i>Мои заметки
               </h1>
-              <button @click="modals.profile = true" class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-lg transition">
-                {{ user?.username || 'Пользователь' }}
-              </button>
+              <div class="flex items-center space-x-4">
+                <button @click="modals.createNote = true" class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-lg transition">
+                  <i class="fas fa-plus mr-2"></i>Создать заметку
+                </button>
+                <button @click="modals.profile = true" class="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden hover:shadow-lg transition">
+                  <img v-if="user?.profile?.avatar_url" :src="user.profile.avatar_url" class="w-full h-full object-cover" :alt="user.username">
+                  <div v-else class="w-full h-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center text-white text-lg font-bold">
+                    {{ user?.username?.charAt(0)?.toUpperCase() || 'U' }}
+                  </div>
+                </button>
+              </div>
             </div>
 
             <!-- Mobile Title -->
@@ -389,7 +405,7 @@
     </div>
 
     <!-- Note Detail Modal -->
-    <div v-if="modals.showNoteDetail" class="fixed inset-0 modal-backdrop flex items-center justify-center p-2 md:p-4 z-50" @click="modals.showNoteDetail = false">
+    <div v-if="modals.showNoteDetail" class="fixed inset-0 modal-backdrop flex items-center justify-center p-2 md:p-4 z-50" @click="modals.showNoteDetail = false" @wheel.stop>
       <div @click.stop class="glass rounded-2xl md:rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-auto shadow-2xl">
         <div class="sticky top-0 glass rounded-t-2xl md:rounded-t-3xl p-4 md:p-6 border-b border-gray-200/50 flex justify-between items-center">
           <div class="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0 pr-2 md:pr-4">
@@ -424,52 +440,49 @@
               </div>
             </div>
           </div>
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-            <div v-if="modals.noteDetail.video_urls && modals.noteDetail.video_urls.length" class="space-y-3 md:space-y-4">
-              <div class="flex items-center space-x-2">
-                <div class="w-6 h-6 md:w-8 md:h-8 bg-blue-100 rounded-md md:rounded-lg flex items-center justify-center">
-                  <i class="fas fa-video text-blue-600 text-sm md:text-base"></i>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-white text-sm md:text-base">Видео</h4>
-                  <p class="text-xs text-gray-300">{{ modals.noteDetail.video_urls.length }} файл(ов)</p>
-                </div>
-              </div>
-              <div class="space-y-3 md:space-y-4 max-h-48 md:max-h-64 overflow-y-auto">
-                <video v-for="url in modals.noteDetail.video_urls" :key="url" :src="url" controls class="w-full rounded-lg md:rounded-xl shadow-md"></video>
-              </div>
-            </div>
-            <div v-if="modals.noteDetail.image_urls && modals.noteDetail.image_urls.length" class="space-y-3 md:space-y-4">
-              <div class="flex items-center space-x-2">
-                <div class="w-6 h-6 md:w-8 md:h-8 bg-green-100 rounded-md md:rounded-lg flex items-center justify-center">
-                  <i class="fas fa-image text-green-600 text-sm md:text-base"></i>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-white text-sm md:text-base">Изображения</h4>
-                  <p class="text-xs text-gray-300">{{ modals.noteDetail.image_urls.length }} файл(ов)</p>
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-2 md:gap-4 max-h-48 md:max-h-64 overflow-y-auto">
-                <div v-for="url in modals.noteDetail.image_urls" :key="url" class="relative group">
-                  <img :src="url" @click="openImageZoom(url)" class="w-full h-20 md:h-24 object-cover rounded-lg md:rounded-xl cursor-zoom-in hover:opacity-80 transition shadow-md">
-                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg md:rounded-xl transition flex items-center justify-center pointer-events-none">
-                    <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition text-lg md:text-xl"></i>
+          <div class="space-y-4 md:space-y-6">
+            <!-- Медиафайлы -->
+            <div v-if="(modals.noteDetail.video_urls && modals.noteDetail.video_urls.length) || (modals.noteDetail.image_urls && modals.noteDetail.image_urls.length) || (modals.noteDetail.audio_urls && modals.noteDetail.audio_urls.length)" class="space-y-3">
+              <h3 class="text-lg font-semibold text-white flex items-center">
+                <i class="fas fa-photo-video mr-2 text-cyan-400"></i>Медиафайлы
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button v-if="modals.noteDetail.video_urls && modals.noteDetail.video_urls.length" @click="openMediaViewer('video', modals.noteDetail.video_urls, 'Видео')" class="flex items-center justify-between p-4 rounded-xl bg-blue-100/10 hover:bg-blue-100/20 transition border border-blue-500/20">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <i class="fas fa-video text-blue-600"></i>
+                    </div>
+                    <div class="text-left">
+                      <h4 class="font-semibold text-white">Видео</h4>
+                      <p class="text-xs text-gray-300">{{ modals.noteDetail.video_urls.length }} файл(ов)</p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-            <div v-if="modals.noteDetail.audio_urls && modals.noteDetail.audio_urls.length" class="space-y-3 md:space-y-4">
-              <div class="flex items-center space-x-2">
-                <div class="w-6 h-6 md:w-8 md:h-8 bg-purple-100 rounded-md md:rounded-lg flex items-center justify-center">
-                  <i class="fas fa-music text-purple-600 text-sm md:text-base"></i>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-white text-sm md:text-base">Аудио</h4>
-                  <p class="text-xs text-gray-300">{{ modals.noteDetail.audio_urls.length }} файл(ов)</p>
-                </div>
-              </div>
-              <div class="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
-                <audio v-for="url in modals.noteDetail.audio_urls" :key="url" :src="url" controls class="w-full"></audio>
+                  <i class="fas fa-chevron-right text-white"></i>
+                </button>
+                <button v-if="modals.noteDetail.image_urls && modals.noteDetail.image_urls.length" @click="openMediaViewer('image', modals.noteDetail.image_urls, 'Изображения')" class="flex items-center justify-between p-4 rounded-xl bg-green-100/10 hover:bg-green-100/20 transition border border-green-500/20">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <i class="fas fa-image text-green-600"></i>
+                    </div>
+                    <div class="text-left">
+                      <h4 class="font-semibold text-white">Изображения</h4>
+                      <p class="text-xs text-gray-300">{{ modals.noteDetail.image_urls.length }} файл(ов)</p>
+                    </div>
+                  </div>
+                  <i class="fas fa-chevron-right text-white"></i>
+                </button>
+                <button v-if="modals.noteDetail.audio_urls && modals.noteDetail.audio_urls.length" @click="openMediaViewer('audio', modals.noteDetail.audio_urls, 'Аудио')" class="flex items-center justify-between p-4 rounded-xl bg-purple-100/10 hover:bg-purple-100/20 transition border border-purple-500/20">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <i class="fas fa-music text-purple-600"></i>
+                    </div>
+                    <div class="text-left">
+                      <h4 class="font-semibold text-white">Аудио</h4>
+                      <p class="text-xs text-gray-300">{{ modals.noteDetail.audio_urls.length }} файл(ов)</p>
+                    </div>
+                  </div>
+                  <i class="fas fa-chevron-right text-white"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -480,26 +493,99 @@
       </div>
     </div>
 
-    <!-- Image Zoom Modal -->
-    <div v-if="modals.imageZoom" class="fixed inset-0 bg-black/95 flex items-center justify-center z-[60]" @wheel="handleZoomWheel" @mousedown="startDrag" @mousemove="drag" @mouseup="endDrag" @mouseleave="endDrag" @touchstart="startDrag" @touchmove="handleTouchZoom" @touchend="handleTouchEnd" @click.self="modals.imageZoom = false">
-      <button @click="modals.imageZoom = false" class="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 md:w-12 md:h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition text-lg md:text-xl z-10">
-        <i class="fas fa-times"></i>
+
+
+    <!-- Улучшенный зум с фишками из старого фронтенда -->
+    <div v-if="zoom.show" @click="zoom.show = false" class="fixed inset-0 bg-black/95 z-[80] flex items-center justify-center"
+         @wheel="handleZoomWheel" @mousedown="startDrag" @mousemove="drag" @mouseup="endDrag" @mouseleave="endDrag">
+      <button @click="zoom.show = false" class="absolute top-6 right-6 w-12 h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center z-10">
+        <i class="fas fa-times text-xl"></i>
       </button>
-      <div class="absolute top-4 left-4 md:top-6 md:left-6 bg-black/70 text-white px-3 py-1 md:px-4 md:py-2 rounded-full text-xs md:text-sm z-10">
-        {{ Math.round(imageZoomLevel * 100) }}%
+      <div class="absolute top-6 left-6 bg-black/70 text-white px-4 py-2 rounded-full text-sm z-10">
+        {{ Math.round(zoom.scale * 100) }}%
       </div>
-      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs z-10 md:hidden">
-        Щипок для зума
+      <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+        <button @click.stop="zoomOut" class="w-12 h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center">
+          <i class="fas fa-minus"></i>
+        </button>
+        <button @click.stop="zoom.scale = 1; zoom.translateX = 0; zoom.translateY = 0" class="w-12 h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center">
+          <i class="fas fa-home"></i>
+        </button>
+        <button @click.stop="zoomIn" class="w-12 h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center">
+          <i class="fas fa-plus"></i>
+        </button>
       </div>
-      <img :src="modals.zoomedImageUrl" :style="{ transform: 'scale(' + imageZoomLevel + ') translate(' + imageTranslateX + 'px, ' + imageTranslateY + 'px)', cursor: isDragging ? 'grabbing' : 'grab' }" class="max-w-none max-h-none object-contain transition-transform duration-300 select-none" @dragstart.prevent @click.stop>
+      <img :src="zoom.url" 
+           :style="{ 
+             transform: `scale(${zoom.scale}) translate(${zoom.translateX}px, ${zoom.translateY}px)`,
+             cursor: zoom.isDragging ? 'grabbing' : (zoom.scale > 1 ? 'grab' : 'zoom-in')
+           }"
+           class="max-w-full max-h-full w-auto h-auto object-contain" 
+           @click.stop @dragstart.prevent>
     </div>
 
-    <!-- Lightbox -->
-    <div v-if="modals.lightbox" @click="modals.lightbox = false" class="fixed inset-0 bg-black/90 flex items-center justify-center p-2 md:p-4 z-50 cursor-zoom-out">
-      <img :src="modals.lightboxUrl" class="max-w-full max-h-full rounded-xl md:rounded-2xl shadow-2xl">
-      <button @click="modals.lightbox = false" class="absolute top-4 right-4 md:top-6 md:right-6 text-white text-2xl md:text-3xl hover:text-red-400 transition">
-        <i class="fas fa-times"></i>
-      </button>
+    <!-- Media Viewer Modal -->
+    <div v-if="modals.mediaViewer.show" class="fixed inset-0 bg-black/95 flex flex-col z-[70]" @wheel.stop>
+      <div class="flex justify-between items-center p-4 border-b border-gray-700">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
+            <i :class="modals.mediaViewer.type === 'video' ? 'fas fa-video' : modals.mediaViewer.type === 'image' ? 'fas fa-image' : 'fas fa-music'" class="text-white"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">{{ modals.mediaViewer.title }}</h2>
+            <p class="text-sm text-gray-300">{{ modals.mediaViewer.files.length }} файл(ов)</p>
+          </div>
+        </div>
+        <button @click="modals.mediaViewer.show = false" class="w-10 h-10 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center transition">
+          <i class="fas fa-times text-white"></i>
+        </button>
+      </div>
+      <div class="flex-1 overflow-auto p-4">
+        <div v-if="modals.mediaViewer.type === 'video'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div v-for="(url, index) in modals.mediaViewer.files" :key="url" class="space-y-2">
+            <video :src="url" controls class="w-full rounded-xl shadow-2xl" @play="pauseOtherMedia($event)"></video>
+            <p class="text-white text-center text-sm">Видео {{ index + 1 }}</p>
+          </div>
+        </div>
+        <div v-else-if="modals.mediaViewer.type === 'image'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="(url, index) in modals.mediaViewer.files" :key="url" class="relative group">
+            <img :src="url" class="w-full h-64 object-cover rounded-xl hover:opacity-80 transition shadow-lg">
+            <button @click="openZoom(url)" class="absolute top-2 right-2 w-8 h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+              <i class="fas fa-search-plus text-sm"></i>
+            </button>
+            <div class="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+              Изображение {{ index + 1 }}
+            </div>
+          </div>
+        </div>
+        <div v-else-if="modals.mediaViewer.type === 'audio'" class="space-y-4 max-w-2xl mx-auto">
+          <div v-for="(url, index) in modals.mediaViewer.files" :key="url" class="bg-gray-800 rounded-xl p-4">
+            <h3 class="text-white font-medium mb-2">Аудио {{ index + 1 }}</h3>
+            <audio :src="url" controls class="w-full" @play="pauseOtherMedia($event)"></audio>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div v-if="modals.confirmDelete" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="modals.confirmDelete = false">
+      <div @click.stop class="glass rounded-3xl p-8 w-full max-w-md">
+        <div class="text-center">
+          <div class="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-white mb-2">Удалить заметку?</h2>
+          <p class="text-gray-300 mb-6">Это действие нельзя отменить</p>
+          <div class="flex space-x-4">
+            <button @click="modals.confirmDelete = false" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition">
+              Отмена
+            </button>
+            <button @click="confirmDeleteNote" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition">
+              Удалить
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -528,14 +614,17 @@ export default {
       }
     }
     
-    // Image zoom state
-    const imageZoomLevel = ref(1)
-    const imageTranslateX = ref(0)
-    const imageTranslateY = ref(0)
-    const isDragging = ref(false)
-    const dragStartX = ref(0)
-    const dragStartY = ref(0)
-    const lastTouchDistance = ref(null)
+    // Улучшенный зум с фишками из старого фронтенда
+    const zoom = reactive({
+      show: false,
+      url: '',
+      scale: 1,
+      translateX: 0,
+      translateY: 0,
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0
+    })
     
     const modals = reactive({
       profile: false,
@@ -544,10 +633,14 @@ export default {
       lightboxUrl: '',
       showNoteDetail: false,
       noteDetail: null,
-      imageZoom: false,
-      zoomedImageUrl: '',
       confirmDelete: false,
-      deleteNoteId: null
+      deleteNoteId: null,
+      mediaViewer: {
+        show: false,
+        type: '',
+        files: [],
+        title: ''
+      }
     })
 
     const forms = reactive({
@@ -845,68 +938,67 @@ export default {
       modals.lightbox = true
     }
 
-    const openImageZoom = (url) => {
-      modals.zoomedImageUrl = url
-      modals.imageZoom = true
-      imageZoomLevel.value = 1
-      imageTranslateX.value = 0
-      imageTranslateY.value = 0
+    const openMediaViewer = (type, files, title) => {
+      modals.mediaViewer.type = type
+      modals.mediaViewer.files = files
+      modals.mediaViewer.title = title
+      modals.mediaViewer.show = true
+    }
+
+    const openZoom = (url) => {
+      zoom.show = true
+      zoom.url = url
+      zoom.scale = 1
+      zoom.translateX = 0
+      zoom.translateY = 0
+    }
+
+    const zoomIn = () => {
+      zoom.scale = Math.min(3, zoom.scale + 0.3)
+    }
+
+    const zoomOut = () => {
+      zoom.scale = Math.max(0.5, zoom.scale - 0.3)
     }
 
     const handleZoomWheel = (event) => {
       event.preventDefault()
       const delta = event.deltaY > 0 ? -0.1 : 0.1
-      const newZoom = Math.max(0.5, Math.min(5, imageZoomLevel.value + delta))
-      imageZoomLevel.value = newZoom
-    }
-
-    const handleTouchZoom = (event) => {
-      if (event.touches.length === 2) {
-        event.preventDefault()
-        const touch1 = event.touches[0]
-        const touch2 = event.touches[1]
-        const distance = Math.sqrt(
-          Math.pow(touch2.clientX - touch1.clientX, 2) + 
-          Math.pow(touch2.clientY - touch1.clientY, 2)
-        )
-        
-        if (lastTouchDistance.value) {
-          const delta = (distance - lastTouchDistance.value) * 0.01
-          const newZoom = Math.max(0.5, Math.min(5, imageZoomLevel.value + delta))
-          imageZoomLevel.value = newZoom
-        }
-        lastTouchDistance.value = distance
-      } else if (event.touches.length === 1 && isDragging.value) {
-        drag(event)
-      }
-    }
-
-    const handleTouchEnd = () => {
-      lastTouchDistance.value = null
-      isDragging.value = false
+      zoom.scale = Math.max(0.5, Math.min(3, zoom.scale + delta))
     }
 
     const startDrag = (event) => {
-      if (imageZoomLevel.value > 1) {
-        isDragging.value = true
-        const clientX = event.touches ? event.touches[0].clientX : event.clientX
-        const clientY = event.touches ? event.touches[0].clientY : event.clientY
-        dragStartX.value = clientX - imageTranslateX.value
-        dragStartY.value = clientY - imageTranslateY.value
+      if (zoom.scale > 1) {
+        zoom.isDragging = true
+        zoom.dragStartX = event.clientX - zoom.translateX
+        zoom.dragStartY = event.clientY - zoom.translateY
       }
     }
 
     const drag = (event) => {
-      if (isDragging.value && imageZoomLevel.value > 1) {
-        const clientX = event.touches ? event.touches[0].clientX : event.clientX
-        const clientY = event.touches ? event.touches[0].clientY : event.clientY
-        imageTranslateX.value = clientX - dragStartX.value
-        imageTranslateY.value = clientY - dragStartY.value
+      if (zoom.isDragging && zoom.scale > 1) {
+        zoom.translateX = event.clientX - zoom.dragStartX
+        zoom.translateY = event.clientY - zoom.dragStartY
       }
     }
 
     const endDrag = () => {
-      isDragging.value = false
+      zoom.isDragging = false
+    }
+
+    const pauseOtherMedia = (event) => {
+      const audios = document.querySelectorAll('audio')
+      const videos = document.querySelectorAll('video')
+      audios.forEach(audio => {
+        if (audio !== event.target) {
+          audio.pause()
+        }
+      })
+      videos.forEach(video => {
+        if (video !== event.target) {
+          video.pause()
+        }
+      })
     }
 
     const viewNote = async (id) => {
@@ -949,11 +1041,10 @@ export default {
     const isHealthy = computed(() => healthStatus.notes && healthStatus.users)
 
     return {
-      currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy,
+      currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy, zoom,
       login, register, logout, loadNotes, deleteNote, confirmDeleteNote, viewNote, createNote,
-      addFiles, dropFiles, removeFile, openLightbox, openImageZoom,
-      handleZoomWheel, handleTouchZoom, handleTouchEnd, startDrag, drag, endDrag, 
-      imageZoomLevel, imageTranslateX, imageTranslateY, isDragging, closeMobileSidebar
+      addFiles, dropFiles, removeFile, openLightbox, openMediaViewer, closeMobileSidebar, 
+      openZoom, zoomIn, zoomOut, handleZoomWheel, startDrag, drag, endDrag, pauseOtherMedia
     }
   }
 }
