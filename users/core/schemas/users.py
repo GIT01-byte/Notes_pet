@@ -9,6 +9,7 @@ from typing import Annotated, Any, List, Optional
 
 from fastapi import Form
 from pydantic import BaseModel, EmailStr, Field
+from notes.core.models.base import Base
 
 
 class UserRead(BaseModel):
@@ -26,8 +27,14 @@ class JWTPayload(BaseModel):
     jti: str
 
 
+class AccessToken(BaseModel):
+    access_token: str
+    expire: datetime
+
+
 class TokenResponse(BaseModel):
     access_token: str
+    expire_acces: datetime
     refresh_token: str
     token_type: str = "bearer"
 

@@ -161,13 +161,12 @@ class AuthService:
         Raises:
             RepositoryInternalError: Если произошла ошибка при сохранении Refresh токена в БД.
         """
-        logger.debug(f"Начало генерации токенов для пользователя ID: {user_id}.")
+        logger.debug(f"Начало создания токенов для пользователя ID: {user_id}.")
 
-        # 1. Генерация Access токена
+        # 1. Создание Access токена
         access_token = create_access_token(user_id)
-        logger.debug(f"Access токен сгенерирован для пользователя ID: {user_id}.")
 
-        # 2. Генерация Refresh токена и его хэша
+        # 2. Создание Refresh токена и его хэша
         refresh_token_raw, refresh_hash = gen_refresh_token()
         logger.debug(
             f"Refresh токен (hash: {refresh_hash[:8]}...) сгенерирован для пользователя ID: {user_id}."
@@ -258,6 +257,7 @@ class AuthService:
             logger.info(f"Пользователь {user.username!r} успешно аутентифицирован.")
             return TokenResponse(
                 access_token=access_token,
+                expire_acces=
                 refresh_token=refresh_token,
             )
 

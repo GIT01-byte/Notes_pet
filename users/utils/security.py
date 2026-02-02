@@ -14,7 +14,7 @@ import hashlib
 
 from exceptions.exceptions import InvalidTokenError
 from core.settings import settings
-from core.schemas import JWTPayload
+from core.schemas import JWTPayload, AccessToken
 
 from utils.logging import logger
 
@@ -24,7 +24,7 @@ ACCESS_TOKEN_TYPE = "access"
 REFRESH_TOKEN_TYPE = "refresh"
 
 
-def create_access_token(user_id: int) -> str:
+def create_access_token(user_id: int) -> AccessToken:
     """
     Создает новый access-токен для указанного пользователя.
 
@@ -32,6 +32,7 @@ def create_access_token(user_id: int) -> str:
     :return: Строка с новым access-токеном
     """
     if isinstance(user_id, int):
+        # Генерируем JTI (уникальный индефикатор токена) и вычисляем время истечения токена
         jti = secrets.token_urlsafe(16)
         expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.jwt.access_token_expire_minutes
@@ -41,10 +42,24 @@ def create_access_token(user_id: int) -> str:
             exp=expire,
             jti=jti,
         )
-        logger.info(
-            f"Создаем access-токен для пользователя с ID={user_id}, срок действия до {expire.isoformat()}"
-        )
-        return encode_jwt(payload=jwt_payload)
+        
+        # Генерируем токен
+        access_token = encode_jwt(jwt_payload)
+        
+        if isinstance(access_token, str): 
+            logger.debug(f"Access-токен для пользователя с ID={user_id} успешно сгенерирован.")
+            
+            # Добавляем в pydantic модель информацию о сроке действия токена путем декодирования токена
+            expire_access = decode_access_token(access_token)["expire"]
+            
+            logger.info(
+                f"Access-токен для пользователя с ID={user_id} успешно создан со сроком действия до {expire.isoformat()}"
+            )
+            return AccessToken(
+                access_token=access_token,
+                expire=expire_access,
+            )
+        raise TypeError
     raise TypeError
 
 

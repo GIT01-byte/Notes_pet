@@ -5,6 +5,7 @@ __all__ = (
     "LoginRequest",
     "RegisterRequest",
     "JWTPayload",
+    "AccessToken",
 )
 
 from .users import UserRead
@@ -13,3 +14,4 @@ from .users import RefreshRequest
 from .users import LoginRequest
 from .users import RegisterRequest
 from .users import JWTPayload
+from .users import AccessToken
