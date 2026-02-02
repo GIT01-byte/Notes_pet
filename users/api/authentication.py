@@ -64,6 +64,7 @@ async def auth_login(
 
         return TokenResponse(
             access_token=user.access_token,
+            access_expire=user.access_expire,
             refresh_token=user.refresh_token,
         )
 
@@ -149,6 +150,7 @@ async def auth_refresh_jwt(
         )
         return TokenResponse(
             access_token=pair.access_token,
+            access_expire=pair.access_expire,
             refresh_token=pair.refresh_token,
         )
     except ValidationError as e:

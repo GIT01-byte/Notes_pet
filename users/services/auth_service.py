@@ -258,6 +258,7 @@ class AuthService:
             logger.info(f"Пользователь {user.username!r} успешно аутентифицирован.")
             return TokenResponse(
                 access_token=access_token.token,
+                access_expire=access_token.expire,
                 refresh_token=refresh_token,
             )
 
@@ -426,5 +427,6 @@ class AuthService:
         logger.info("Процедура обновления токенов завершена успешно")
         return TokenResponse(
             access_token=access_token.token,
+            access_expire=access_token.expire,
             refresh_token=refresh_token,
         )

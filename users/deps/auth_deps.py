@@ -104,7 +104,7 @@ async def get_current_user_from_token(
 
         jti: str | None = payload.get("jti")
         user_id: int | None = int(payload.get("sub"))  # type: ignore
-        acess_expire: datetime | None = payload.get(ACCESS_EXPIRE_NAME)
+        acess_expire: int | None = payload.get(ACCESS_EXPIRE_NAME)
         iat: int | None = payload.get(ACCESS_ISSUED_AT_NAME)
 
         if not user_id or not jti:

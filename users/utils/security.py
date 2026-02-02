@@ -53,7 +53,7 @@ def create_access_token(user_id: int) -> AccessToken:
             
             # Добавляем в pydantic модель информацию о сроке действия токена путем декодирования токена
             decoded_access = decode_access_token(access_token)
-            expire_access = decoded_access[ACCESS_EXPIRE_NAME]
+            expire_access: int = decoded_access[ACCESS_EXPIRE_NAME]
             
             logger.info(
                 f"Access-токен для пользователя с ID={user_id} успешно создан со сроком действия до {expire.isoformat()}"

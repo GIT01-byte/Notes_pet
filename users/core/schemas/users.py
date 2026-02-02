@@ -28,11 +28,12 @@ class JWTPayload(BaseModel):
 
 class AccessToken(BaseModel):
     token: str
-    expire: datetime
+    expire: int
 
 
 class TokenResponse(BaseModel):
     access_token: str
+    access_expire: int
     refresh_token: str
     token_type: str = "bearer"
 

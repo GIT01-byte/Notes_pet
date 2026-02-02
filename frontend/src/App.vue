@@ -155,6 +155,9 @@
                 <i class="fas fa-sticky-note mr-3"></i>Мои заметки
               </h1>
               <div class="flex items-center space-x-4">
+                <button @click="testTokenRefresh" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl font-medium text-sm">
+                  <i class="fas fa-sync mr-2"></i>Тест токена
+                </button>
                 <button @click="modals.createNote = true" class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-lg transition">
                   <i class="fas fa-plus mr-2"></i>Создать заметку
                 </button>
@@ -726,7 +729,9 @@ export default {
           localStorage.clear()
           localStorage.setItem('access_token', data.access_token)
           localStorage.setItem('refresh_token', data.refresh_token)
+          localStorage.setItem('access_expire', data.access_expire)
           
+          setupTokenRefresh()
           await getUserInfo()
           currentView.value = 'dashboard'
           await loadNotes()
@@ -772,6 +777,50 @@ export default {
         showNotification('Ошибка сети', 'error')
       } finally {
         loading.value = false
+      }
+    }
+
+    const refreshToken = async () => {
+      try {
+        const refresh = localStorage.getItem('refresh_token')
+        if (!refresh) return false
+
+        const res = await fetch(`${API}/user/refresh_tokens/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refresh })
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          localStorage.setItem('access_token', data.access_token)
+          localStorage.setItem('refresh_token', data.refresh_token)
+          localStorage.setItem('access_expire', data.access_expire)
+          setupTokenRefresh()
+          return true
+        }
+      } catch (error) {
+        console.error('Token refresh failed:', error)
+      }
+      return false
+    }
+
+    const setupTokenRefresh = () => {
+      const expireTime = localStorage.getItem('access_expire')
+      if (!expireTime) return
+
+      const expireTimestamp = parseInt(expireTime) * 1000
+      const now = Date.now()
+      const timeUntilExpire = expireTimestamp - now
+      const refreshTime = Math.max(0, timeUntilExpire - 60000) // 1 минута до истечения или сразу если меньше
+
+      if (timeUntilExpire > 0) {
+        setTimeout(async () => {
+          const success = await refreshToken()
+          if (!success) {
+            logout()
+          }
+        }, refreshTime)
       }
     }
 
@@ -1020,12 +1069,18 @@ export default {
       }
     }
 
+    const testTokenRefresh = async () => {
+      const success = await refreshToken()
+      showNotification(success ? 'Токен обновлен' : 'Ошибка обновления токена', success ? 'success' : 'error')
+    }
+
     onMounted(async () => {
       await checkHealth()
       
       const token = localStorage.getItem('access_token')
       if (token) {
         try {
+          setupTokenRefresh()
           await getUserInfo()
           if (user.value) {
             currentView.value = 'dashboard'
@@ -1044,7 +1099,7 @@ export default {
       currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy, zoom,
       login, register, logout, loadNotes, deleteNote, confirmDeleteNote, viewNote, createNote,
       addFiles, dropFiles, removeFile, openLightbox, openMediaViewer, closeMobileSidebar, 
-      openZoom, zoomIn, zoomOut, handleZoomWheel, startDrag, drag, endDrag, pauseOtherMedia
+      openZoom, zoomIn, zoomOut, handleZoomWheel, startDrag, drag, endDrag, pauseOtherMedia, testTokenRefresh
     }
   }
 }
