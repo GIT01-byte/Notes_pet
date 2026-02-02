@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import sys
 
@@ -21,6 +22,8 @@ from exceptions.exceptions import (
 from utils.security import (
     REFRESH_TOKEN_TYPE,
     ACCESS_TOKEN_TYPE,
+    ACCESS_EXPIRE_NAME, 
+    ACCESS_ISSUED_AT_NAME,
     decode_access_token,
 )
 
@@ -101,7 +104,8 @@ async def get_current_user_from_token(
 
         jti: str | None = payload.get("jti")
         user_id: int | None = int(payload.get("sub"))  # type: ignore
-        iat: int | None = payload.get("iat")
+        acess_expire: datetime | None = payload.get(ACCESS_EXPIRE_NAME)
+        iat: int | None = payload.get(ACCESS_ISSUED_AT_NAME)
 
         if not user_id or not jti:
             raise InvalidTokenError("Missing required claims: sub or jti")
@@ -123,6 +127,7 @@ async def get_current_user_from_token(
             "username": user.username,
             "email": user.email,
             "is_active": user.is_active,
+            "acess_expire": acess_expire,
             "iat": iat,
         }
 

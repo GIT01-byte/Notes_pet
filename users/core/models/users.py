@@ -22,7 +22,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from .base import (
+from core.models.base import (
     Base,
     str_64,
 )

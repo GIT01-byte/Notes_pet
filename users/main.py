@@ -15,8 +15,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
 from core.settings import settings
-from core.models.user_admin import setup_admin
-from core.db.db_manager import db_manager
 from api import api_routers
 
 from utils.logging import logger

@@ -186,5 +186,6 @@ async def auth_user_check_self_info(
         "email": current_user["email"],
         "is_active": current_user["is_active"],
         "jti": current_user["jti"],
+        "access_expire": current_user["acess_expire"],
         "iat": current_user["iat"],
     }

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import Form
 from pydantic import BaseModel, EmailStr
 
@@ -8,4 +10,5 @@ class RequestUserData(BaseModel):
     email: EmailStr
     is_active: bool
     jti: str
+    access_expire: datetime
     iat: int

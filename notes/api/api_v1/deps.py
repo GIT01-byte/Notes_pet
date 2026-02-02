@@ -5,9 +5,7 @@ from fastapi import Query, Request, UploadFile, HTTPException, status
 import httpx
 
 from core.schemas.users import RequestUserData
-
-ACCESS_TOKEN_TYPE = "access"
-REFRESH_TOKEN_TYPE = "refresh"
+from utils.security import ACCESS_EXPIRE_NAME, ACCESS_ISSUED_AT_NAME
 
 
 class NoteCreateForm:
@@ -62,7 +60,8 @@ async def get_current_user(request: Request):
                 email=response_data["email"],
                 is_active=response_data["is_active"],
                 jti=response_data["jti"],
-                iat=response_data["iat"],
+                access_expire=response_data[ACCESS_EXPIRE_NAME],
+                iat=response_data[ACCESS_ISSUED_AT_NAME],
             )
             
         except httpx.RequestError as exc:

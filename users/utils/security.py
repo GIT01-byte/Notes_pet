@@ -21,6 +21,8 @@ from utils.logging import logger
 
 TOKEN_TYPE_FIELD = "type"
 ACCESS_TOKEN_TYPE = "access"
+ACCESS_EXPIRE_NAME = "exp"
+ACCESS_ISSUED_AT_NAME = "iat"
 REFRESH_TOKEN_TYPE = "refresh"
 
 
@@ -50,13 +52,14 @@ def create_access_token(user_id: int) -> AccessToken:
             logger.debug(f"Access-токен для пользователя с ID={user_id} успешно сгенерирован.")
             
             # Добавляем в pydantic модель информацию о сроке действия токена путем декодирования токена
-            expire_access = decode_access_token(access_token)["expire"]
+            decoded_access = decode_access_token(access_token)
+            expire_access = decoded_access[ACCESS_EXPIRE_NAME]
             
             logger.info(
                 f"Access-токен для пользователя с ID={user_id} успешно создан со сроком действия до {expire.isoformat()}"
             )
             return AccessToken(
-                access_token=access_token,
+                token=access_token,
                 expire=expire_access,
             )
         raise TypeError
@@ -153,7 +156,7 @@ def encode_jwt(
         expire = now + expire_timedelta
     else:
         expire = now + timedelta(minutes=expire_minutes)
-    to_encode.update(exp=expire, iat=now)
+    to_encode.update({ACCESS_EXPIRE_NAME: expire, ACCESS_ISSUED_AT_NAME: now})
     encoded = jwt.encode(to_encode, private_key, algorithm=algorithm)
     logger.debug(f"Токен с user_id: {payload.sub} успешно закодирован.")
     return encoded

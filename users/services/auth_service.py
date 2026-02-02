@@ -40,6 +40,7 @@ from deps.auth_deps import (
     clear_cookie_with_tokens,
     set_tokens_cookie,
 )
+from core.schemas.users import AccessToken
 
 
 @time_all_methods(async_timed_report())
@@ -147,7 +148,7 @@ class AuthService:
         logger.info(f"Токен {raw_token[:8]}... успешно проверен")
         return stored
 
-    async def _issue_tokens(self, user_id: int) -> tuple[str, str]:
+    async def _issue_tokens(self, user_id: int) -> tuple[AccessToken, str]:
         """
         Приватный вспомогательный метод для генерации Access и Refresh токенов,
         а также для сохранения хэша Refresh токена в базе данных.
@@ -249,15 +250,14 @@ class AuthService:
             # 5. Установка токенов в куки
             set_tokens_cookie(
                 response=response,
-                access_token=access_token,
+                access_token=access_token.token,
                 refresh_token=refresh_token,
             )
             logger.info(f"Куки с токенами установлены для пользователя ID: {user.id}.")
 
             logger.info(f"Пользователь {user.username!r} успешно аутентифицирован.")
             return TokenResponse(
-                access_token=access_token,
-                expire_acces=
+                access_token=access_token.token,
                 refresh_token=refresh_token,
             )
 
@@ -357,14 +357,16 @@ class AuthService:
                 "Failed to revoke token due to internal error."
             ) from e
 
-    async def loggout_user_logic(self, response: Response, access_jti: str, user_id: int):
+    async def loggout_user_logic(
+        self, response: Response, access_jti: str, user_id: int
+    ):
         """
         Процедура выхода текущего пользователя из системы
 
         Params:
-            response(Response): Объект Response FastAPI 
-            access_jti(str): Строка уникального индефикатора access токена 
-            user_id(int): ID текущего пользвателя 
+            response(Response): Объект Response FastAPI
+            access_jti(str): Строка уникального индефикатора access токена
+            user_id(int): ID текущего пользвателя
         Raises:
             LogoutUserFailedError: Если процедура выхода завершилась неудачно
         """
@@ -415,9 +417,14 @@ class AuthService:
 
         # Установка токенов в куки
         set_tokens_cookie(
-            response=response, access_token=access_token, refresh_token=refresh_token
+            response=response,
+            access_token=access_token.token,
+            refresh_token=refresh_token,
         )
         logger.info(f"Куки с токенами установлены для пользователя ID: {user.id}.")
 
         logger.info("Процедура обновления токенов завершена успешно")
-        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+        return TokenResponse(
+            access_token=access_token.token,
+            refresh_token=refresh_token,
+        )
