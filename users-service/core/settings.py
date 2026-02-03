@@ -74,11 +74,11 @@ class Settings(BaseSettings):
 settings = Settings()  # type: ignore
 
 print()
-print("-------- Settings --------")
+print("-------- Users Service --------")
 print(f"DB Host: {settings.db.host}")
 print(f"Redis URL: {settings.redis.REDIS_URL}")
 print(f"JWT Algorithm: {settings.jwt.algorithm}")
 print(f"Asyncpg DB URL: {settings.db.DB_URL_asyncpg}")
 print(f"Run mode: {settings.app.mode}")
-print("--------------------------")
+print("-------------------------------")
 print()

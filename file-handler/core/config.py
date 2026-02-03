@@ -10,12 +10,12 @@ ENV_PATH = BASE_PATH / ".env"
 class AppConfig(BaseModel):
     mode: str = 'DEV'
     host: str = '0.0.0.0'
-    port: int = 8000
+    port: int = 8003
 
 
 class ApiV1Prefix(BaseModel):
     prefix: str = '/v1'
-    notes: str = '/notes'
+    handler: str = '/file_handler'
 
 
 class ApiPrefix(BaseModel):
@@ -23,30 +23,30 @@ class ApiPrefix(BaseModel):
     v1: ApiV1Prefix = ApiV1Prefix()
 
 
-class DatabaseSettings(BaseModel):
-    # DB URL
-    host: str
-    port: int
-    user: str
-    pwd: str
-    name: str
-    # Other DB settings
-    echo: bool = False
-    echo_pool: bool = False
-    pool_size: int = 50
-    max_overflow: int = 10
+# class DatabaseSettings(BaseModel):
+#     # DB URL
+#     host: str
+#     port: int
+#     user: str
+#     pwd: str
+#     name: str
+#     # Other DB settings
+#     echo: bool = False
+#     echo_pool: bool = False
+#     pool_size: int = 50
+#     max_overflow: int = 10
     
-    naming_convention: dict[str, str] = {
-        "ix": "ix_%(column_0_label)s",
-        "uq": "uq_%(table_name)s_%(column_0_N_name)s",
-        "ck": "ck_%(table_name)s_%(constraint_name)s",
-        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-        "pk": "pk_%(table_name)s",
-    }
+#     naming_convention: dict[str, str] = {
+#         "ix": "ix_%(column_0_label)s",
+#         "uq": "uq_%(table_name)s_%(column_0_N_name)s",
+#         "ck": "ck_%(table_name)s_%(constraint_name)s",
+#         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+#         "pk": "pk_%(table_name)s",
+#     }
 
-    @property
-    def DB_URL_asyncpg(self):
-        return f"postgresql+asyncpg://{self.user}:{self.pwd}@{self.host}:{self.port}/{self.name}"
+#     @property
+#     def DB_URL_asyncpg(self):
+#         return f"postgresql+asyncpg://{self.user}:{self.pwd}@{self.host}:{self.port}/{self.name}"
 
 
 class S3Settings(BaseModel):
@@ -61,15 +61,18 @@ class Settings(BaseSettings):
         env_file=str(ENV_PATH),
         case_sensitive=False,
         env_nested_delimiter="_",
-        env_prefix="NOTES_",
+        env_prefix="FileHandler_",
     )
     app: AppConfig = AppConfig()
     api: ApiPrefix = ApiPrefix()
-    db: DatabaseSettings
+    # db: DatabaseSettings
     s3: S3Settings
 
 
 settings = Settings() # type: ignore
+print()
+print("-------- File Handler --------")
 print(f"INFO:     Run mode: {settings.app.mode}")
-print(f"INFO:     Using Database url: {settings.db.DB_URL_asyncpg}")
 print(f"INFO:     Using S3 url: {settings.s3.endpointurl}/{settings.s3.bucketname}")
+print("------------------------------")
+print()
