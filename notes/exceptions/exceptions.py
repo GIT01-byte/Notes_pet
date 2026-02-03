@@ -59,6 +59,11 @@ class FilesUploadError(BaseAPIException):
         )
 
 
+class InvalidFileFormatError(BaseAPIException):
+    def __init__(self, detail: str = "Invalid file format"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
 # Исключения сервисов о проваленной работе
 class NoteCreateFailedError(BaseAPIException):
     def __init__(self, detail: str = "Note create failed"):
