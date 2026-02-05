@@ -75,7 +75,7 @@ async def log_requests(request: Request, call_next):
         print(f"WARNING: Could not decode JSON body: {e}\n")
     response = await call_next(request)
     return response
-
+ 
 
 if __name__ == "__main__":
     import uvicorn

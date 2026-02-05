@@ -1,6 +1,13 @@
-from fastapi import APIRouter
+from fastapi import Depends, APIRouter
 
 from core.config import settings
+
+from core.schemas.files import (
+    FileCreate,
+)
+
+from service.service import MediaService
+from .deps import FileUploadRequest
 
 from utils.logging import logger
 
@@ -17,5 +24,12 @@ async def health_check():
 
 
 @router.post("/upload")
-async def upload_file():
-    pass
+async def upload_file(reauest: FileUploadRequest = Depends()):
+    media_sevice = MediaService()
+    
+    await media_sevice.upload_file(
+        file=reauest.file,
+        filename=reauest.filename,
+    )
+    
+    return {"message": f"File {reauest.file} uploaded successfully"}
