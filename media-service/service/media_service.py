@@ -16,8 +16,8 @@ class MediaService:
         except:
             raise Exception("Erroe while get file url")
         
-    async def get_metadata_s3(self, filename: str):
-        try:
-            return await s3_client.get_file_metadata(filename=filename)
-        except:
-            raise Exception("Error while get file metadata")
+    # async def get_metadata_s3(self, filename: str):
+    #     try:
+    #         return await s3_client.get_file_metadata(filename=filename)
+    #     except:
+    #         raise Exception("Error while get file metadata")

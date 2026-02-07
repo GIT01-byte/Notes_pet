@@ -43,6 +43,7 @@ async def upload_file(request: FileUploadRequest = Depends()):
         # Формирование метаданных файла с жесткой проверкой на целостность
         uuid = uuid7()
         s3_url = await media_sevice.get_s3_url(filename=request.filename)
+        
         if uuid and s3_url and request.file.size and request.file.content_type:
             new_file_metadata = FileMeatadataCreate(
                 uuid=uuid,
@@ -52,16 +53,21 @@ async def upload_file(request: FileUploadRequest = Depends()):
                 content_type=request.file.content_type,
             )
             logger.info(f"Metadata of file: {request.file} is succesfully forming")
-        else:
-            logger.error(f"Error while getting metadata of file: {request.file}")
+            
+            # Запись метаданных в БД
+            file_metadata_in_db = await MediaRepo.create_note(file_metadata_to_create=new_file_metadata)
+            
+            if file_metadata_in_db:
+                logger.info(f"Metadata of file: {request.file} is saved in DB")
+                return {
+                    "ok": True,
+                    "message": f"File {request.file} uploaded successfully"
+                }
+            logger.error(f"Error while saving metadata of file: {request.file} in DB")
+            raise Exception("Error while saving metadata in DB")
+        logger.error(f"Error while getting metadata of file: {request.file}")
+        raise Exception("Error while getting metadata")
         
-        # Запись метаданных в БД
-        
-        logger.info(f"Metadata of file: {request.file} is saved in DB")
-        return {
-            "ok": True,
-            "message": f"File {request.file} uploaded successfully"
-        }
     except:
         return {
             "ok": False,
