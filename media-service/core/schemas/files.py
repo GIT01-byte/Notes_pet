@@ -1,16 +1,16 @@
 import datetime
+import uuid
+
 from pydantic import BaseModel, ConfigDict
 
 
 class FileMetadataBase(BaseModel):
-    uuid: str
-    
+    uuid: uuid.UUID
+
     s3_url: str
     filename: str
     size: int
     content_type: str
-    
-    uploaded_at_s3: datetime.datetime
 
 
 class FileMeatadataCreate(FileMetadataBase):

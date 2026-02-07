@@ -24,7 +24,7 @@ class MediaRepo:
         try:
             async with db_helper.session_factory() as session:
                 logger.debug(
-                    f"Попытка создание новой метадаты: {file_metadata_to_create.filename!r}/{file_metadata_to_create.uplo}"
+                    f"Попытка создание новой метадаты: {file_metadata_to_create.s3_url!r}"
                 )
 
                 existing_metadata = await session.scalar(

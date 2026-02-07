@@ -41,9 +41,8 @@ async def upload_file(request: FileUploadRequest = Depends()):
         logger.info(f"File {request.file} uploaded successfully")
         
         # Формирование метаданных файла с жесткой проверкой на целостность
-        uuid = str(uuid7())
+        uuid = uuid7()
         s3_url = await media_sevice.get_s3_url(filename=request.filename)
-        uploaded_at_s3 = await media_sevice.get_metadata_s3(filename=request.filename)
         if uuid and s3_url and request.file.size and request.file.content_type:
             new_file_metadata = FileMeatadataCreate(
                 uuid=uuid,
@@ -51,7 +50,6 @@ async def upload_file(request: FileUploadRequest = Depends()):
                 filename=request.filename,
                 size=request.file.size,
                 content_type=request.file.content_type,
-                uuploaded_at_s3=uploaded_at_s3,
             )
             logger.info(f"Metadata of file: {request.file} is succesfully forming")
         else:
