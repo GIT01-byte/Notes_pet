@@ -9,7 +9,7 @@ logger.add(
     level="INFO"
 )
 logger.add(
-    "logs/notes_service.log",
+    "logs/media_service.log",
     rotation="10 MB",
     retention="7 days",
     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",

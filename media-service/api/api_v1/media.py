@@ -29,6 +29,7 @@ router = APIRouter(prefix=settings.api.v1.service, tags=["Media Service"])
 # | GET | /files/{file_uuid}/view | Прямая ссылка или редирект на файл | Позволяет просматривать файл в браузере |
 # | DELETE | /files/{file_uuid} | Удаление файла | Удаляет файл из S3 и запись из базы данных |
 # TODO сделать синхронную отправку и в БД и в S3
+# TODO сделать обработку и валидацию файлов в media service 
 
 
 @router.get("/health_check")
