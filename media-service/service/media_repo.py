@@ -97,7 +97,7 @@ class MediaRepo:
             ) from e
         except Exception as e:
             logger.exception(
-                f"Неожиданная ошибка при получении метаданных файла с ID {file_uuid}: {e}"
+                f"Неожиданная ошибка при получении метаданных файла с UUID {file_uuid}: {e}"
             )
             raise RepositoryInternalError(
                 f"Не удалось получить метаданные файла с UUID {file_uuid} из-за неожиданной ошибки."

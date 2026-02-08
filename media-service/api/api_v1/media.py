@@ -36,79 +36,123 @@ async def health_check():
     return {"success": "Медиа-сервис запущен"}
 
 
-# TODO: Сделать нормальную обработку ошибок и логирование
 @router.post("/upload")
 async def upload_file(request: FileUploadRequest = Depends()):
     try:
-        logger.info(f"Загрузка файла {request.file} в бакет {request.filename}")
+        logger.info(f"Загрузка файла {request.file.filename!r} в S3")
 
         # Отправка файла в S3
         await s3_client.upload_file(
             file=request.file.file,
             filename=request.filename,
         )
-        logger.info(f"Файл {request.file} успешно загружен")
+        logger.info(f"Файл {request.file.filename!r} успешно загружен в S3")
 
-        # Формирование метаданных файла с жесткой проверкой на целостность
+        # Формирование метаданных файла
         uuid = uuid7()
         s3_url = await s3_client.get_file_url(filename=request.filename)
 
-        if uuid and s3_url and request.file.size and request.file.content_type:
-            new_file_metadata = FileMeatadataCreate(
-                uuid=uuid,
-                s3_url=s3_url,
-                filename=request.filename,
-                size=request.file.size,
-                content_type=request.file.content_type,
-            )
-            logger.info(f"Метаданные файла: {request.file} успешно сформированы")
+        if not (uuid and s3_url and request.file.size and request.file.content_type):
+            logger.error(f"Ошибка при формировании метаданных файла {request.file.filename!r}")
+            raise FilesUploadFailedError(detail="Не удалось сформировать метаданные файла")
 
-            # Запись метаданных в БД
-            file_metadata_in_db = await MediaRepo.create_note(
-                file_metadata_to_create=new_file_metadata
-            )
+        new_file_metadata = FileMeatadataCreate(
+            uuid=uuid,
+            s3_url=s3_url,
+            filename=request.filename,
+            size=request.file.size,
+            content_type=request.file.content_type,
+        )
+        logger.debug(f"Метаданные файла {request.file.filename!r} успешно сформированы")
 
-            if file_metadata_in_db:
-                logger.info(f"Метаданные файла: {request.file} сохранены в БД")
-                return {"ok": True, "message": f"Файл {request.file.filename!r} успешно загружен"}
-            # Exception Handling
-        # Exception Handling
+        # Запись метаданных в БД
+        file_metadata_in_db = await MediaRepo.create_note(
+            file_metadata_to_create=new_file_metadata
+        )
 
-    except:
-        # Exception Handling
-        return FilesUploadFailedError
+        if not file_metadata_in_db:
+            logger.error(f"Ошибка при сохранении метаданных файла {request.file.filename!r} в БД")
+            raise FilesUploadFailedError(detail="Не удалось сохранить метаданные в БД")
+
+        logger.info(f"Файл {request.file.filename!r} успешно загружен, UUID: {uuid}")
+        return {"ok": True, "message": f"Файл {request.file.filename!r} успешно загружен", "uuid": str(uuid)}
+
+    except FilesUploadFailedError:
+        raise
+    except Exception as e:
+        logger.exception(f"Неожиданная ошибка при загрузке файла {request.file.filename!r}: {e}")
+        raise FilesUploadFailedError(detail=f"Ошибка загрузки файла: {str(e)}")
 
 
 @router.get("/files/{file_uuid}", response_model=FileMeatadataRead)
 async def get_file(file_uuid: UUID):
     try:
-        logger.info(f"Просмотр файла {file_uuid}")
+        logger.info(f"Получение метаданных файла с UUID: {file_uuid}")
 
         file_db = await MediaRepo.get_files_metadata(file_uuid=file_uuid)
-        if file_db:
-            logger.info(f"Файл {file_uuid} успешно найден")
-            return file_db
-        # Exception Handling
-    except:
-        # Exception Handling
-        return ViewFileFailedError
+        
+        if not file_db:
+            logger.warning(f"Файл с UUID: {file_uuid} не найден")
+            raise ViewFileFailedError(detail=f"Файл с UUID {file_uuid} не найден")
+        
+        logger.info(f"Метаданные файла {file_uuid} успешно получены")
+        return file_db
+        
+    except ViewFileFailedError:
+        raise
+    except Exception as e:
+        logger.exception(f"Неожиданная ошибка при получении метаданных файла {file_uuid}: {e}")
+        raise ViewFileFailedError(detail=f"Ошибка просмотра файла: {str(e)}")
 
 @router.get("/files/{file_uuid}/view")
 async def view_file_urL(file_uuid: UUID):
     try:
-        logger.info(f"Получение прямой ссылки на файл {file_uuid}")
+        logger.info(f"Получение прямой ссылки на файл с UUID: {file_uuid}")
         
         file_db = await MediaRepo.get_files_metadata(file_uuid=file_uuid)
-        if file_db:
-            logger.info(f"Файл {file_uuid} успешно найден")
-            file_url = file_db.s3_url
-            if file_url:
-                logger.info(f"Ссылка на файл {file_uuid} успешно получена")
-                redirect_response = Response(status_code=302, headers={"Location": file_url})
-                return redirect_response
-        # Exception Handling
-    except:
-        # Exception Handling
-        return ViewFileFailedError(detail="Error viewing file url")
         
+        if not file_db:
+            logger.warning(f"Файл с UUID: {file_uuid} не найден")
+            raise ViewFileFailedError(detail=f"Файл с UUID {file_uuid} не найден")
         
+        file_url = file_db.s3_url
+        if not file_url:
+            logger.error(f"Отсутствует S3 URL для файла {file_uuid}")
+            raise ViewFileFailedError(detail="S3 URL не найден")
+        
+        logger.info(f"Ссылка на файл {file_uuid} успешно получена")
+        return Response(status_code=302, headers={"Location": file_url})
+        
+    except ViewFileFailedError:
+        raise
+    except Exception as e:
+        logger.exception(f"Неожиданная ошибка при получении ссылки на файл {file_uuid}: {e}")
+        raise ViewFileFailedError(detail=f"Ошибка просмотра файла: {str(e)}")
+        
+
+@router.delete("/files/{file_uuid}")
+async def delete_file(file_uuid: UUID):
+    try:
+        logger.info(f"Удаление файла с UUID: {file_uuid}")
+
+        file_db = await MediaRepo.get_files_metadata(file_uuid=file_uuid)
+
+        if not file_db:
+            logger.warning(f"Файл с UUID: {file_uuid} не найден")
+            raise ViewFileFailedError(detail=f"Файл с UUID {file_uuid} не найден")
+
+        # Удаление файла из S3
+        await s3_client.delete_file(filename=file_db.filename)
+        logger.info(f"Файл {file_db.filename!r} успешно удален из S3")
+
+        # Удаление записи из БД
+        await MediaRepo.delete_file_metadata(file_uuid=file_uuid)
+        logger.info(f"Метаданные файла {file_uuid} успешно удалены из БД")
+
+        return {"ok": True, "message": f"Файл {file_db.filename!r} успешно удален"}
+
+    except ViewFileFailedError:
+        raise
+    except Exception as e:
+        logger.exception(f"Неожиданная ошибка при удалении файла {file_uuid}: {e}")
+        raise ViewFileFailedError(detail=f"Ошибка удаления файла: {str(e)}")

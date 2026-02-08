@@ -59,21 +59,19 @@ class S3Client:
             print(f"Ошибка при генерации ссылки: {e}")
             return None
     
-    async def delete_files(
+    async def delete_file(
         self,
-        file_urls: list[str],
+        filename: str,
     ):
         try:
             async with self.get_client() as client:
-                for url in file_urls:
-                    filename = decode_s3_file_url(url)
-                    response = await client.delete_object(
-                        Bucket=self.bucket_name,
-                        Key=filename
-                    ) # type: ignore
-                    print(f"Файл {filename} удален из {self.bucket_name}. Ответ: {response}")
+                response = await client.delete_object(
+                    Bucket=self.bucket_name,
+                    Key=filename
+                ) # type: ignore
+                print(f"Файл {filename} удален из {self.bucket_name}. Ответ: {response}")
         except Exception as e:
-            print(f"Ошибка при удалении {file_urls}: {e}")
+            print(f"Ошибка при удалении {filename}: {e}")
     
 
 s3_client = S3Client(
