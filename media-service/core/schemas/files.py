@@ -1,11 +1,11 @@
 import datetime
-import uuid
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
 
 class FileMetadataBase(BaseModel):
-    uuid: uuid.UUID
+    uuid: UUID
 
     s3_url: str
     filename: str
@@ -21,6 +21,8 @@ class FileMeatadataRead(FileMetadataBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    created_at_db: datetime.datetime
+    updated_at_db: datetime.datetime
 
 
 class FileMetadataDelete(BaseModel):

@@ -10,7 +10,7 @@ from core.schemas.files import FileMeatadataCreate
 from core.models.files import FilesMetadataOrm
 
 from exceptions.exceptions import (
-    FileMetadataAlreadyExistsError,
+    DataConflictError,
     EntityNotFoundError,
     RepositoryInternalError,
 )
@@ -36,7 +36,7 @@ class MediaRepo:
                 if existing_metadata:
                     error_msg = f"Метаданные с UUID: {file_metadata_to_create.uuid!r} уже существуют."
                     logger.error(error_msg)
-                    raise FileMetadataAlreadyExistsError(error_msg)
+                    raise DataConflictError(error_msg)
 
                 new_note = FilesMetadataOrm(**file_metadata_to_create.model_dump())
                 session.add(new_note)
@@ -47,7 +47,7 @@ class MediaRepo:
                     f"ID: {file_metadata_to_create.uuid}, S3 URL: {file_metadata_to_create.s3_url!r} успешно созданы."
                 )
                 return new_note
-        except FileMetadataAlreadyExistsError:
+        except DataConflictError:
             raise
         except SQLAlchemyError as e:
             logger.exception(
@@ -102,3 +102,5 @@ class MediaRepo:
             raise RepositoryInternalError(
                 f"Не удалось получить метаданные файла с UUID {file_uuid} из-за неожиданной ошибки."
             ) from e
+    
+    

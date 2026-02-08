@@ -8,18 +8,18 @@ ENV_PATH = BASE_PATH / ".env"
 
 
 class AppConfig(BaseModel):
-    mode: str = 'DEV'
-    host: str = '0.0.0.0'
+    mode: str = "DEV"
+    host: str = "0.0.0.0"
     port: int = 8003
 
 
 class ApiV1Prefix(BaseModel):
-    prefix: str = '/v1'
-    handler: str = '/file_handler'
+    prefix: str = "/v1"
+    service: str = "/media_service"
 
 
 class ApiPrefix(BaseModel):
-    prefix: str = '/api'
+    prefix: str = "/api"
     v1: ApiV1Prefix = ApiV1Prefix()
 
 
@@ -35,7 +35,7 @@ class DatabaseSettings(BaseModel):
     echo_pool: bool = False
     pool_size: int = 50
     max_overflow: int = 10
-    
+
     naming_convention: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",
         "uq": "uq_%(table_name)s_%(column_0_N_name)s",
@@ -69,7 +69,7 @@ class Settings(BaseSettings):
     s3: S3Settings
 
 
-settings = Settings() # type: ignore
+settings = Settings()  # type: ignore
 print()
 print("-------- Media Service --------")
 print(f"INFO:     Run mode: {settings.app.mode}")
