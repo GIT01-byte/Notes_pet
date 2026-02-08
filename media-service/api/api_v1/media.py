@@ -146,7 +146,7 @@ async def delete_file(file_uuid: UUID):
         logger.info(f"Файл {file_db.filename!r} успешно удален из S3")
 
         # Удаление записи из БД
-        await MediaRepo.delete_file_metadata(file_uuid=file_uuid)
+        await MediaRepo.delete_file_metadata(file_metadata_obj=file_db)
         logger.info(f"Метаданные файла {file_uuid} успешно удалены из БД")
 
         return {"ok": True, "message": f"Файл {file_db.filename!r} успешно удален"}

@@ -1,7 +1,7 @@
-from typing import Sequence, NoReturn
+from typing import NoReturn
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import select, or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from core.models.db_helper import db_helper
@@ -103,4 +103,29 @@ class MediaRepo:
                 f"Не удалось получить метаданные файла с UUID {file_uuid} из-за неожиданной ошибки."
             ) from e
     
-    
+    @staticmethod
+    async def delete_file_metadata(file_metadata_obj: FilesMetadataOrm ) -> None:
+        try:
+            async with db_helper.session_factory() as session:
+                logger.debug(f"Попытка удаления метаданных файла с UUID: {file_metadata_obj.uuid}")
+                
+                await session.delete(file_metadata_obj)
+                await session.commit()
+                
+                logger.info(f"Метаданные файла с UUID: {file_metadata_obj.uuid} успешно удалены.")
+        except EntityNotFoundError:
+            raise
+        except SQLAlchemyError as e:
+            logger.exception(
+                f"Ошибка базы данных при удалении метаданных файла с UUID {file_metadata_obj.uuid}: {e}"
+            )
+            raise RepositoryInternalError(
+                f"Не удалось удалить метаданные файла с UUID {file_metadata_obj.uuid} из-за ошибки базы данных."
+            ) from e
+        except Exception as e:
+            logger.exception(
+                f"Неожиданная ошибка при удалении метаданных файла с UUID {file_metadata_obj.uuid}: {e}"
+            )
+            raise RepositoryInternalError(
+                f"Не удалось удалить метаданные файла с UUID {file_metadata_obj.uuid} из-за неожиданной ошибки."
+            ) from e
