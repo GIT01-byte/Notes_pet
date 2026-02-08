@@ -24,18 +24,23 @@ class FilesHandlingError(BaseAPIException):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-class FilesUploadError(BaseAPIException):
-    def __init__(self, detail: str = "Error uploading files"):
-        super().__init__(
-            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
 class InvalidFileFormatError(BaseAPIException):
     def __init__(self, detail: str = "Invalid file format"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
+class FileMetadataNotFoundError(BaseAPIException):
+    def __init__(self, detail: str = "File metadata not found"):
+        super().__init__(detail=detail, status_code=status.HTTP_404_NOT_FOUND)
+
+
 class FileMetadataAlreadyExistsError(BaseAPIException):
     def __init__(self, detail: str = "File metadata already exists"):
         super().__init__(detail=detail, status_code=status.HTTP_409_CONFLICT)
+
+
+class FilesUploadError(BaseAPIException):
+    def __init__(self, detail: str = "Error uploading files"):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

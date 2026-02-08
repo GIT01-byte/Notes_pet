@@ -1,4 +1,4 @@
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 from fastapi import Depends, APIRouter
 
@@ -23,7 +23,7 @@ router = APIRouter(prefix=settings.api.v1.handler, tags=["File Handler"])
 
 @router.get("/health_check")
 async def health_check():
-    return {"success": "Media service is started"}
+    return {"success": "Медиа-сервис запущен"}
 
 # TODO: Сделать нормальную обработку ошибок и логирование + доделать запись в БД
 @router.post("/upload")
@@ -31,14 +31,14 @@ async def upload_file(request: FileUploadRequest = Depends()):
     media_sevice = MediaService()
 
     try:
-        logger.info(f"Uploading file {request.file} to bucket {request.filename}")
+        logger.info(f"Загрузка файла {request.file} в бакет {request.filename}")
         
         # Отправка файла в S3
         await media_sevice.upload_file(
             file=request.file,
             filename=request.filename,
         )
-        logger.info(f"File {request.file} uploaded successfully")
+        logger.info(f"Файл {request.file} успешно загружен")
         
         # Формирование метаданных файла с жесткой проверкой на целостность
         uuid = uuid7()
@@ -52,48 +52,39 @@ async def upload_file(request: FileUploadRequest = Depends()):
                 size=request.file.size,
                 content_type=request.file.content_type,
             )
-            logger.info(f"Metadata of file: {request.file} is succesfully forming")
+            logger.info(f"Метаданные файла: {request.file} успешно сформированы")
             
             # Запись метаданных в БД
             file_metadata_in_db = await MediaRepo.create_note(file_metadata_to_create=new_file_metadata)
             
             if file_metadata_in_db:
-                logger.info(f"Metadata of file: {request.file} is saved in DB")
+                logger.info(f"Метаданные файла: {request.file} сохранены в БД")
                 return {
                     "ok": True,
-                    "message": f"File {request.file} uploaded successfully"
+                    "message": f"Файл {request.file} успешно загружен"
                 }
-            logger.error(f"Error while saving metadata of file: {request.file} in DB")
-            raise Exception("Error while saving metadata in DB")
-        logger.error(f"Error while getting metadata of file: {request.file}")
-        raise Exception("Error while getting metadata")
+            logger.error(f"Ошибка при сохранении метаданных файла: {request.file} в БД")
+            raise Exception("Ошибка при сохранении метаданных в БД")
+        logger.error(f"Ошибка при получении метаданных файла: {request.file}")
+        raise Exception("Ошибка при получении метаданных")
         
     except:
         return {
             "ok": False,
-            "message": f"Error while uploading file {request.file}"
+            "message": f"Ошибка при загрузке файла {request.file}"
         }
         
         
 @router.post("/files/{id}")
-async def view_file(reauest: FileUploadRequest = Depends()):
+async def view_file(file_id: UUID):
     media_sevice = MediaService()
 
     try:
-        logger.info(f"Uploading file {reauest.file} to bucket {reauest.filename}")
+        logger.info(f"Просмотр файла {file_id}")
         
-        await media_sevice.upload_file(
-            file=reauest.file,
-            filename=reauest.filename,
-        )
-        logger.info(f"File {reauest.file} uploaded successfully")
-        
-        return {
-            "ok": True,
-            "message": f"File {reauest.file} uploaded successfully"
-        }
+        view_file = await media_sevice.view_file(file_id=file_id)
     except:
         return {
             "ok": False,
-            "message": f"Error while uploading file {reauest.file}"
+            "message": f"Ошибка при просмотре файла {file_id}"
         }

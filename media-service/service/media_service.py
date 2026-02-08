@@ -21,3 +21,6 @@ class MediaService:
     #         return await s3_client.get_file_metadata(filename=filename)
     #     except:
     #         raise Exception("Error while get file metadata")
+
+    async def view_file(self, file_id: str):
+        pass

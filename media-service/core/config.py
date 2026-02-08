@@ -71,7 +71,7 @@ class Settings(BaseSettings):
 
 settings = Settings() # type: ignore
 print()
-print("-------- File Handler --------")
+print("-------- Media Service --------")
 print(f"INFO:     Run mode: {settings.app.mode}")
 print(f"INFO:     Using S3 url: {settings.s3.endpointurl}/{settings.s3.bucketname}")
 print("------------------------------")
