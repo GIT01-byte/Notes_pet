@@ -20,13 +20,13 @@ class DataConflictError(BaseAPIException):
 
 # --- Базовые исключения API ---
 # Исключения обработки файлов
-class FilesHandlingError(BaseAPIException):
-    def __init__(self, detail: str = "Error handling files"):
+class FileInvalidCategoryError(BaseAPIException):
+    def __init__(self, detail: str = "Invalid file category"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-class InvalidFileFormatError(BaseAPIException):
-    def __init__(self, detail: str = "Invalid file format"):
+class FileMaxSizeLimitError(BaseAPIException):
+    def __init__(self, detail: str = "File size exceeds the maximum limit"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -40,6 +40,13 @@ class FilesUploadFailedError(BaseAPIException):
 
 class ViewFileFailedError(BaseAPIException):
     def __init__(self, detail: str = "Error viewing file"):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+class ValidateFileFailedError(BaseAPIException):
+    def __init__(self, detail: str = "Error validating file"):
         super().__init__(
             detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
