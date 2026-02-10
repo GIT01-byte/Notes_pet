@@ -37,23 +37,23 @@ class S3Client:
     async def upload_file(
         self,
         file: BinaryIO,
-        filename: str
+        key: str
     ):
         async with self.get_client() as client:
             await client.put_object(
                 Bucket=self.bucket_name,
-                Key=filename,
+                Key=key,
                 Body=file,
             ) # type: ignore
-            print(f"Файл: {filename} добавлен в S3")
+            print(f"Файл: {key} добавлен в S3")
     
     async def get_file_url(
         self,
-        filename: str,
+        key: str,
     ):
         try:
             # Генерируем ссылку для скачивания
-            url = f"{self.config["endpoint_url"]}/{filename}"
+            url = f"{self.config["endpoint_url"]}/{key}"
             return url
         except Exception as e:
             print(f"Ошибка при генерации ссылки: {e}")
@@ -61,17 +61,17 @@ class S3Client:
     
     async def delete_file(
         self,
-        filename: str,
+        key: str,
     ):
         try:
             async with self.get_client() as client:
                 response = await client.delete_object(
                     Bucket=self.bucket_name,
-                    Key=filename
+                    Key=key
                 ) # type: ignore
-                print(f"Файл {filename} удален из {self.bucket_name}. Ответ: {response}")
+                print(f"Файл {key} удален из {self.bucket_name}. Ответ: {response}")
         except Exception as e:
-            print(f"Ошибка при удалении {filename}: {e}")
+            print(f"Ошибка при удалении {key}: {e}")
     
 
 s3_client = S3Client(

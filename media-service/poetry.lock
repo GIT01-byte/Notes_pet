@@ -476,6 +476,18 @@ urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >
 crt = ["awscrt (==0.27.6)"]
 
 [[package]]
+name = "clamd"
+version = "1.0.2"
+description = "Clamd is a python interface to Clamd (Clamav daemon)."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "clamd-1.0.2-py2.py3-none-any.whl", hash = "sha256:5c32546b7d1eb00fd6be00a889d79e00fbf980ed082826ccfa369bce3dcff5e7"},
+    {file = "clamd-1.0.2.tar.gz", hash = "sha256:d82a2fd814684a35a1b31feadafb2e69c8ebde9403613f6bdaa5d877c0f29560"},
+]
+
+[[package]]
 name = "click"
 version = "8.3.1"
 description = "Composable command line interface toolkit"
@@ -2121,4 +2133,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.14"
-content-hash = "b74040acb73b8c5de897503f165fc3a7bd88a1810005aa33b841c46abf221206"
+content-hash = "aa9f274320e3564fd06f4e8ebe19faf4704627d6a05dbf17455b391c686efd18"

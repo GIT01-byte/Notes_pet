@@ -25,12 +25,27 @@ class FileInvalidCategoryError(BaseAPIException):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
+class InvalidFileCategoryError(BaseAPIException):
+    def __init__(self, detail: str = "Invalid file category"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+    
 class FileMaxSizeLimitError(BaseAPIException):
     def __init__(self, detail: str = "File size exceeds the maximum limit"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-# Исключения ендпоинтов о проваленной работе
+class EmptyFileError(BaseAPIException):
+    def __init__(self, detail: str = "File is empty"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class FileVirusFoundError(BaseAPIException):
+    def __init__(self, detail: str = "Virus found in file"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+# Исключения сервисов о проваленной работе
 class FilesUploadFailedError(BaseAPIException):
     def __init__(self, detail: str = "Error uploading files"):
         super().__init__(
@@ -47,6 +62,13 @@ class ViewFileFailedError(BaseAPIException):
 
 class ValidateFileFailedError(BaseAPIException):
     def __init__(self, detail: str = "Error validating file"):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+class VirusScanFileFailedError(BaseAPIException):
+    def __init__(self, detail: str = "Error scanning file for viruses"):
         super().__init__(
             detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

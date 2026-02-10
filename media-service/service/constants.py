@@ -10,7 +10,7 @@ VIDEOS = {
         "video/webm",
         "video/x-matroska",  # mkv
     ],
-    "max_size": 4 * 1024 * 1024 * 1024  # 4GB
+    "max_size": 2 * 1024 * 1024 * 1024  # 4GB
 }
 
 IMAGES = {
@@ -24,7 +24,21 @@ IMAGES = {
         "image/x-icon",  # ico
         "image/vnd.microsoft.icon",  # ico
     ],
-    "max_size": 50 * 1024 * 1024  # 50MB
+    "max_size": 30 * 1024 * 1024  # 30MB
+}
+
+AVATARS = {
+    "content_types": [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/bmp",
+        "image/webp",
+        "image/svg+xml",
+        "image/x-icon",  # ico
+        "image/vnd.microsoft.icon",  # ico
+    ],
+    "max_size": 5 * 1024 * 1024  # 5MB
 }
 
 AUDIO = {

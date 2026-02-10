@@ -27,3 +27,10 @@ class FileMeatadataRead(FileMetadataBase):
 
 class FileMetadataDelete(BaseModel):
     id: int
+
+
+class FileValidation(BaseModel):
+    validaion_status: bool
+    category: str
+    filename: str
+    

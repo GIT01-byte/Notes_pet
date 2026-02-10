@@ -1,9 +1,9 @@
 from uuid import UUID, uuid7
 
 from fastapi import (
-    UploadFile,
-    Depends,
-    APIRouter,
+    UploadFile, 
+    Depends, 
+    APIRouter, 
     Response,
 )
 
@@ -15,11 +15,12 @@ from core.schemas.files import (
 from core.s3.s3_client import s3_client
 
 from exceptions.exceptions import (
+    EmptyFileError,
     FilesUploadFailedError,
     ViewFileFailedError,
 )
 
-from service.media_service import MediaService
+from service.media_service import FileProcessingService
 from service.media_repo import MediaRepo
 
 from .deps import FileUploadRequest
@@ -34,8 +35,8 @@ router = APIRouter(prefix=settings.api.v1.service, tags=["Media Service"])
 # | GET | /files/{file_uuid}/view | Прямая ссылка или редирект на файл | Позволяет просматривать файл в браузере |
 # | DELETE | /files/{file_uuid} | Удаление файла | Удаляет файл из S3 и запись из базы данных |
 # TODO сделать синхронную отправку и в БД и в S3
-# TODO сделать обработку и валидацию файлов в media service
-
+# TODO сделать обработку и валидацию файлов в media service 
+# TODO реализловать upload type entity id в запросе /upload
 
 @router.get("/health_check")
 async def health_check():
@@ -44,36 +45,42 @@ async def health_check():
 
 @router.post("/upload")
 async def upload_file(request: FileUploadRequest = Depends()):
-    media_service = MediaService()
+    media_service = FileProcessingService()
     try:
         logger.info(f"Загрузка файла {request.file.filename!r} в S3")
+        
+        if not request.file:
+            logger.warning("Попытка загрузки пустого файла")
+            raise EmptyFileError 
+        
+        # Валидация и генерация уникального имени файла
+        process_file = await media_service.process_file(request.file)
 
-        # Проверка валидности файла
-        await media_service.validate_file(file=request.file)
-
+        unigue_filename = process_file.filename
+        
+        if not unigue_filename:
+            logger.error(f"Ошибка при генерации уникального имени файла {request.file.filename!r}")
+            raise FilesUploadFailedError(detail=f"Generate unigue filename error for file {request.file.filename!r}")
+        
         # Отправка файла в S3
         await s3_client.upload_file(
             file=request.file.file,
-            filename=request.filename,
+            key=unigue_filename,
         )
         logger.info(f"Файл {request.file.filename!r} успешно загружен в S3")
 
         # Формирование метаданных файла
         uuid = uuid7()
-        s3_url = await s3_client.get_file_url(filename=request.filename)
+        s3_url = await s3_client.get_file_url(key=unigue_filename)
 
         if not (uuid and s3_url and request.file.size and request.file.content_type):
-            logger.error(
-                f"Ошибка при формировании метаданных файла {request.file.filename!r}"
-            )
-            raise FilesUploadFailedError(
-                detail="Не удалось сформировать метаданные файла"
-            )
+            logger.error(f"Ошибка при формировании метаданных файла {request.file.filename!r}")
+            raise FilesUploadFailedError(detail="Не удалось сформировать метаданные файла")
 
         new_file_metadata = FileMeatadataCreate(
             uuid=uuid,
             s3_url=s3_url,
-            filename=request.filename,
+            filename=unigue_filename,
             size=request.file.size,
             content_type=request.file.content_type,
         )
@@ -85,24 +92,18 @@ async def upload_file(request: FileUploadRequest = Depends()):
         )
 
         if not file_metadata_in_db:
-            logger.error(
-                f"Ошибка при сохранении метаданных файла {request.file.filename!r} в БД"
-            )
+            logger.error(f"Ошибка при сохранении метаданных файла {request.file.filename!r} в БД")
             raise FilesUploadFailedError(detail="Не удалось сохранить метаданные в БД")
 
         logger.info(f"Файл {request.file.filename!r} успешно загружен, UUID: {uuid}")
-        return {
-            "ok": True,
-            "message": f"Файл {request.file.filename!r} успешно загружен",
-            "uuid": str(uuid),
-        }
+        return {"ok": True, "message": f"Файл {request.file.filename!r} успешно загружен", "uuid": str(uuid)}
 
+    except EmptyFileError:
+        raise
     except FilesUploadFailedError:
         raise
     except Exception as e:
-        logger.exception(
-            f"Неожиданная ошибка при загрузке файла {request.file.filename!r}: {e}"
-        )
+        logger.exception(f"Неожиданная ошибка при загрузке файла {request.file.filename!r}: {e}")
         raise FilesUploadFailedError from e
 
 
@@ -112,50 +113,45 @@ async def get_file(file_uuid: UUID):
         logger.info(f"Получение метаданных файла с UUID: {file_uuid}")
 
         file_db = await MediaRepo.get_files_metadata(file_uuid=file_uuid)
-
+        
         if not file_db:
             logger.warning(f"Файл с UUID: {file_uuid} не найден")
             raise ViewFileFailedError(detail=f"Файл с UUID {file_uuid} не найден")
-
+        
         logger.info(f"Метаданные файла {file_uuid} успешно получены")
         return file_db
-
+        
     except ViewFileFailedError:
         raise
     except Exception as e:
-        logger.exception(
-            f"Неожиданная ошибка при получении метаданных файла {file_uuid}: {e}"
-        )
+        logger.exception(f"Неожиданная ошибка при получении метаданных файла {file_uuid}: {e}")
         raise ViewFileFailedError from e
-
 
 @router.get("/files/{file_uuid}/view")
 async def view_file_urL(file_uuid: UUID):
     try:
         logger.info(f"Получение прямой ссылки на файл с UUID: {file_uuid}")
-
+        
         file_db = await MediaRepo.get_files_metadata(file_uuid=file_uuid)
-
+        
         if not file_db:
             logger.warning(f"Файл с UUID: {file_uuid} не найден")
             raise ViewFileFailedError(detail=f"Файл с UUID {file_uuid} не найден")
-
+        
         file_url = file_db.s3_url
         if not file_url:
             logger.error(f"Отсутствует S3 URL для файла {file_uuid}")
             raise ViewFileFailedError(detail="S3 URL не найден")
-
+        
         logger.info(f"Ссылка на файл {file_uuid} успешно получена")
         return Response(status_code=302, headers={"Location": file_url})
-
+        
     except ViewFileFailedError:
         raise
     except Exception as e:
-        logger.exception(
-            f"Неожиданная ошибка при получении ссылки на файл {file_uuid}: {e}"
-        )
+        logger.exception(f"Неожиданная ошибка при получении ссылки на файл {file_uuid}: {e}")
         raise ViewFileFailedError from e
-
+        
 
 @router.delete("/files/{file_uuid}")
 async def delete_file(file_uuid: UUID):
@@ -169,7 +165,7 @@ async def delete_file(file_uuid: UUID):
             raise ViewFileFailedError(detail=f"Файл с UUID {file_uuid} не найден")
 
         # Удаление файла из S3
-        await s3_client.delete_file(filename=file_db.filename)
+        await s3_client.delete_file(key=file_db.filename)
         logger.info(f"Файл {file_db.filename!r} успешно удален из S3")
 
         # Удаление записи из БД
