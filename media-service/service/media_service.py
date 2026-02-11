@@ -1,3 +1,4 @@
+import io
 from uuid import UUID, uuid4
 import clamd
 from fastapi import UploadFile
@@ -30,8 +31,8 @@ class FileProcessingService:
 
     async def process_file(self, file: UploadFile):
         # Проверка на наличие вирусов #FIXME
-        # if not await self.virus_scanner.scan_for_viruses(file):
-        #     raise VirusScanFileFailedError 
+        if not await self.virus_scanner.scan_for_viruses(file):
+            raise VirusScanFileFailedError
 
         # Получение категории файла
         category = await self.metadata_handler.get_file_category(file)
@@ -157,8 +158,6 @@ class FileContentValidator:
 
     async def validate_file(self, file: UploadFile, category: str):
         try:
-            logger.info(f"Начало валидации файла {file.filename!r}")
-
             if not file.size or not category:
                 logger.warning("Попытка загрузки пустого файла")
                 raise EmptyFileError(detail="Empty file size or category")
@@ -188,7 +187,7 @@ class FileContentValidator:
 class VirusScanner:
     def __init__(self):
         try:
-            self.cd = clamd.ClamdUnixSocket()
+            self.cd = clamd.ClamdNetworkSocket()
             # Проверка соединения (пинг)
             self.cd.ping()
         except Exception as e:
@@ -211,7 +210,7 @@ class VirusScanner:
 
             # Сканируем буфер
             try:
-                result = self.cd.instream(content)
+                result = self.cd.instream(io.BytesIO(content))
             except Exception as e:
                 logger.exception(f"Ошибка при передаче потока в ClamAV: {e}")
                 raise VirusScanFileFailedError(f"Scan failed: {str(e)}")
@@ -226,14 +225,14 @@ class VirusScanner:
                 raise VirusScanFileFailedError("Invalid response from scanner")
 
             # Если найдено 'FOUND', значит вирус есть
-            status, virus_name = result.get("stream")
+            status, virus_name = result.get("stream") # type: ignore
             if status == "FOUND":
                 logger.info(f"ВИРУС ОБНАРУЖЕН: {virus_name} в файле {file.filename!r}")
                 raise FileVirusFoundError(f"Virus {virus_name} found")
 
-            logger.info(f"Файл {file.filename!r} чист")
+            logger.info(f"В файле {file.filename!r} вирусов не обнаруженно")
             return True
-
+ 
         except (EmptyFileError, FileVirusFoundError, VirusScanFileFailedError):
             raise
         except Exception as e:
