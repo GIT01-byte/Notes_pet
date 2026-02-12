@@ -1355,6 +1355,17 @@ files = [
 ]
 
 [[package]]
+name = "pyclamd"
+version = "0.4.0"
+description = "pyClamd is a python interface to Clamd (Clamav daemon)."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "pyClamd-0.4.0.tar.gz", hash = "sha256:ddd588577e5db123760b6ddaac46b5c4b1d9044a00b5d9422de59f83a55c20fe"},
+]
+
+[[package]]
 name = "pydantic"
 version = "2.12.5"
 description = "Data validation using Python type hints"
@@ -2133,4 +2144,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.14"
-content-hash = "aa9f274320e3564fd06f4e8ebe19faf4704627d6a05dbf17455b391c686efd18"
+content-hash = "c6955e9eb392bb9336cf264d43843d5e26444447478a8a83b3226bfb2af21fe4"

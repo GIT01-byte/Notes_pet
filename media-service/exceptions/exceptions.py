@@ -20,16 +20,11 @@ class DataConflictError(BaseAPIException):
 
 # --- Базовые исключения API ---
 # Исключения обработки файлов
-class FileInvalidCategoryError(BaseAPIException):
-    def __init__(self, detail: str = "Invalid file category"):
+class FileCategoryNotSupportedError(BaseAPIException):
+    def __init__(self, detail: str = "File category is not supported"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-class InvalidFileCategoryError(BaseAPIException):
-    def __init__(self, detail: str = "Invalid file category"):
-        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
-
-    
 class FileMaxSizeLimitError(BaseAPIException):
     def __init__(self, detail: str = "File size exceeds the maximum limit"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
@@ -40,7 +35,7 @@ class EmptyFileError(BaseAPIException):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-class FileVirusFoundError(BaseAPIException):
+class FileVirusFound(BaseAPIException):
     def __init__(self, detail: str = "Virus found in file"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -69,6 +64,13 @@ class ValidateFileFailedError(BaseAPIException):
 
 class VirusScanFileFailedError(BaseAPIException):
     def __init__(self, detail: str = "Error scanning file for viruses"):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+class ProcessFileFailedError(BaseAPIException):
+    def __init__(self, detail: str = "Error processing file"):
         super().__init__(
             detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

@@ -10,7 +10,8 @@ VIDEOS = {
         "video/webm",
         "video/x-matroska",  # mkv
     ],
-    "max_size": 2 * 1024 * 1024 * 1024  # 4GB
+    "s3_save_path": "notes_media/{note_id}/videos",
+    "max_size": 2 * 1024 * 1024 * 1024,  # 4GB
 }
 
 IMAGES = {
@@ -24,7 +25,19 @@ IMAGES = {
         "image/x-icon",  # ico
         "image/vnd.microsoft.icon",  # ico
     ],
-    "max_size": 30 * 1024 * 1024  # 30MB
+    "s3_save_path": "notes_media/{note_id}/images",
+    "max_size": 30 * 1024 * 1024,  # 30MB
+}
+
+AUDIO = {
+    "content_types": [
+        "audio/mpeg",  # mp3
+        "audio/wav",
+        "audio/wave",  # wav
+        "application/ogg",
+    ],
+    "s3_save_path": "notes_media/{note_id}/audios",
+    "max_size": 30 * 1024 * 1024,  # 30MB
 }
 
 AVATARS = {
@@ -38,15 +51,6 @@ AVATARS = {
         "image/x-icon",  # ico
         "image/vnd.microsoft.icon",  # ico
     ],
-    "max_size": 5 * 1024 * 1024  # 5MB
-}
-
-AUDIO = {
-    "content_types": [
-        "audio/mpeg",  # mp3
-        "audio/wav",
-        "audio/wave",  # wav
-        "application/ogg",
-    ],
-    "max_size": 30 * 1024 * 1024  # 30MB
+    "s3_save_path": "users_media/{user_id}/avatar",
+    "max_size": 5 * 1024 * 1024,  # 5MB
 }
