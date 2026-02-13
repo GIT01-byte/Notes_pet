@@ -20,6 +20,11 @@ class DataConflictError(BaseAPIException):
 
 # --- Базовые исключения API ---
 # Исключения обработки файлов
+class EmptyFileError(BaseAPIException):
+    def __init__(self, detail: str = "File is empty"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
 class FileCategoryNotSupportedError(BaseAPIException):
     def __init__(self, detail: str = "File category is not supported"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
@@ -30,8 +35,8 @@ class FileMaxSizeLimitError(BaseAPIException):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-class EmptyFileError(BaseAPIException):
-    def __init__(self, detail: str = "File is empty"):
+class FileInvalidExtensionError(BaseAPIException):
+    def __init__(self, detail: str = "File extension is invalid"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 

@@ -16,6 +16,7 @@ from core.s3.s3_client import s3_client
 
 from exceptions.exceptions import (
     EmptyFileError,
+    FileInvalidExtensionError,
     FileMaxSizeLimitError,
     FileVirusFound,
     ValidateFileFailedError,
@@ -128,6 +129,7 @@ async def upload_file(request: FileUploadRequest = Depends()):
         FileCategoryNotSupportedError,
         FileMaxSizeLimitError,
         FileVirusFound,
+        FileInvalidExtensionError,
         ValidateFileFailedError,
         VirusScanFileFailedError,
         FilesUploadFailedError,

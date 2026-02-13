@@ -1,14 +1,14 @@
-from uuid import UUID, uuid4
+from uuid import uuid4
+import magic
 import pyclamd
 from fastapi import UploadFile
-
-from core.s3.s3_client import s3_client
 
 from core.schemas.files import FileValidation
 from .constants import VIDEOS, IMAGES, AUDIO
 from exceptions.exceptions import (
     EmptyFileError,
     FileCategoryNotSupportedError,
+    FileInvalidExtensionError,
     FileMaxSizeLimitError,
     FileVirusFound,
     ProcessFileFailedError,
@@ -16,7 +16,6 @@ from exceptions.exceptions import (
     VirusScanFileFailedError,
 )
 
-from .media_repo import MediaRepo
 
 from utils.logging import logger
 
@@ -71,6 +70,7 @@ class FileProcessingService:
             FileCategoryNotSupportedError,
             FileMaxSizeLimitError,
             FileVirusFound,
+            FileInvalidExtensionError,
             ValidateFileFailedError,
             VirusScanFileFailedError,
         ):
@@ -149,7 +149,73 @@ class GenerateUnigueFilename:
             ) from e
 
 
+# TODO допработать
 class FileContentValidator:
+    async def _validate_file_integrity(self, file: UploadFile, category: str):
+        try:
+            logger.debug(
+                f"Validating file integrity {file.filename!r}, category: {category}"
+            )
+
+            if not file.filename or not category:
+                logger.warning(
+                    "Attempt to validation file integrity with empty parameters"
+                )
+                raise EmptyFileError(detail="Empty file or category")
+
+            # Читаем только начало файла для определения типа
+            header = await file.read(2048)
+            await file.seek(0)  # Сбрасываем указатель сразу!
+
+            # Определяем расширение и MIME через magic
+            extension = file.filename.split(".")[-1].lower()
+            detected_mime = magic.from_buffer(header, mime=True)
+            if not detected_mime:
+                logger.warning(f"Failed to detect MIME type for {file.filename!r}")
+                raise ValidateFileFailedError(detail="Failed to detect MIME type")
+
+            logger.debug(f"Detected MIME: {detected_mime}, Extension: {extension}")
+
+            # Проверяем, разрешен ли этот тип и соответствие расширению
+            if (
+                category == "video"
+                and detected_mime not in VIDEOS["content_types"]
+                and extension not in VIDEOS["extensions"]
+            ):
+                logger.debug(
+                    f"Расширение {extension} - Тип {detected_mime} не соответствует категории {category}"
+                )
+                raise FileInvalidExtensionError
+            elif (
+                category == "image"
+                and detected_mime not in IMAGES["content_types"]
+                and extension not in IMAGES["extensions"]
+            ):
+                logger.debug(
+                    f"Расширение {extension} - Тип {detected_mime} не соответствует категории {category}"
+                )
+                raise FileInvalidExtensionError
+            elif (
+                category == "audio"
+                and detected_mime not in AUDIO["content_types"]
+                and extension not in AUDIO["extensions"]
+            ):
+                logger.debug(
+                    f"Расширение {extension} - Тип {detected_mime} не соответствует категории {category}"
+                )
+                raise FileInvalidExtensionError
+
+            return True
+        except (EmptyFileError, ValidateFileFailedError, FileInvalidExtensionError):
+            raise
+        except Exception as e:
+            logger.exception(
+                f"Failed to validate file integrity {file.filename!r}: {e}"
+            )
+            raise ValidateFileFailedError(
+                detail=f"Failed to validate file integrity for {file.filename}: {str(e)}"
+            ) from e
+
     async def _validate_file_size(self, file: UploadFile, category: str):
         try:
             logger.debug(
@@ -184,21 +250,27 @@ class FileContentValidator:
 
     async def validate_file(self, file: UploadFile, category: str):
         try:
-            if not file.size or not category:
+            if not file or not file.filename or not file.size or not category:
                 logger.warning("Attempt to validate empty file")
-                raise EmptyFileError(detail="Empty file size or category")
+                raise EmptyFileError(detail="Empty file or category")
 
             if not await self._validate_file_size(file, category):
                 logger.error(f"File {file.filename!r} failed size validation")
                 raise FileMaxSizeLimitError
 
+            if not await self._validate_file_integrity(file, category):
+                logger.error(f"File {file.filename!r} failed integrity validation")
+                raise ValidateFileFailedError
+
             logger.info(
                 f"File {file.filename!r}, category: {category!r} validation passed"
             )
             return True
-        except EmptyFileError:
-            raise
-        except FileMaxSizeLimitError:
+        except (
+            EmptyFileError,
+            FileMaxSizeLimitError,
+            FileInvalidExtensionError,
+        ):
             raise
         except Exception as e:
             logger.exception(f"Failed to validate file {file.filename!r}: {e}")

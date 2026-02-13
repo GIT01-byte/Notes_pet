@@ -12,12 +12,14 @@ from api import router as api_router
 
 from core.config import settings
 
+from utils.logging import logger
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("INFO:     App is started")
+    logger.info("App is started")
     yield
-    print('INFO:     App is turn off')
+    logger.info('App is turn off')
 
 
 # Middleware для логирования ошибок
@@ -65,14 +67,14 @@ main_app.include_router(api_router)
 
 @main_app.middleware("http")
 async def log_requests(request: Request, call_next):
-    print(f"\n----------- INFO:    New request -----------")
-    print(f"INFO:    Request: {request.method} {request.url}")
-    print(f"INFO:    Headers: {request.headers}")
+    logger.info(f"\n----------- New request -----------")
+    logger.info(f"Request: {request.method} {request.url}")
+    logger.info(f"Headers: {request.headers}")
     try:
         body = await request.json()
-        print(f"INFO:    Body: {body}\n")
+        logger.info(f"Body: {body}\n")
     except Exception as e:
-        print(f"WARNING: Could not decode JSON body: {e}\n")
+        logger.warning(f"Could not decode JSON body: {e}\n")
     response = await call_next(request)
     return response
  
