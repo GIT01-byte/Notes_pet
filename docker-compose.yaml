@@ -28,6 +28,7 @@ services:
     depends_on:
       - notes-service
       - notes-users-service
+      - media-service
     networks:
       - app-network
 
@@ -38,6 +39,10 @@ services:
     container_name: notes_frontend
     ports:
       - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     networks:
       - app-network
 
@@ -64,18 +69,20 @@ services:
 
   notes-service:
     build:
-      context: ./notes
+      context: ./notes-service
     container_name: notes_service
     ports:
       - "8002:8002"
     environment:
       APP_MODE: ${NOTES_APP_MODE}
+
       NOTES_DB_HOST: postgres-notes
       NOTES_DB_PORT: 5432
       NOTES_DB_NAME: ${NOTES_DB_NAME}
       NOTES_DB_USER: ${NOTES_DB_USER}
       NOTES_DB_PWD: ${NOTES_DB_PWD}
       NOTES_DB_ECHO: ${NOTES_DB_ECHO}
+      
       S3_ACCESS_KEY: ${NOTES_S3_ACCESSKEY}
       S3_SECRET_KEY: ${NOTES_S3_SECRETKEY}
       S3_ENDPOINT_URL: ${NOTES_S3_ENDPOINTURL}
@@ -83,6 +90,8 @@ services:
     depends_on:
       postgres-notes:
         condition: service_healthy
+      media-service:
+        condition: service_started
     logging:
       driver: json-file
       options:
@@ -136,19 +145,21 @@ services:
 
   notes-users-service:
     build:
-      context: ./users
+      context: ./users-service
     container_name: notes_users
     ports:
       - "8001:8001"
     environment:
+      APP_MODE: ${USERS_APP_MODE}
+
       USERS_DB_HOST: postgres-users
       USERS_DB_PORT: 5433
       USERS_DB_NAME: ${USERS_DB_NAME}
       USERS_DB_USER: ${USERS_DB_USER}
       USERS_DB_PWD: ${USERS_DB_PWD}
+
       USERS_REDIS_HOST: redis-users
       USERS_REDIS_PORT: 6380
-      APP_MODE: ${USERS_APP_MODE}
     depends_on:
       postgres-users:
         condition: service_healthy
@@ -163,9 +174,68 @@ services:
     networks:
       - app-network
 
+  # --- СЕРВИС МЕДИА-ФАЙЛОВ (Media Service) ---
+  postgres-media_service:
+    image: postgres:17
+    command: -p 5434
+    container_name: postgres-media_service
+    environment:
+      POSTGRES_DB: ${MEDIA-SERV_DB_NAME}
+      POSTGRES_USER: ${MEDIA-SERV_DB_USER}
+      POSTGRES_PASSWORD: ${MEDIA-SERV_DB_PWD}
+    ports:
+      - "5434:5434"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -p 5434 -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data_media:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+  
+  media-service:
+    build:
+      context: ./media-service
+    container_name: media_service
+    ports:
+      - "8003:8003"
+    environment:
+      APP_MODE: ${MEDIA-SERV_APP_MODE}
+
+      MEDIA-SERV_DB_HOST: postgres-media_service
+      MEDIA-SERV_DB_PORT: 5434
+      MEDIA-SERV_DB_NAME: ${MEDIA-SERV_DB_NAME}
+      MEDIA-SERV_DB_USER: ${MEDIA-SERV_DB_USER}
+      MEDIA-SERV_DB_PWD: ${MEDIA-SERV_DB_PWD}
+      MEDIA-SERV_DB_ECHO: ${NOTES_DB_ECHO}
+
+      MEDIA-SERV_S3_ACCESSKEY: ${MEDIA-SERV_S3_ACCESSKEY}
+      MEDIA-SERV_S3_SECRETKEY: ${MEDIA-SERV_S3_SECRETKEY}
+      MEDIA-SERV_S3_ENDPOINTURL: ${MEDIA-SERV_S3_ENDPOINTURL}
+      MEDIA-SERV_S3_BUCKETNAME: ${MEDIA-SERV_S3_BUCKETNAME} 
+    depends_on:
+      postgres-media_service:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    command: ["bash", "-c", "alembic upgrade head && python main.py"]
+    restart: always
+    networks:
+      - app-network
+
 volumes:
   postgres_data_notes:
   postgres_data_users:
+  postgres_data_media:
   redis_data_users:
 
 networks:

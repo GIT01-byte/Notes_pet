@@ -178,6 +178,67 @@
           ]
         }
       ]
+    },
+    {
+      "endpoint": "/media_service/health_check/",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/users/health_check",
+          "host": [
+            "http://notes_users:8003"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/users_service/health_check/",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/users/health_check",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/users_service/health_check/",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/users/health_check",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/users_service/health_check/",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/users/health_check",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/users_service/health_check/",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/users/health_check",
+          "host": [
+            "http://notes_users:8001"
+          ]
+        }
+      ]
     }
+
   ]
 }
