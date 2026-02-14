@@ -1,8 +1,13 @@
 import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+class UploadContext(str, Enum):
+    post_attachment = "post_attachment"
+    avatar = "avatar"
+    # document = "document"
 
 class FileMetadataBase(BaseModel):
     uuid: UUID
@@ -33,4 +38,3 @@ class FileValidation(BaseModel):
     validaion_status: bool
     category: str
     filename: str
-    

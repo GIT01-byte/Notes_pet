@@ -79,11 +79,26 @@ async def upload_file(request: FileUploadRequest = Depends()):
             )
 
         # Отправка файла в S3
-        await s3_client.upload_file(
-            file=request.file.file,
-            key=unigue_filename,
-        )
-        logger.info(f"Файл {request.file.filename!r} успешно загружен в S3")
+        if request.upload_context == "post_attachment":
+            logger.info(f"Файл {request.file.filename!r} будет сохранен как post_attachment")
+            upload_key = f"posts/{request.entity_id}/{unigue_filename}"
+            await s3_client.upload_file(
+                file=request.file.file,
+                key=upload_key,
+            )
+            logger.info(f"Файл {request.file.filename!r} успешно загружен в S3")
+        
+        elif request.upload_context == "avatar":
+            logger.info(f"Файл {request.file.filename!r} будет сохранен как avatar")
+            upload_key = f"avatars/{request.entity_id}/{unigue_filename}"
+            await s3_client.upload_file(
+                file=request.file.file,
+                key=upload_key,
+            )
+            logger.info(f"Файл {request.file.filename!r} успешно загружен в S3")
+            
+        else:
+            raise FilesUploadFailedError(f"Unknown upload context: {request.upload_context}")
 
         # Формирование метаданных файла
         uuid = uuid7()
