@@ -23,7 +23,7 @@ VIDEOS = {
     "max_width": 3160,
     "max_height": 3160,
     "s3_save_path": "notes_media/{note_id}/videos",
-    "max_size": 2 * 1024 * 1024 * 1024,  # 4GB
+    "max_size": 500 * 1024 * 1024,  # 500MB
 }
 
 IMAGES = {

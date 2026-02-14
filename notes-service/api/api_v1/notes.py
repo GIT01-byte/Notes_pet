@@ -28,7 +28,7 @@ async def health_check():
 
 
 # TODO добавить обработку ошибок связанную с куки
-# TODO добавить ограничение обработки файлов макс 200 МБ
+# TODO добавить модуль для взаимодействия с миросервисом файлов
 @router.post("/create")
 async def create_notes(
     note_create_form: NoteCreateForm = Depends(),
@@ -53,9 +53,9 @@ async def create_notes(
             user=current_user.username,
             title=note_create_form.title,
             content=note_create_form.content,
-            video_urls=video_urls,
-            image_urls=image_urls,
-            audio_urls=audio_urls,
+            video_uuid=video_urls,
+            image_uuid=image_urls,
+            audio_uuid=audio_urls,
         )
 
         # Сохраняем в БД
@@ -90,6 +90,7 @@ async def delete_note(
         # Удаление медиа-файлов из S3
         note = await NotesRepo.get_note(note_id=note_id, username=current_user.username)
         if note:
+             # FIXME
             await s3_client.delete_files(note.video_urls)
             await s3_client.delete_files(note.image_urls)
             await s3_client.delete_files(note.audio_urls)
