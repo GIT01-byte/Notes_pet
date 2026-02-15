@@ -61,7 +61,7 @@ class Settings(BaseSettings):
         env_file=str(ENV_PATH),
         case_sensitive=False,
         env_nested_delimiter="_",
-        env_prefix="MEDIA-SERV_",
+        env_prefix="MEDIA_",
     )
     app: AppConfig = AppConfig()
     api: ApiPrefix = ApiPrefix()
@@ -73,6 +73,7 @@ settings = Settings()  # type: ignore
 print()
 print("-------- Media Service --------")
 print(f"INFO:     Run mode: {settings.app.mode}")
+print(f"INFO:     Using Database url: {settings.db.DB_URL_asyncpg}")
 print(f"INFO:     Using S3 url: {settings.s3.endpointurl}/{settings.s3.bucketname}")
 print("------------------------------")
 print()

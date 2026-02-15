@@ -50,7 +50,7 @@ router = APIRouter(prefix=settings.api.v1.service, tags=["Media Service"])
 # TODO media_service: cделать проверку целостности, соответствие первичных байтов с помощью py_magic
 
 
-@router.get("/health_check")
+@router.get("/health_check/")
 async def health_check():
     return {"success": "Медиа-сервис запущен"}
 
@@ -157,7 +157,7 @@ async def upload_file(request: FileUploadRequest = Depends()):
         raise FilesUploadFailedError from e
 
 
-@router.get("/files/{file_uuid}", response_model=FileMeatadataRead)
+@router.get("/files/{file_uuid}/", response_model=FileMeatadataRead)
 async def get_file(file_uuid: UUID):
     try:
         logger.info(f"Получение метаданных файла с UUID: {file_uuid}")
@@ -180,7 +180,7 @@ async def get_file(file_uuid: UUID):
         raise ViewFileFailedError from e
 
 
-@router.get("/files/{file_uuid}/view")
+@router.get("/files/{file_uuid}/view/")
 async def view_file_urL(file_uuid: UUID):
     try:
         logger.info(f"Получение прямой ссылки на файл с UUID: {file_uuid}")
@@ -208,7 +208,7 @@ async def view_file_urL(file_uuid: UUID):
         raise ViewFileFailedError from e
 
 
-@router.delete("/files/{file_uuid}")
+@router.delete("/files/delete/{file_uuid}/")
 async def delete_file(file_uuid: UUID):
     try:
         logger.info(f"Удаление файла с UUID: {file_uuid}")

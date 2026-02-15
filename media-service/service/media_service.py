@@ -18,7 +18,7 @@ from exceptions.exceptions import (
 
 
 from utils.logging import logger
-  
+
 
 class FileProcessingService:
     def __init__(self):
@@ -282,7 +282,7 @@ class FileContentValidator:
 class VirusScanner:
     def __init__(self):
         try:
-            self.cd = pyclamd.ClamdNetworkSocket()
+            self.cd = pyclamd.ClamdUnixSocket()
             # Проверка соединения (пинг)
             self.cd.ping()
         except Exception as e:
