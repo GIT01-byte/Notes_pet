@@ -15,9 +15,12 @@ from exceptions.exceptions import (
 )
 
 from .service import NoteService
-from .deps import NoteCreateForm, get_current_user
+from .deps import NoteCreateForm
+
+from integrations.auth import get_current_user
 
 from utils.logging import logger
+import uuid
 
 router = APIRouter(prefix=settings.api.v1.notes, tags=["Notes"])
 
@@ -40,12 +43,15 @@ async def create_notes(
             f"с помощью {settings.api.v1.notes}/create"
         )
 
-        # Загружаем все типы медиа через вспомогательную функцию
+        # FIXME переделать логику отправки файлов на логику взаимодествия с микросеврисом файлов (media service)
+        # Загружаем все типы медиа через вспомогательную функцию 
         note_service = NoteService()
+        
+        new_note_uuid = str(uuid.uuid4())
 
-        video_urls = await note_service.upload_media_files(files=note_create_form.video_files, category="videos")  # type: ignore
-        image_urls = await note_service.upload_media_files(files=note_create_form.image_files, category="photos")  # type: ignore
-        audio_urls = await note_service.upload_media_files(files=note_create_form.audio_files, category="audios")  # type: ignore
+        video_uuids = await note_service.upload_media_files(files=note_create_form.video_files, category="videos", note_uuid=new_note_uuid)  
+        image_uuids = await note_service.upload_media_files(files=note_create_form.image_files, category="images", note_uuid=new_note_uuid) 
+        audio_uuids = await note_service.upload_media_files(files=note_create_form.audio_files, category="audios", note_uuid=new_note_uuid)
 
         # Теперь подготавливаем данные для БД
         logger.debug("Подготовка данных для создания заметки в БД...")
@@ -53,9 +59,9 @@ async def create_notes(
             user=current_user.username,
             title=note_create_form.title,
             content=note_create_form.content,
-            video_uuid=video_urls,
-            image_uuid=image_urls,
-            audio_uuid=audio_urls,
+            video_uuid=video_uuids,
+            image_uuid=image_uuids,
+            audio_uuid=audio_uuids,
         )
 
         # Сохраняем в БД
@@ -91,9 +97,9 @@ async def delete_note(
         note = await NotesRepo.get_note(note_id=note_id, username=current_user.username)
         if note:
              # FIXME
-            await s3_client.delete_files(note.video_urls)
-            await s3_client.delete_files(note.image_urls)
-            await s3_client.delete_files(note.audio_urls)
+            await s3_client.delete_files(note.video_uuid)
+            await s3_client.delete_files(note.image_uuid)
+            await s3_client.delete_files(note.audio_uuid)
         else:
             raise NoteNotFoundError
 

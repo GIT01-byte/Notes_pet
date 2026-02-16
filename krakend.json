@@ -194,7 +194,7 @@
     {
       "endpoint": "/media_service/upload",
       "method": "POST",
-      "input_query_strings": ["upload_context", "entity_id"],
+      "input_query_strings": ["upload_context", "entity_uuid"],
       "input_headers": ["Content-Type"],
       "timeout": "10s",
       "backend": [

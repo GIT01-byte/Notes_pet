@@ -12,6 +12,10 @@ from exceptions.exceptions import (
     InvalidFileFormatError,
 )
 
+from integrations.files.files import upload_file
+from integrations.files.schemas import NotesServiceFileUploadRequest
+from integrations.auth import get_current_user
+
 from utils.logging import logger
 
 
@@ -36,46 +40,44 @@ class NoteService:
             logger.error(f"Ошибка определения категории файла {filename}: {e}")
             raise FilesHandlingError
 
-    async def upload_media_files(self, files: List[UploadFile], category: str):
+    async def upload_media_files(self, files: List[UploadFile], category: str, note_uuid: str) -> list:
         """Вспомогательная функция для загрузки списка файлов"""
-        urls = []
         if not files:
-            return urls
-
+            logger.warning("Список файлов пуст")
+            return []
+        
         logger.info(f"Начало загрузки {len(files)} файлов категории {category}")
-
+        
         try:
-            for file in files:
-                # Проверяем расширение файла
-                file_ext = Path(file.filename).suffix  # type: ignore
-                valid_category = self.get_file_category(file.filename)  # type: ignore
-                if not category == valid_category:
-                    logger.warning(
-                        f"Неверная категория файла {file.filename}: ожидалось {category}, получено {valid_category}"
-                    )
-                    raise InvalidFileFormatError
-
-                # Генерируем уникальное имя: uuid + оригинальное расширение
-                unique_filename = f"{category}/{uuid.uuid4()}{file_ext}"
-
-                logger.debug(
-                    f"Загрузка {category}: {file.filename} -> {unique_filename}"
-                )
-
-                # Загружаем
-                await s3_client.upload_file(file=file.file, filename=unique_filename)
-
-                # Получаем ссылку
-                file_url = await s3_client.get_file_url(filename=unique_filename)
-                if file_url:
-                    urls.append(file_url)
-                    logger.debug(f"Файл {file.filename} успешно загружен: {file_url}")
-                else:
-                    logger.error(f"Не удалось получить URL для файла {unique_filename}")
-
-            logger.info(f"Успешно загружено {len(urls)} файлов категории {category}")
-            return urls
-
+            if category == "videos":
+                file_uuids = []
+                for video_file in files:
+                    request = NotesServiceFileUploadRequest(upload_context="post_attachment", file=video_file, entity_uuid=note_uuid)
+                    logger.debug(f"Запрос для загрузки видео: {request}")
+                    
+                    response = await upload_file(request)
+                    file_uuids.append(response["uuid"])
+                    return file_uuids
+            elif category == "images":
+                file_uuids = []
+                for video_file in files:
+                    request = NotesServiceFileUploadRequest(upload_context="post_attachment", file=video_file, entity_uuid=note_uuid)
+                    logger.debug(f"Запрос для загрузки изображений: {request}")
+                    
+                    response = await upload_file(request)
+                    file_uuids.append(response["uuid"])
+                    return file_uuids
+            elif category == "audios":
+                file_uuids = []
+                for video_file in files:
+                    request = NotesServiceFileUploadRequest(upload_context="post_attachment", file=video_file, entity_uuid=note_uuid)
+                    logger.debug(f"Запрос для загрузки аудио: {request}")
+                    
+                    response = await upload_file(request)
+                    file_uuids.append(response["uuid"])
+                    return file_uuids
+            else:
+                return []
         except HTTPException:
             raise
         except Exception as e:

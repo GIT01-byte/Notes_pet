@@ -81,7 +81,7 @@ async def upload_file(request: FileUploadRequest = Depends()):
         # Отправка файла в S3
         if request.upload_context == "post_attachment":
             logger.info(f"Файл {request.file.filename!r} будет сохранен как post_attachment")
-            upload_key = f"posts/{request.entity_id}/{unigue_filename}"
+            upload_key = f"posts/{request.entity_uuid}/{unigue_filename}"
             await s3_client.upload_file(
                 file=request.file.file,
                 key=upload_key,
@@ -90,7 +90,7 @@ async def upload_file(request: FileUploadRequest = Depends()):
         
         elif request.upload_context == "avatar":
             logger.info(f"Файл {request.file.filename!r} будет сохранен как avatar")
-            upload_key = f"avatars/{request.entity_id}/{unigue_filename}"
+            upload_key = f"avatars/{request.entity_uuid}/{unigue_filename}"
             await s3_client.upload_file(
                 file=request.file.file,
                 key=upload_key,

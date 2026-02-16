@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import UploadFile
 
 from core.schemas.files import UploadContext
@@ -8,9 +9,9 @@ class FileUploadRequest:
         self,
         file: UploadFile,
         upload_context: UploadContext,
-        entity_id: str,
+        entity_uuid: str,
     ):
         self.file = file
         self.upload_context = upload_context
-        self.entity_id = entity_id
+        self.entity_uuid = entity_uuid
     
