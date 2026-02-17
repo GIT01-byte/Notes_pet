@@ -11,3 +11,4 @@ created_at = Annotated[datetime.datetime, mapped_column(UtcDateTime(), server_de
 updated_at = Annotated[datetime.datetime, mapped_column(DateTime(timezone=True), server_default=utcnow(), onupdate=utcnow(), nullable=False)]
 str_256 = Annotated[str, mapped_column(String(256))]
 media_uuid = Annotated[list[str], mapped_column(ARRAY(String), default=[])]
+media_s3_url = Annotated[str, mapped_column(String(250), nullable=False, unique=True)]

@@ -137,6 +137,7 @@ async def upload_file(request: FileUploadRequest = Depends()):
             "ok": True,
             "message": f"Файл {request.file.filename!r} успешно загружен",
             "uuid": str(uuid),
+            "s3_url": s3_url,
         }
 
     except (

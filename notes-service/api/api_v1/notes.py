@@ -43,8 +43,6 @@ async def create_notes(
             f"с помощью {settings.api.v1.notes}/create"
         )
 
-        # FIXME переделать логику отправки файлов на логику взаимодествия с микросеврисом файлов (media service)
-        # Загружаем все типы медиа через вспомогательную функцию 
         note_service = NoteService()
         
         new_note_uuid = str(uuid.uuid4())
@@ -92,6 +90,8 @@ async def delete_note(
             f"Попытка удаления заметки ID {note_id} пользователя {current_user.username!r}"
             f"с помощью {settings.api.v1.notes}/delete/{note_id}"
         )
+        
+        note_service = NoteService()
 
         # Удаление медиа-файлов из S3
         note = await NotesRepo.get_note(note_id=note_id, username=current_user.username)
@@ -124,6 +124,8 @@ async def get_all_user_notes(current_user=Depends(get_current_user)):
             f"Получение всех заметок пользователя {current_user.username!r}"
             f"с помощью {settings.api.v1.notes}/get_all_user_notes/"
         )
+        
+        note_service = NoteService()
 
         notes = await NotesRepo.get_user_notes(current_user.username)
 
@@ -131,7 +133,16 @@ async def get_all_user_notes(current_user=Depends(get_current_user)):
             logger.info(
                 f"Получение заметок пользователя {current_user.username!r} прошло успешно!"
             )
-            return {"data": notes}
+            notes_data = []
+            for note in notes:
+                note_file_uuids = [
+                    str(note.video_uuid),
+                    str(note.image_uuid),
+                    str(note.audio_uuid),
+                ]
+                note_file_metadates = await note_service.get_files_metadata(note_file_uuids)
+                
+                return {"data": notes}
 
         raise NoteNotFoundError
     except NoteNotFoundError:

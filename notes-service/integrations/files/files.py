@@ -1,8 +1,9 @@
-from fastapi import Request, HTTPException, status
+from uuid import UUID
+from fastapi import HTTPException, status
 
 import httpx
 
-from .schemas import NotesServiceFileUploadRequest
+from .schemas import  NotesServiceFileUploadRequest
 
 from utils.logging import logger
 
@@ -47,6 +48,41 @@ async def upload_file(request: NotesServiceFileUploadRequest):
                 "message": response_data["message"],
                 "uuid": response_data["uuid"]
             }
+        except httpx.RequestError as exc:
+            logger.exception(f"Gateway unavailable: {exc}") 
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Media service unavailable")
+        except KeyError as exc:
+            logger.exception(f"Invalid response format: {exc}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Invalid response from media service")
+        except Exception as exc:
+            logger.exception(f"Unexpected error: {exc}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+
+async def get_file(file_uuid: str):
+    async with httpx.AsyncClient() as client:
+        try:
+            get_file_response = await client.post(
+                    url=f"http://krakend:8080/media_service/files/{file_uuid}/",
+                    follow_redirects=True,
+                )
+            
+            if get_file_response.status_code != 200:
+                logger.exception(f"Get file failed: {get_file_response.text}") 
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Get file failed: {get_file_response.text}"
+                )
+
+            response_data = get_file_response.json()
+            logger.info(f"get_file обработал - {response_data}")
+            
+            return {
+                "uuid": response_data["uuid"],
+                "filename": response_data["filename"],
+                "s3_url": response_data["s3_url"],
+            }
+        
         except httpx.RequestError as exc:
             logger.exception(f"Gateway unavailable: {exc}") 
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Media service unavailable")
