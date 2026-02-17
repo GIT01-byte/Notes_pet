@@ -1,90 +1,82 @@
 from contextlib import asynccontextmanager
+import tracemalloc
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
-from pydantic import ValidationError
-from starlette.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware
-
 from api import router as api_router
-
 from core.config import settings
-from core.models import db_helper
+
+from prometheus_fastapi_instrumentator import Instrumentator
+
+from utils.logging import logger
+
+
+# Включаем отслеживание памяти, для дебага ошибок с ассинхронными функциями
+tracemalloc.start()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("INFO:     App is started")
+    logger.info("Запуск приложения...")
     yield
-    print('INFO:     Dispose db engine')
-    await db_helper.dispose()
+    logger.info("Выключение...")
 
 
-# Middleware для логирования ошибок
-class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+def create_app() -> FastAPI:
+    main_app = FastAPI(
+        default_response_class=ORJSONResponse,
+        lifespan=lifespan,
+    )
+
+    origins = [
+        "http://127.0.0.1",
+    ]
+
+    main_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Подключаем middleware для просмотра содержимого http запроса
+    @main_app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        logger.info(f"\n----------- New request -----------")
+        logger.info(f"Request: {request.method} {request.url}")
+        logger.info(f"Headers: {request.headers}")
         try:
-            response = await call_next(request)
-            return response
-        except ValidationError as e:
-            print(f"EXC:   Validation Error: {e.errors()}")
-            raise  # Re-raise the exception to be handled by FastAPI's default exception handlers
+            body = await request.json()
+            logger.info(f"Body: {body}\n")
         except Exception as e:
-            print(f"EXC:   Unhandled Exception: {e}")
-            raise  # Re-raise the exception
+            logger.warning(f"Could not decode JSON body: {e}\n")
+        response = await call_next(request)
+        return response
+
+    # Подключаем api роутеры
+    main_app.include_router(api_router)
+
+    # Подключаем prometheus метрики
+    Instrumentator().instrument(main_app).expose(main_app)
+
+    # Подключаем админ панель
+    # setup_admin(app, db_manager.engine)
+
+    return main_app
 
 
-middleware = [
-    Middleware(ExceptionLoggingMiddleware)
-]
-
-
-main_app = FastAPI(
-    default_response_class=ORJSONResponse,
-    lifespan=lifespan,
-    middleware=middleware,
-)
-
-
-origins = [
-    "http://127.0.0.1",
-]
-
-
-main_app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-main_app.include_router(api_router)
-
-
-@main_app.middleware("http")
-async def log_requests(request: Request, call_next):
-    print(f"\n----------- INFO:    New request -----------")
-    print(f"INFO:    Request: {request.method} {request.url}")
-    print(f"INFO:    Headers: {request.headers}")
-    try:
-        body = await request.json()
-        print(f"INFO:    Body: {body}\n")
-    except Exception as e:
-        print(f"WARNING: Could not decode JSON body: {e}\n")
-    response = await call_next(request)
-    return response
-
+main_app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:main_app",
         host=settings.app.host,
         port=settings.app.port,
         reload=True,
-        log_level='debug'
+        log_level="debug",
     )

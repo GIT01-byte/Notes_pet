@@ -64,7 +64,7 @@ pydantic_core==2.41.5
 pyproject_hooks==1.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
-python-magic
+python-magic-bin==0.4.14
 python-multipart==0.0.22
 pytokens==0.4.1
 pywin32-ctypes==0.2.3
