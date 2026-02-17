@@ -61,6 +61,9 @@ def create_app() -> FastAPI:
     # Подключаем api роутеры
     main_app.include_router(api_router)
 
+    # Подключаем обработчики исключений
+    register_errors_handlers(main_app)
+
     # Подключаем prometheus метрики
     Instrumentator().instrument(main_app).expose(main_app)
 

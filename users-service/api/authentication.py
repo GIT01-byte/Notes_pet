@@ -191,3 +191,14 @@ async def auth_user_check_self_info(
         "access_expire": current_user["acess_expire"],
         "iat": current_user["iat"],
     }
+
+@dev_usage.get("/validation_error")
+async def get_validation_error(raise_error: bool):
+    """
+    Эндпоинт для тестирования валидации
+    """
+    if raise_error:
+        TokenResponse.model_validate(None)
+    return {
+        "ok": True,
+    }

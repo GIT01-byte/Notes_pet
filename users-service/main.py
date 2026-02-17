@@ -16,6 +16,8 @@ from api import api_router
 
 from prometheus_fastapi_instrumentator import Instrumentator
 
+from errors_handlers import register_errors_handlers
+
 from utils.logging import logger
 
 
@@ -62,10 +64,13 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         return response
 
-    # Подключаем api роутеры
+    # Подключаем api-роутеры
     main_app.include_router(api_router)
+    
+    # Подключаем обработчики исключений
+    register_errors_handlers(main_app)
 
-    # Подключаем prometheus метрики
+    # Подключаем prometheus-метрики
     Instrumentator().instrument(main_app).expose(main_app)
 
     # Подключаем админ панель
