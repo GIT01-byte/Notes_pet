@@ -229,7 +229,6 @@ services:
       options:
         tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
     command: ["bash", "-c", "service clamav-daemon start && alembic upgrade head && python main.py"]
-    restart: always
     networks:
       - app-network
 

@@ -10,6 +10,8 @@ from core.config import settings
 
 from prometheus_fastapi_instrumentator import Instrumentator
 
+from errors_handlers import register_errors_handlers
+
 from utils.logging import logger
 
 
