@@ -1,3 +1,6 @@
+from typing import Optional
+from uuid import UUID, uuid7
+
 from sqlalchemy import String, Table, Column, Integer, MetaData, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -19,28 +22,36 @@ class NotesOrm(Base):
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 
-    video_files: Mapped["VideoFilesOrm"] = relationship(
+    video_files: Mapped[Optional["VideoFilesOrm"]] = relationship(
         back_populates="notes",
-        lazy="selectin",
+        order_by="VideoFilesOrm.id.desc()",
+        lazy="joined",
     )
-    
-    image_files: Mapped["ImageFilesOrm"] = relationship(
+
+    image_files: Mapped[Optional["ImageFilesOrm"]] = relationship(
         back_populates="notes",
-        lazy="selectin",
+        order_by="ImageFilesOrm.id.desc()",
+        lazy="joined",
     )
-    
-    audio_files: Mapped["AudioFilesOrm"] = relationship(
+
+    audio_files: Mapped[Optional["AudioFilesOrm"]] = relationship(
         back_populates="notes",
-        lazy="selectin",
+        order_by="AudioFilesOrm.id.desc()",
+        lazy="joined",
     )
 
 
 class VideoFilesOrm(Base):
     note_id: Mapped[int] = mapped_column(ForeignKey("notes.id"))
 
-    uuid: Mapped[media_uuid]
-    s3_url: Mapped[media_s3_url]
-    note: Mapped["NotesOrm"] = relationship(
+    uuid: Mapped[UUID] = mapped_column(unique=True, default=uuid7, index=True)
+    s3_url: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    created_at: Mapped[created_at]
+    updated_at: Mapped[updated_at]
+
+    notes: Mapped["NotesOrm"] = relationship(
         back_populates="video_files",
         lazy="selectin",
     )
@@ -49,9 +60,14 @@ class VideoFilesOrm(Base):
 class ImageFilesOrm(Base):
     note_id: Mapped[int] = mapped_column(ForeignKey("notes.id"))
 
-    uuid: Mapped[media_uuid]
-    s3_url: Mapped[media_s3_url]
-    note: Mapped["NotesOrm"] = relationship(
+    uuid: Mapped[UUID] = mapped_column(unique=True, default=uuid7, index=True)
+    s3_url: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    created_at: Mapped[created_at]
+    updated_at: Mapped[updated_at]
+
+    notes: Mapped["NotesOrm"] = relationship(
         back_populates="image_files",
         lazy="selectin",
     )
@@ -60,9 +76,14 @@ class ImageFilesOrm(Base):
 class AudioFilesOrm(Base):
     note_id: Mapped[int] = mapped_column(ForeignKey("notes.id"))
 
-    uuid: Mapped[media_uuid]
-    s3_url: Mapped[media_s3_url]
-    note: Mapped["NotesOrm"] = relationship(
+    uuid: Mapped[UUID] = mapped_column(unique=True, default=uuid7, index=True)
+    s3_url: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    created_at: Mapped[created_at]
+    updated_at: Mapped[updated_at]
+
+    notes: Mapped["NotesOrm"] = relationship(
         back_populates="audio_files",
         lazy="selectin",
     )
