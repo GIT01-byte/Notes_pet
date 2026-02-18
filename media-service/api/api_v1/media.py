@@ -1,7 +1,6 @@
 from uuid import UUID, uuid7
 
 from fastapi import (
-    UploadFile,
     Depends,
     APIRouter,
     Response,
@@ -27,6 +26,7 @@ from exceptions.exceptions import (
     ViewFileFailedError,
 )
 
+from utils.constants import NOTES_ATTACHMENT_NAME, USERS_AVATAR_NAME
 from service.media_service import FileProcessingService
 from service.media_repo import MediaRepo
 
@@ -45,9 +45,7 @@ router = APIRouter(prefix=settings.api.v1.service, tags=["Media Service"])
 # | DELETE | /files/{file_uuid} | Удаление файла | Удаляет файл из S3 и запись из базы данных |
 
 # TODO all: сделать синхронную отправку и в БД и в S3
-# TODO media: реализовать upload type, entity id в запросе /upload
-# TODO media_service: реализловать s3 save path для упорядочиваняи файлов
-# TODO media_service: cделать проверку целостности, соответствие первичных байтов с помощью py_magic
+# TODO all: сделать статус "uploaded" после того как файл был успешно отправлен в S3
 
 
 @router.get("/health_check/")
@@ -66,9 +64,12 @@ async def upload_file(request: FileUploadRequest = Depends()):
             raise EmptyFileError
 
         # Валидация и генерация уникального имени файла
-        validation_process_file = await media_service.process_file(request.file)
+        validation_process_file = await media_service.process_file(
+            file=request.file, upload_context=request.upload_context
+        )
 
         unigue_filename = validation_process_file.filename
+        category = validation_process_file.category
 
         if not unigue_filename:
             logger.error(
@@ -79,18 +80,18 @@ async def upload_file(request: FileUploadRequest = Depends()):
             )
 
         # Отправка файла в S3
-        if request.upload_context == "post_attachment":
+        if request.upload_context == NOTES_ATTACHMENT_NAME:
             logger.info(f"Файл {request.file.filename!r} будет сохранен как post_attachment")
-            upload_key = f"posts/{request.entity_uuid}/{unigue_filename}"
+            upload_key = f"notes/{request.entity_id}/{unigue_filename}"
             await s3_client.upload_file(
                 file=request.file.file,
                 key=upload_key,
             )
             logger.info(f"Файл {request.file.filename!r} успешно загружен в S3")
         
-        elif request.upload_context == "avatar":
+        elif request.upload_context == USERS_AVATAR_NAME:
             logger.info(f"Файл {request.file.filename!r} будет сохранен как avatar")
-            upload_key = f"avatars/{request.entity_uuid}/{unigue_filename}"
+            upload_key = f"avatars/{request.entity_id}/{unigue_filename}"
             await s3_client.upload_file(
                 file=request.file.file,
                 key=upload_key,
@@ -103,6 +104,7 @@ async def upload_file(request: FileUploadRequest = Depends()):
         # Формирование метаданных файла
         uuid = uuid7()
         s3_url = await s3_client.get_file_url(key=unigue_filename)
+        status = "uploaded" # FIX
 
         if not (uuid and s3_url and request.file.size and request.file.content_type):
             logger.error(
@@ -118,11 +120,13 @@ async def upload_file(request: FileUploadRequest = Depends()):
             filename=unigue_filename,
             size=request.file.size,
             content_type=request.file.content_type,
+            category=category,
+            status=status,
         )
         logger.debug(f"Метаданные файла {request.file.filename!r} успешно сформированы")
 
         # Запись метаданных в БД
-        file_metadata_in_db = await MediaRepo.create_note(
+        file_metadata_in_db = await MediaRepo.create_metadata(
             file_metadata_to_create=new_file_metadata
         )
 
@@ -136,8 +140,13 @@ async def upload_file(request: FileUploadRequest = Depends()):
         return {
             "ok": True,
             "message": f"Файл {request.file.filename!r} успешно загружен",
-            "uuid": str(uuid),
-            "s3_url": s3_url,
+            "file": {
+                "uuid": str(file_metadata_in_db.uuid),
+                "s3_url": file_metadata_in_db.s3_url,
+                "content_type": file_metadata_in_db.content_type,
+                "category": file_metadata_in_db.category,
+                "uploaded_at": str(file_metadata_in_db.created_at_db),
+            }
         }
 
     except (

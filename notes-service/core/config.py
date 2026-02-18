@@ -49,13 +49,6 @@ class DatabaseSettings(BaseModel):
         return f"postgresql+asyncpg://{self.user}:{self.pwd}@{self.host}:{self.port}/{self.name}"
 
 
-class S3Settings(BaseModel):
-    accesskey: str
-    secretkey: str
-    endpointurl: str
-    bucketname: str
-
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=str(ENV_PATH),
@@ -66,7 +59,6 @@ class Settings(BaseSettings):
     app: AppConfig = AppConfig()
     api: ApiPrefix = ApiPrefix()
     db: DatabaseSettings
-    s3: S3Settings
 
 
 settings = Settings() # type: ignore
@@ -74,6 +66,5 @@ print()
 print("-------- Notes Service --------")
 print(f"INFO:     Run mode: {settings.app.mode}")
 print(f"INFO:     Using Database url: {settings.db.DB_URL_asyncpg}")
-print(f"INFO:     Using S3 url: {settings.s3.endpointurl}/{settings.s3.bucketname}")
 print("-------------------------------")
 print()

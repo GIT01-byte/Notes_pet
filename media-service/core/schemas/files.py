@@ -4,10 +4,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from utils.constants import NOTES_ATTACHMENT_NAME, USERS_AVATAR_NAME
+
+
 class UploadContext(str, Enum):
-    post_attachment = "post_attachment"
-    avatar = "avatar"
-    # document = "document"
+    post_attachment = NOTES_ATTACHMENT_NAME
+    avatar = USERS_AVATAR_NAME
+    # document = DOCUMENT_NAME
+
 
 class FileMetadataBase(BaseModel):
     uuid: UUID
@@ -16,6 +20,8 @@ class FileMetadataBase(BaseModel):
     filename: str
     size: int
     content_type: str
+    category: str
+    status: str
 
 
 class FileMeatadataCreate(FileMetadataBase):

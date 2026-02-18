@@ -1,4 +1,3 @@
-from typing import NoReturn
 from uuid import UUID
 
 from sqlalchemy import select, or_
@@ -20,7 +19,7 @@ from utils.logging import logger
 
 class MediaRepo:
     @staticmethod
-    async def create_note(file_metadata_to_create: FileMeatadataCreate) -> FilesMetadataOrm | None:
+    async def create_metadata(file_metadata_to_create: FileMeatadataCreate) -> FilesMetadataOrm | None:
         try:
             async with db_helper.session_factory() as session:
                 logger.debug(

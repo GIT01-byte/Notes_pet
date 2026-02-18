@@ -4,7 +4,14 @@ import pyclamd
 from fastapi import UploadFile
 
 from core.schemas.files import FileValidation
-from .constants import VIDEOS, IMAGES, AUDIO
+from utils.constants import (
+    AVATARS,
+    NOTES_ATTACHMENT_NAME,
+    USERS_AVATAR_NAME,
+    VIDEOS,
+    IMAGES,
+    AUDIO,
+)
 from exceptions.exceptions import (
     EmptyFileError,
     FileCategoryNotSupportedError,
@@ -16,10 +23,10 @@ from exceptions.exceptions import (
     VirusScanFileFailedError,
 )
 
-
 from utils.logging import logger
 
 
+# TODO добавить категорию avatars, детектиться с помощью upload context, также добавить проверку на upload context
 class FileProcessingService:
     def __init__(self):
         self.metadata_handler = FileMetadataHandler()
@@ -27,7 +34,7 @@ class FileProcessingService:
         self.generator_filename = GenerateUnigueFilename()
         self.virus_scanner = VirusScanner()
 
-    async def process_file(self, file: UploadFile):
+    async def process_file(self, file: UploadFile, upload_context: str):
         try:
             logger.info(f"Обработка файла {file.filename!r}")
 
@@ -40,7 +47,9 @@ class FileProcessingService:
                 raise VirusScanFileFailedError
 
             # Получение категории файла
-            category = await self.metadata_handler.get_file_category(file)
+            category = await self.metadata_handler.get_file_category(
+                file=file, upload_context=upload_context,
+            )
             if not category:
                 raise ValidateFileFailedError(
                     detail=f"Catagory handling error for file {file.filename!r}"
@@ -83,7 +92,7 @@ class FileProcessingService:
 
 
 class FileMetadataHandler:
-    async def get_file_category(self, file: UploadFile):
+    async def get_file_category(self, file: UploadFile, upload_context: str) -> str:
         try:
             logger.debug(
                 f"Processing file category {file.filename!r}, content-type: {file.content_type}"
@@ -93,15 +102,26 @@ class FileMetadataHandler:
                 logger.warning("Attempt to upload empty file")
                 raise EmptyFileError
 
-            if file.content_type in VIDEOS["content_types"]:
-                logger.debug(f"File {file.filename!r} identified as video")
-                return "video"
-            elif file.content_type in IMAGES["content_types"]:
-                logger.debug(f"File {file.filename!r} identified as image")
-                return "image"
-            elif file.content_type in AUDIO["content_types"]:
-                logger.debug(f"File {file.filename!r} identified as audio")
-                return "audio"
+            if file.content_type in VIDEOS["content_types"] and upload_context == NOTES_ATTACHMENT_NAME:
+                logger.debug(
+                    f"File {file.filename!r} identified as {VIDEOS["category_name"]}"
+                )
+                return VIDEOS["category_name"]
+            elif file.content_type in IMAGES["content_types"] and upload_context == NOTES_ATTACHMENT_NAME:
+                logger.debug(
+                    f"File {file.filename!r} identified as {IMAGES["category_name"]}"
+                )
+                return IMAGES["category_name"]
+            elif file.content_type in AUDIO["content_types"] and upload_context == NOTES_ATTACHMENT_NAME:
+                logger.debug(
+                    f"File {file.filename!r} identified as {AUDIO["category_name"]}"
+                )
+                return AUDIO["category_name"]
+            elif file.content_type in AVATARS["content_types"] and upload_context == USERS_AVATAR_NAME:
+                logger.debug(
+                    f"File {file.filename!r} identified as {AVATARS["category_name"]}"
+                )
+                return AVATARS["category_name"]
             else:
                 logger.warning(
                     f"Unknown content-type {file.content_type} for file {file.filename!r}"
@@ -204,6 +224,14 @@ class FileContentValidator:
                     f"Расширение {extension} - Тип {detected_mime} не соответствует категории {category}"
                 )
                 raise FileInvalidExtensionError
+            elif category == "avatar" and (
+                detected_mime not in AVATARS["content_types"]
+                and extension not in AVATARS["extensions"]
+            ):
+                logger.debug(
+                    f"Расширение {extension} - Тип {detected_mime} не соответствует категории {category}"
+                )
+                raise FileInvalidExtensionError
 
             return True
         except (EmptyFileError, ValidateFileFailedError, FileInvalidExtensionError):
@@ -226,14 +254,22 @@ class FileContentValidator:
                 logger.warning("Attempt to validate empty file size")
                 raise EmptyFileError(detail="Empty file size")
 
-            if category == "video" and file.size <= VIDEOS["max_size"]:
+            if category == VIDEOS["category_name"] and file.size <= VIDEOS["max_size"]:
                 logger.debug(f"Video file {file.filename!r} size is valid")
                 return True
-            elif category == "image" and file.size <= IMAGES["max_size"]:
+            elif (
+                category == IMAGES["category_name"] and file.size <= IMAGES["max_size"]
+            ):
                 logger.debug(f"Image file {file.filename!r} size is valid")
                 return True
-            elif category == "audio" and file.size <= AUDIO["max_size"]:
+            elif category == AUDIO["category_name"] and file.size <= AUDIO["max_size"]:
                 logger.debug(f"Audio file {file.filename!r} size is valid")
+                return True
+            elif (
+                category == AVATARS["category_name"]
+                and file.size <= AVATARS["max_size"]
+            ):
+                logger.debug(f"Avatar file {file.filename!r} size is valid")
                 return True
             else:
                 logger.warning(

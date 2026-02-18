@@ -22,8 +22,8 @@ VIDEOS = {
     ],
     "max_width": 3160,
     "max_height": 3160,
-    "s3_save_path": "notes_media/{note_id}/videos",
     "max_size": 500 * 1024 * 1024,  # 500MB
+    "category_name": "video"
 }
 
 IMAGES = {
@@ -49,8 +49,8 @@ IMAGES = {
     ],
     "max_width": 3160,
     "max_height": 3160,
-    "s3_save_path": "notes_media/{note_id}/images",
     "max_size": 30 * 1024 * 1024,  # 30MB
+    "category_name": "image"
 }
 
 AUDIO = {
@@ -66,8 +66,8 @@ AUDIO = {
         "wav",
         "ogg",
     ],
-    "s3_save_path": "notes_media/{note_id}/audios",
     "max_size": 30 * 1024 * 1024,  # 30MB
+    "category_name": "audio"
 }
 
 AVATARS = {
@@ -93,6 +93,9 @@ AVATARS = {
     ],
     "max_width": 1024,
     "max_height": 1024,
-    "s3_save_path": "users_media/{user_id}/avatar",
     "max_size": 5 * 1024 * 1024,  # 5MB
+    "category_name": "avatar"
 }
+
+NOTES_ATTACHMENT_NAME = "post_attachment"
+USERS_AVATAR_NAME = "avatar"

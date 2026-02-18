@@ -1,4 +1,3 @@
-import datetime
 from uuid import UUID, uuid7 
 
 from sqlalchemy import BigInteger, String
@@ -24,6 +23,7 @@ class FilesMetadataOrm(Base):
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     size: Mapped[int] = mapped_column(BigInteger, nullable=False)
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
     
     status: Mapped[str] = mapped_column(String(20), default="pending")
 

@@ -47,8 +47,19 @@ class NoteNotFoundError(BaseAPIException):
         super().__init__(detail=detail, status_code=status.HTTP_404_NOT_FOUND)
 
 
+# Исключения обработки файлов
+class EmptyFileError(BaseAPIException):
+    def __init__(self, detail: str = "File is empty"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
 class FilesHandlingError(BaseAPIException):
     def __init__(self, detail: str = "Error handling files"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class InvalidFileFormatError(BaseAPIException):
+    def __init__(self, detail: str = "Invalid file format"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -57,11 +68,6 @@ class FilesUploadError(BaseAPIException):
         super().__init__(
             detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
-
-class InvalidFileFormatError(BaseAPIException):
-    def __init__(self, detail: str = "Invalid file format"):
-        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 # Исключения сервисов о проваленной работе

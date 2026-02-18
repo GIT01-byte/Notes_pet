@@ -5,6 +5,14 @@ from pydantic import BaseModel
 
 
 class NotesServiceFileUploadRequest(BaseModel):
-    upload_context: str
     file: UploadFile
-    entity_uuid: str
+    upload_context: str
+    entity_id: int
+
+
+class NotesServiceFileUploadResponse(BaseModel):
+    uuid: str
+    s3_url: str
+    content_type: str
+    category: str
+    uploaded_at_s3: str
