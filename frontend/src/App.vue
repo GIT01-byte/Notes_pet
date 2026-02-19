@@ -155,9 +155,6 @@
                 <i class="fas fa-sticky-note mr-3"></i>Мои заметки
               </h1>
               <div class="flex items-center space-x-4">
-                <button @click="testTokenRefresh" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl font-medium text-sm">
-                  <i class="fas fa-sync mr-2"></i>Тест токена
-                </button>
                 <button @click="modals.createNote = true" class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-lg transition">
                   <i class="fas fa-plus mr-2"></i>Создать заметку
                 </button>
