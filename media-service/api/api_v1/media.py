@@ -80,9 +80,9 @@ async def upload_file(request: FileUploadRequest = Depends()):
             )
 
         # Отправка файла в S3
+        upload_key = f"{request.upload_context}/{request.entity_id}/{unigue_filename}"
         if request.upload_context == NOTES_ATTACHMENT_NAME:
             logger.info(f"Файл {request.file.filename!r} будет сохранен как post_attachment")
-            upload_key = f"notes/{request.entity_id}/{unigue_filename}"
             await s3_client.upload_file(
                 file=request.file.file,
                 key=upload_key,
@@ -91,7 +91,6 @@ async def upload_file(request: FileUploadRequest = Depends()):
         
         elif request.upload_context == USERS_AVATAR_NAME:
             logger.info(f"Файл {request.file.filename!r} будет сохранен как avatar")
-            upload_key = f"avatars/{request.entity_id}/{unigue_filename}"
             await s3_client.upload_file(
                 file=request.file.file,
                 key=upload_key,
@@ -103,8 +102,8 @@ async def upload_file(request: FileUploadRequest = Depends()):
 
         # Формирование метаданных файла
         uuid = uuid7()
-        s3_url = await s3_client.get_file_url(key=unigue_filename)
-        status = "uploaded" # FIX
+        s3_url = await s3_client.get_file_url(key=upload_key)
+        status = "uploaded" # FIXME
 
         if not (uuid and s3_url and request.file.size and request.file.content_type):
             logger.error(

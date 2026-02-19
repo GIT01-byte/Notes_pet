@@ -199,18 +199,18 @@
                   <p class="text-gray-300 mb-3 md:mb-4 line-clamp-3 text-sm md:text-base">{{ note.content }}</p>
 
                   <!-- Media Summary -->
-                  <div v-if="note.image_urls?.length || note.video_urls?.length || note.audio_urls?.length" class="mb-3 md:mb-4 flex flex-wrap gap-1 md:gap-2">
-                    <div v-if="note.image_urls?.length" class="flex items-center bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                  <div v-if="note.image_files?.length || note.video_files?.length || note.audio_files?.length" class="mb-3 md:mb-4 flex flex-wrap gap-1 md:gap-2">
+                    <div v-if="note.image_files?.length" class="flex items-center bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
                       <i class="fas fa-image mr-1"></i>
-                      {{ note.image_urls.length }} фото
+                      {{ note.image_files.length }} фото
                     </div>
-                    <div v-if="note.video_urls?.length" class="flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                    <div v-if="note.video_files?.length" class="flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
                       <i class="fas fa-video mr-1"></i>
-                      {{ note.video_urls.length }} видео
+                      {{ note.video_files.length }} видео
                     </div>
-                    <div v-if="note.audio_urls?.length" class="flex items-center bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
+                    <div v-if="note.audio_files?.length" class="flex items-center bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
                       <i class="fas fa-music mr-1"></i>
-                      {{ note.audio_urls.length }} аудио
+                      {{ note.audio_files.length }} аудио
                     </div>
                   </div>
 
@@ -445,43 +445,43 @@
           </div>
           <div class="space-y-4 md:space-y-6">
             <!-- Медиафайлы -->
-            <div v-if="(modals.noteDetail.video_urls && modals.noteDetail.video_urls.length) || (modals.noteDetail.image_urls && modals.noteDetail.image_urls.length) || (modals.noteDetail.audio_urls && modals.noteDetail.audio_urls.length)" class="space-y-3">
+            <div v-if="(modals.noteDetail.video_files && modals.noteDetail.video_files.length) || (modals.noteDetail.image_files && modals.noteDetail.image_files.length) || (modals.noteDetail.audio_files && modals.noteDetail.audio_files.length)" class="space-y-3">
               <h3 class="text-lg font-semibold text-white flex items-center">
                 <i class="fas fa-photo-video mr-2 text-cyan-400"></i>Медиафайлы
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <button v-if="modals.noteDetail.video_urls && modals.noteDetail.video_urls.length" @click="openMediaViewer('video', modals.noteDetail.video_urls, 'Видео')" class="flex items-center justify-between p-4 rounded-xl bg-blue-100/10 hover:bg-blue-100/20 transition border border-blue-500/20">
+                <button v-if="modals.noteDetail.video_files && modals.noteDetail.video_files.length" @click="openMediaViewer('video', modals.noteDetail.video_files.map(f => f.s3_url), 'Видео')" class="flex items-center justify-between p-4 rounded-xl bg-blue-100/10 hover:bg-blue-100/20 transition border border-blue-500/20">
                   <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                       <i class="fas fa-video text-blue-600"></i>
                     </div>
                     <div class="text-left">
                       <h4 class="font-semibold text-white">Видео</h4>
-                      <p class="text-xs text-gray-300">{{ modals.noteDetail.video_urls.length }} файл(ов)</p>
+                      <p class="text-xs text-gray-300">{{ modals.noteDetail.video_files.length }} файл(ов)</p>
                     </div>
                   </div>
                   <i class="fas fa-chevron-right text-white"></i>
                 </button>
-                <button v-if="modals.noteDetail.image_urls && modals.noteDetail.image_urls.length" @click="openMediaViewer('image', modals.noteDetail.image_urls, 'Изображения')" class="flex items-center justify-between p-4 rounded-xl bg-green-100/10 hover:bg-green-100/20 transition border border-green-500/20">
+                <button v-if="modals.noteDetail.image_files && modals.noteDetail.image_files.length" @click="openMediaViewer('image', modals.noteDetail.image_files.map(f => f.s3_url), 'Изображения')" class="flex items-center justify-between p-4 rounded-xl bg-green-100/10 hover:bg-green-100/20 transition border border-green-500/20">
                   <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                       <i class="fas fa-image text-green-600"></i>
                     </div>
                     <div class="text-left">
                       <h4 class="font-semibold text-white">Изображения</h4>
-                      <p class="text-xs text-gray-300">{{ modals.noteDetail.image_urls.length }} файл(ов)</p>
+                      <p class="text-xs text-gray-300">{{ modals.noteDetail.image_files.length }} файл(ов)</p>
                     </div>
                   </div>
                   <i class="fas fa-chevron-right text-white"></i>
                 </button>
-                <button v-if="modals.noteDetail.audio_urls && modals.noteDetail.audio_urls.length" @click="openMediaViewer('audio', modals.noteDetail.audio_urls, 'Аудио')" class="flex items-center justify-between p-4 rounded-xl bg-purple-100/10 hover:bg-purple-100/20 transition border border-purple-500/20">
+                <button v-if="modals.noteDetail.audio_files && modals.noteDetail.audio_files.length" @click="openMediaViewer('audio', modals.noteDetail.audio_files.map(f => f.s3_url), 'Аудио')" class="flex items-center justify-between p-4 rounded-xl bg-purple-100/10 hover:bg-purple-100/20 transition border border-purple-500/20">
                   <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                       <i class="fas fa-music text-purple-600"></i>
                     </div>
                     <div class="text-left">
                       <h4 class="font-semibold text-white">Аудио</h4>
-                      <p class="text-xs text-gray-300">{{ modals.noteDetail.audio_urls.length }} файл(ов)</p>
+                      <p class="text-xs text-gray-300">{{ modals.noteDetail.audio_files.length }} файл(ов)</p>
                     </div>
                   </div>
                   <i class="fas fa-chevron-right text-white"></i>
