@@ -80,7 +80,7 @@ async def upload_file(request: FileUploadRequest = Depends()):
             )
 
         # Отправка файла в S3
-        upload_key = f"{request.upload_context}/{request.entity_id}/{unigue_filename}"
+        upload_key = f"{str(request.upload_context)}/{request.entity_id}/{unigue_filename}"
         if request.upload_context == NOTES_ATTACHMENT_NAME:
             logger.info(f"Файл {request.file.filename!r} будет сохранен как post_attachment")
             await s3_client.upload_file(
