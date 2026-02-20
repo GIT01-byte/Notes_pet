@@ -44,6 +44,16 @@ class FileVirusFound(BaseAPIException):
     def __init__(self, detail: str = "Virus found in file"):
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
 
+# Исключения S3
+class S3DeleteFileError(BaseAPIException):
+    def __init__(self, detail: str = "Error deleting file from S3"):
+        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class S3UploadFileError(BaseAPIException):
+    def __init__(self, detail: str = "Error uploading file to S3"):
+        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # Исключения сервисов о проваленной работе
 class FilesUploadFailedError(BaseAPIException):

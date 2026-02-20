@@ -223,7 +223,6 @@ async def delete_file(file_uuid: UUID):
         logger.info(f"Удаление файла с UUID: {file_uuid}")
 
         file_db = await MediaRepo.get_files_metadata(file_uuid=file_uuid)
-
         if not file_db:
             logger.warning(f"Файл с UUID: {file_uuid} не найден")
             raise ViewFileFailedError(detail=f"Файл с UUID {file_uuid} не найден")

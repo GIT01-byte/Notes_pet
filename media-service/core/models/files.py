@@ -20,6 +20,7 @@ class FilesMetadataOrm(Base):
     
     s3_url: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
     
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
     size: Mapped[int] = mapped_column(BigInteger, nullable=False)
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)
     category: Mapped[str] = mapped_column(String(100), nullable=False)
