@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from core.models.notes import VideoFilesOrm, ImageFilesOrm, AudioFilesOrm
 from core.models.db_helper import db_helper
-from integrations.files.schemas import NotesServiceFileUploadResponse
+from integrations.files.schemas import NSFileUploadResponse
 from exceptions.exceptions import RepositoryInternalError
 from utils.logging import logger
 
@@ -11,7 +11,7 @@ from utils.logging import logger
 class MediaFilesRepo:
     @staticmethod
     async def add_video(
-        note_id: int, file_data: NotesServiceFileUploadResponse
+        note_id: int, file_data: NSFileUploadResponse
     ) -> VideoFilesOrm | None:
         try:
             async with db_helper.session_factory() as session:
@@ -51,7 +51,7 @@ class MediaFilesRepo:
 
     @staticmethod
     async def add_image(
-        note_id: int, file_data: NotesServiceFileUploadResponse
+        note_id: int, file_data: NSFileUploadResponse
     ) -> ImageFilesOrm | None:
         try:
             async with db_helper.session_factory() as session:
@@ -91,7 +91,7 @@ class MediaFilesRepo:
 
     @staticmethod
     async def add_audio(
-        note_id: int, file_data: NotesServiceFileUploadResponse
+        note_id: int, file_data: NSFileUploadResponse
     ) -> AudioFilesOrm | None:
         try:
             async with db_helper.session_factory() as session:
