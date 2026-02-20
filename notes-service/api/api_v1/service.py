@@ -82,7 +82,7 @@ class NoteService:
 
             logger.info(f"Обработка {len(files)} файлов категории {category} для заметки {note_id}")
             
-            uploaded_uuids = []
+            uploaded_uuids: list[UUID] = []
             for file in files:
                 # Загружаем в S3
                 upload_response = await self._upload_media_file(file=file, entity_id=note_id)

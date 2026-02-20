@@ -26,7 +26,6 @@ from exceptions.exceptions import (
 from utils.logging import logger
 
 
-# TODO добавить категорию avatars, детектиться с помощью upload context, также добавить проверку на upload context
 class FileProcessingService:
     def __init__(self):
         self.metadata_handler = FileMetadataHandler()

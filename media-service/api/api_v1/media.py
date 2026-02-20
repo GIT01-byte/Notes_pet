@@ -229,14 +229,14 @@ async def delete_file(file_uuid: UUID):
             raise ViewFileFailedError(detail=f"Файл с UUID {file_uuid} не найден")
 
         # Удаление файла из S3
-        await s3_client.delete_file(key=file_db.filename)
-        logger.info(f"Файл {file_db.filename!r} успешно удален из S3")
+        await s3_client.delete_file(key=file_db.s3_url)
+        logger.info(f"Файл {file_db.s3_url!r} успешно удален из S3")
 
         # Удаление записи из БД
         await MediaRepo.delete_file_metadata(file_metadata_obj=file_db)
         logger.info(f"Метаданные файла {file_uuid} успешно удалены из БД")
 
-        return {"ok": True, "message": f"Файл {file_db.filename!r} успешно удален"}
+        return {"ok": True, "message": f"Файл {file_db.s3_url!r} успешно удален"}
 
     except ViewFileFailedError:
         raise
