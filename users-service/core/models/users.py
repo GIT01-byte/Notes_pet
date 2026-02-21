@@ -10,35 +10,42 @@ from typing import Any
 from sqlalchemy import (
     DateTime,
     ForeignKey,
-    Integer,
     String,
     Boolean,
     JSON,
-    func,
 )
+
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
     relationship,
 )
 
-from core.models.base import (
-    Base,
+from core.models.base import Base
+from .mixins import (
+    intpk,
+    str_128,
     str_64,
+    created_at,
+    updated_at,
 )
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[intpk]
 
     username: Mapped[str_64] = mapped_column(String, unique=True, nullable=False)
     hashed_password: Mapped[bytes] = mapped_column(nullable=False)
     email: Mapped[str | None] = mapped_column(String, unique=True)
     profile: Mapped[Any | None] = mapped_column(JSON)
-
+    
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    role: Mapped[str_64] = mapped_column(String, default="readonly", nullable=False)
+
+    created_at: Mapped[created_at]
+    updated_at: Mapped[updated_at]
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -48,13 +55,13 @@ class User(Base):
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[intpk]
+
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    token_hash: Mapped[str] = mapped_column(String(128), unique=True)
+    token_hash: Mapped[str_128] = mapped_column(unique=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     revoked: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+
+    created_at: Mapped[created_at]
 
     user: Mapped[User] = relationship(back_populates="refresh_tokens")
