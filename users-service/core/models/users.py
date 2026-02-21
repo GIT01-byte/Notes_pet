@@ -42,7 +42,7 @@ class User(Base):
     profile: Mapped[Any | None] = mapped_column(JSON)
     
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    role: Mapped[str_64] = mapped_column(String, default="readonly", nullable=False)
+    role: Mapped[str_64] = mapped_column(String, default="user", nullable=False)
 
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
