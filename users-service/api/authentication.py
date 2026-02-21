@@ -14,24 +14,29 @@ from core.schemas.users import (
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
+    UserSelfInfo,
 )
 from services.auth_service import (
     AuthService,
 )
-from deps.auth_deps import (
+from api.auth_deps import (
     get_current_active_user,
 )
 from exceptions.exceptions import (
+    EntityNotFoundError,
     InvalidCredentialsError,
+    NotAllowedPermisionError,
     PasswordRequiredError,
     RefreshUserTokensFailedError,
     RegistrationFailedError,
+    RepositoryInternalError,
     UserAlreadyExistsError,
 )
 
 from utils.logging import logger
 from utils.time_decorator import async_timed_report
 from utils.security import ACCESS_TOKEN_TYPE, decode_access_token
+from core.db.repositories import UsersRepo
 
 # Роутеры для аутентификации и разработки
 auth = APIRouter(redirect_slashes=False)
@@ -44,7 +49,7 @@ async def health_check():
     return {"success": "Note users service started"}
 
 
-# Вход пользователя с выдачей токенов 
+# Вход пользователя с выдачей токенов
 @auth.post("/login/", response_model=TokenResponse)
 @async_timed_report()
 async def auth_login(
@@ -71,12 +76,13 @@ async def auth_login(
     except ValidationError as e:
         logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
 
+
 # Регистрация нового пользователя
 @auth.post("/register/")
 @async_timed_report()
 async def auth_register_user(
-    request: Request, 
-    response: Response, 
+    request: Request,
+    response: Response,
     register_request: RegisterRequest,
 ):
     try:
@@ -89,17 +95,14 @@ async def auth_register_user(
                 payload = decode_access_token(current_user_token)
 
                 # Извлечение данных из токена
-                access_jti: str | None = payload.get("jti")
-                sub: int | None = payload.get("sub")
-
-                if access_jti and sub:
-                    user_id = int(sub)
+                if payload.jti and payload.sub:
+                    user_id = int(payload.sub)
                     logger.info(
                         f"Авто-выход пользователя {user_id} перед новой регистрацией"
                     )
 
                     await auth_service.loggout_user_logic(
-                        response=response, access_jti=access_jti, user_id=user_id
+                        response=response, access_jti=payload.jti, user_id=user_id
                     )
             except (ValueError, TypeError, Exception) as e:
                 logger.warning(f"Не удалось выполнить авто-выход: {e}")
@@ -116,9 +119,12 @@ async def auth_register_user(
             payload=payload, password=register_request.password
         )
 
-        return {"message": f"Регистрация пользователя: {new_user!r} прошла успешно!"}
+        return {
+            "ok": True,
+            "message": f"Регистрация пользователя: {new_user["new_username"]!r} с ролью {new_user["role"]!r} прошла успешно!",
+        }
 
-    # Обрабатываем уникальные ошибки регистрации и ошибки валидации
+    # Обрабатываем уникальные ошибки регистрации и ошибки валидации #FIXME
     except ValidationError as e:
         logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
     except ValueError as e:
@@ -139,7 +145,7 @@ async def auth_register_user(
 @auth.post("/tokens/refresh/", response_model=TokenResponse)
 @async_timed_report()
 async def auth_refresh_jwt(
-    data: RefreshRequest, 
+    data: RefreshRequest,
     response: Response,
 ):
     try:
@@ -155,6 +161,8 @@ async def auth_refresh_jwt(
         )
     except ValidationError as e:
         logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
+    except EntityNotFoundError:
+        raise
     except Exception as ex:
         logger.error(f"Обновление токенов прошло неудачно: {ex}")
         raise RefreshUserTokensFailedError()
@@ -180,25 +188,30 @@ async def auth_logout_user(
 @auth_usage.get("/me/")
 @async_timed_report()
 async def auth_user_check_self_info(
-    current_user: dict = Depends(get_current_active_user),
+    current_user=Depends(get_current_active_user),
 ):
-    return {
-        "user_id": current_user["user_id"],
-        "username": current_user["username"],
-        "email": current_user["email"],
-        "is_active": current_user["is_active"],
-        "jti": current_user["jti"],
-        "access_expire": current_user["acess_expire"],
-        "iat": current_user["iat"],
-    }
+    return current_user
 
-@dev_usage.get("/validation_error")
-async def get_validation_error(raise_error: bool):
-    """
-    Эндпоинт для тестирования валидации
-    """
-    if raise_error:
-        TokenResponse.model_validate(None)
-    return {
-        "ok": True,
-    }
+
+@auth_usage.get("/all_users")
+async def get_all_user(
+    current_user: UserSelfInfo = Depends(get_current_active_user),
+):
+    try:
+        auth_service = AuthService()
+        logger.info(
+            f"Попытка доступа к /all_users пользователем {current_user.username}"
+        )
+
+        role_rights = await auth_service.get_role_rights(current_user.role)
+        if role_rights.user_management.view_all_users:
+            users = await UsersRepo.get_all_users()
+            return {"users": users}
+
+        logger.warning(f"Попытка доступа к /all_users без прав администратора")
+        raise NotAllowedPermisionError
+    except NotAllowedPermisionError:
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка при получении списка пользователей: {e}")
+        raise RepositoryInternalError(detail="Failed to get users list")

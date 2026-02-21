@@ -2,6 +2,8 @@ from datetime import datetime
 import os
 import sys
 
+from core.schemas.users import UserSelfInfo
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
@@ -88,7 +90,7 @@ def set_tokens_cookie(response: Response, access_token: str, refresh_token: str)
 async def get_current_user_from_token(
     token: str = Depends(oauth2_scheme),
     redis: Redis = Depends(get_redis_client),
-) -> dict:
+) -> UserSelfInfo:
     """
     Возвращает текущего активного пользователя на основании JWT-токена.
 
@@ -101,35 +103,32 @@ async def get_current_user_from_token(
     """
     try:
         payload = decode_access_token(token)
-
-        jti: str | None = payload.get("jti")
-        user_id: int | None = int(payload.get("sub"))  # type: ignore
-        acess_expire: int | None = payload.get(ACCESS_EXPIRE_NAME)
-        iat: int | None = payload.get(ACCESS_ISSUED_AT_NAME)
-
-        if not user_id or not jti:
+        
+        # Извлекаем данные из токена
+        if not payload.sub or not payload.jti:
             raise InvalidTokenError("Missing required claims: sub or jti")
 
         # Проверка чёрного списка Redis
-        if await redis.exists(f"blacklist:access:{jti}"):
+        if await redis.exists(f"blacklist:access:{payload.jti}"):
             raise AccessTokenRevokedError()
 
         # Запрашиваем пользователя из базы данных
-        user = await UsersRepo.select_user_by_user_id(user_id)
+        user = await UsersRepo.select_user_by_user_id(int(payload.sub))
 
         # Проверяем полученного user'а
         if not user:
             raise UserNotFoundError()
 
-        return {
-            "jti": jti,
-            "user_id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "is_active": user.is_active,
-            "acess_expire": acess_expire,
-            "iat": iat,
-        }
+        return UserSelfInfo(
+            jti=payload.jti,
+            user_id=int(user.id),
+            username=user.username,
+            email=user.email,
+            is_active=user.is_active,
+            role=payload.role,
+            acess_expire=payload.exp,
+            iat=payload.iat,
+        )
 
     except PyJWTError as err:
         logger.error(f"Ошибка декодирования токена: {err}")
@@ -137,7 +136,9 @@ async def get_current_user_from_token(
 
 
 @async_timed_report()
-async def get_current_active_user(current_user: dict = Depends(get_current_user_from_token)):
+async def get_current_active_user(
+    current_user: UserSelfInfo = Depends(get_current_user_from_token)
+) -> UserSelfInfo:
     """
     Возвращает активного пользователя.
 
@@ -145,6 +146,6 @@ async def get_current_active_user(current_user: dict = Depends(get_current_user_
     :raises UserInactiveError: Если пользователь неактивен
     :return: Активный пользователь
     """
-    if current_user["is_active"] == True:
+    if current_user.is_active == True:
         return current_user
     raise UserInactiveError()

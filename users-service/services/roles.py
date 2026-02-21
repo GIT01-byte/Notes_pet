@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from pydantic import BaseModel
 
 
@@ -267,3 +265,11 @@ class GuestUser(UserPermissions):
             view_analytics=False,
         ),
     )
+
+ALL_ROLES = {
+    "user": RegularUser(),
+    "admin": AdminUser(),
+    "moderator": ModeratorUser(),
+    "readonly": ReadOnlyUser(),
+    "guest": GuestUser(),
+}

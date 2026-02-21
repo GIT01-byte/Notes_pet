@@ -16,24 +16,38 @@ class UserRead(BaseModel):
     username: str
     email: Annotated[EmailStr, None]
     is_active: bool
+    role: str
 
     model_config = {"from_attributes": True}
+
+
+class UserSelfInfo(BaseModel):
+    jti: str
+    user_id: int
+    username: str
+    email: str | None
+    is_active: bool
+    role: str
+    acess_expire: datetime
+    iat: datetime
 
 
 class JWTPayload(BaseModel):
     sub: str
     exp: datetime
     jti: str
+    role: str
+    iat: datetime
 
 
 class AccessToken(BaseModel):
     token: str
-    expire: int
+    expire: datetime
 
 
 class TokenResponse(BaseModel):
     access_token: str
-    access_expire: int
+    access_expire: datetime
     refresh_token: str
     token_type: str = "bearer"
 

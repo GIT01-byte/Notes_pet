@@ -103,6 +103,11 @@ class UserAlreadyLoggedgError(BaseAPIException):
         super().__init__(detail=detail, status_code=status.HTTP_409_CONFLICT)
 
 
+class NotAllowedPermisionError(BaseAPIException):
+    def __init__(self, detail: str = "Not allowed permission"):
+        super().__init__(detail=detail, status_code=status.HTTP_403_FORBIDDEN)
+
+
 # Исключения сервисов о проваленной работе
 class RegistrationFailedError(BaseAPIException):
     def __init__(self, detail: str = "Registration failed due to internal error"):

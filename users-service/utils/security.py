@@ -26,7 +26,7 @@ ACCESS_ISSUED_AT_NAME = "iat"
 REFRESH_TOKEN_TYPE = "refresh"
 
 
-def create_access_token(user_id: int) -> AccessToken:
+def create_access_token(user_id: int, user_role: str) -> AccessToken:
     """
     Создает новый access-токен для указанного пользователя.
 
@@ -39,24 +39,29 @@ def create_access_token(user_id: int) -> AccessToken:
         expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.jwt.access_token_expire_minutes
         )
+        iat = datetime.now(timezone.utc)
         jwt_payload = JWTPayload(
             sub=str(user_id),
             exp=expire,
             jti=jti,
+            iat=iat,
+            role=user_role,
         )
-        
+
         # Генерируем токен
         access_token = encode_jwt(jwt_payload)
-        
-        if isinstance(access_token, str): 
-            logger.debug(f"Access-токен для пользователя с ID={user_id} успешно сгенерирован.")
-            
+
+        if isinstance(access_token, str):
+            logger.debug(
+                f"Access-токен для пользователя с ID {user_id} и ролью {user_role} успешно сгенерирован."
+            )
+
             # Добавляем в pydantic модель информацию о сроке действия токена путем декодирования токена
             decoded_access = decode_access_token(access_token)
-            expire_access: int = decoded_access[ACCESS_EXPIRE_NAME]
-            
+            expire_access: datetime = decoded_access.exp
+
             logger.info(
-                f"Access-токен для пользователя с ID={user_id} успешно создан со сроком действия до {expire.isoformat()}"
+                f"Access-токен для пользователя с ID {user_id} и ролью {user_role} успешно создан со сроком действия до {expire.isoformat()}"
             )
             return AccessToken(
                 token=access_token,
@@ -84,7 +89,7 @@ def hash_token(token: str) -> str:
     raise TypeError
 
 
-def decode_access_token(token: str) -> dict[str, Any]:
+def decode_access_token(token: str) -> JWTPayload:
     """
     Декодирует JWT-токен и проверяет его действительность.
 
@@ -93,7 +98,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
     :return: Полезная нагрузка токена
     """
     try:
-        payload: dict[str, Any] = decode_jwt(token=token)
+        payload: JWTPayload = decode_jwt(token=token)
         return payload
     except jwt.PyJWTError as ex:
         logger.error(f"Ошибка декодирования токена: {ex}")
@@ -166,7 +171,7 @@ def decode_jwt(
     token: Union[str, bytes],
     public_key: str = settings.jwt.public_key_path.read_text(),
     algorithm: str = settings.jwt.algorithm,
-) -> dict[str, Any]:
+) -> JWTPayload:
     """
     Декодирует JWT-токен и извлекает полезные данные.
 
@@ -178,5 +183,11 @@ def decode_jwt(
     if isinstance(token, (str, bytes)):
         decoded = jwt.decode(token, public_key, algorithms=[algorithm])
         logger.debug(f"Токен успешно декодирован.")
-        return decoded
+        return JWTPayload(
+            sub=decoded["sub"],
+            exp=decoded["exp"],
+            jti=decoded["jti"],
+            role=decoded["role"],
+            iat=decoded["iat"],
+        )
     raise TypeError

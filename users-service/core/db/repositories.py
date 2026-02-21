@@ -7,7 +7,7 @@ sys.path.append(current_dir)
 from typing import Optional
 from datetime import datetime
 
-from sqlalchemy import or_, select, delete
+from sqlalchemy import Sequence, or_, select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import EmailStr
 
@@ -31,7 +31,7 @@ class UsersRepo:
         username = payload.get("username")
         email = payload.get("email")
         logger.debug(
-            f"Попытка создания пользователя с username: {username!r}, email: {email!r}"
+            f"Попытка создания пользователя с именем: {username!r}, email: {email!r}"
         )
         try:
             async with db_manager.session_factory() as session:
@@ -41,9 +41,8 @@ class UsersRepo:
                     )
                 )
                 if existing_user:
-                    error_msg = f"Пользователь с username: {username!r} или email: {email!r} уже существует."
-                    logger.error(error_msg)
-                    raise UserAlreadyExistsError(error_msg)
+                    logger.warning(f"Пользователь с именем: {username!r} или email: {email!r} уже существует")
+                    raise UserAlreadyExistsError(f"Пользователь с именем {username!r} или email {email!r} уже существует")
 
                 new_user = User(**payload)
                 session.add(new_user)
@@ -52,25 +51,17 @@ class UsersRepo:
                 await session.commit()
                 await session.refresh(new_user)
                 logger.info(
-                    f"Пользователь ID:{new_user.id}, username:{new_user.username!r} успешно создан."
+                    f"Пользователь ID:{new_user.id}, Роль: {new_user.role}, Имя: {new_user.username!r} успешно создан."
                 )
                 return new_user
         except UserAlreadyExistsError:
             raise
         except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка базы данных при создании пользователя {username!r}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось создать пользователя из-за ошибки базы данных."
-            ) from e
+            logger.exception(f"Ошибка БД при создании пользователя {username!r}")
+            raise RepositoryInternalError("Не удалось создать пользователя из-за ошибки базы данных") from e
         except Exception as e:
-            logger.exception(
-                f"Неожиданная ошибка при создании пользователя {username!r}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось создать пользователя из-за неожиданной ошибки."
-            ) from e
+            logger.exception(f"Неожиданная ошибка при создании пользователя {username!r}")
+            raise RepositoryInternalError("Не удалось создать пользователя из-за неожиданной ошибки") from e
 
     @staticmethod
     async def select_user_by_user_id(user_id: int) -> User | None:
@@ -82,59 +73,43 @@ class UsersRepo:
                     logger.debug(f"Пользователь с ID: {user_id} не найден.")
                     raise EntityNotFoundError(f"Пользователь с ID {user_id} не найден.")
                 logger.debug(
-                    f"Найден пользователь ID: {user_id}, username: {user.username!r}."
+                    f"Найден пользователь ID: {user_id}, имя: {user.username!r}, Роль: {user.role}"
                 )
                 return user
         except EntityNotFoundError:
-            raise  # Перебрасываем, если не найден
+            raise
         except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка базы данных при выборе пользователя по ID {user_id}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось выбрать пользователя по ID из-за ошибки базы данных."
-            ) from e
+            logger.exception(f"Ошибка БД при выборе пользователя по ID {user_id}")
+            raise RepositoryInternalError("Не удалось выбрать пользователя по ID из-за ошибки базы данных") from e
         except Exception as e:
-            logger.exception(
-                f"Неожиданная ошибка при выборе пользователя по ID {user_id}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось выбрать пользователя по ID из-за неожиданной ошибки."
-            ) from e
+            logger.exception(f"Неожиданная ошибка при выборе пользователя по ID {user_id}")
+            raise RepositoryInternalError("Не удалось выбрать пользователя по ID из-за неожиданной ошибки") from e
 
     @staticmethod
     async def select_user_by_username(username: str) -> User | None:
-        logger.debug(f"Попытка выбрать пользователя по username: {username!r}")
+        logger.debug(f"Попытка выбрать пользователя по имени: {username!r}")
         try:
             async with db_manager.session_factory() as session:
                 user = await session.scalar(
                     select(User).where(User.username == username)
                 )
                 if not user:
-                    logger.debug(f"Пользователь с username: {username!r} не найден.")
+                    logger.debug(f"Пользователь с именем: {username!r} не найден.")
                     raise EntityNotFoundError(
-                        f"Пользователь с username {username!r} не найден."
+                        f"Пользователь с именем {username!r} не найден."
                     )
                 logger.debug(
-                    f"Найден пользователь с username: {username!r}, ID: {user.id}."
+                    f"Найден пользователь с именем: {username!r}, ID: {user.id}, Роль: {user.role}"
                 )
                 return user
         except EntityNotFoundError:
             raise
         except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка базы данных при выборе пользователя по username {username!r}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось выбрать пользователя по username из-за ошибки базы данных."
-            ) from e
+            logger.exception(f"Ошибка БД при выборе пользователя по имени {username!r}")
+            raise RepositoryInternalError("Не удалось выбрать пользователя по имени из-за ошибки базы данных") from e
         except Exception as e:
-            logger.exception(
-                f"Неожиданная ошибка при выборе пользователя по username {username!r}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось выбрать пользователя по username из-за неожиданной ошибки."
-            ) from e
+            logger.exception(f"Неожиданная ошибка при выборе пользователя по имени {username!r}")
+            raise RepositoryInternalError("Не удалось выбрать пользователя по имени из-за неожиданной ошибки") from e
 
     @staticmethod
     async def select_user_by_email(email: EmailStr) -> User | None:
@@ -147,25 +122,33 @@ class UsersRepo:
                     raise EntityNotFoundError(
                         f"Пользователь с email {email!r} не найден."
                     )
-                logger.debug(f"Найден пользователь с email: {email!r}, ID: {user.id}.")
+                logger.debug(f"Найден пользователь с email: {email!r}, ID: {user.id}, Роль: {user.role}")
                 return user
         except EntityNotFoundError:
             raise
         except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка базы данных при выборе пользователя по email {email!r}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось выбрать пользователя по email из-за ошибки базы данных."
-            ) from e
+            logger.exception(f"Ошибка БД при выборе пользователя по email {email!r}")
+            raise RepositoryInternalError("Не удалось выбрать пользователя по email из-за ошибки базы данных") from e
         except Exception as e:
-            logger.exception(
-                f"Неожиданная ошибка при выборе пользователя по email {email!r}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось выбрать пользователя по email из-за неожиданной ошибки."
-            ) from e
+            logger.exception(f"Неожиданная ошибка при выборе пользователя по email {email!r}")
+            raise RepositoryInternalError("Не удалось выбрать пользователя по email из-за неожиданной ошибки") from e
 
+    @staticmethod
+    async def get_all_users():
+        logger.debug("Попытка получить всех пользователей")
+        try:
+            async with db_manager.session_factory() as session:
+                all_users = await session.scalars(select(User))
+                users_list = all_users.all()
+                logger.debug(f"Получено пользователей: {len(users_list)}")
+                return users_list
+        except SQLAlchemyError as e:
+            logger.exception("Ошибка БД при получении всех пользователей")
+            raise RepositoryInternalError("Не удалось получить всех пользователей из-за ошибки базы данных") from e
+        except Exception as e:
+            logger.exception("Неожиданная ошибка при получении всех пользователей")
+            raise RepositoryInternalError("Не удалось получить всех пользователей из-за неожиданной ошибки") from e
+    
 
 class RefreshTokensRepo:
     @staticmethod
@@ -187,19 +170,11 @@ class RefreshTokensRepo:
                 )
                 return token
         except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка базы данных при создании refresh токена для user_id {user_id}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось создать refresh токен из-за ошибки базы данных."
-            ) from e
+            logger.exception(f"Ошибка БД при создании refresh токена для user_id {user_id}")
+            raise RepositoryInternalError("Не удалось создать refresh токен из-за ошибки базы данных") from e
         except Exception as e:
-            logger.exception(
-                f"Неожиданная ошибка при создании refresh токена для user_id {user_id}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось создать refresh токен из-за неожиданной ошибки."
-            ) from e
+            logger.exception(f"Неожиданная ошибка при создании refresh токена для user_id {user_id}")
+            raise RepositoryInternalError("Не удалось создать refresh токен из-за неожиданной ошибки") from e
 
     @staticmethod
     async def get_refresh_token(token_hash: str) -> Optional[RefreshToken]:
@@ -222,19 +197,11 @@ class RefreshTokensRepo:
         except EntityNotFoundError:
             raise
         except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка базы данных при получении refresh токена (хэш: {token_hash[:8]}...): {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось получить refresh токен из-за ошибки базы данных."
-            ) from e
+            logger.exception(f"Ошибка БД при получении refresh токена (хэш: {token_hash[:8]}...)")
+            raise RepositoryInternalError("Не удалось получить refresh токен из-за ошибки базы данных") from e
         except Exception as e:
-            logger.exception(
-                f"Неожиданная ошибка при получении refresh токена (хэш: {token_hash[:8]}...): {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось получить refresh токен из-за неожиданной ошибки."
-            ) from e
+            logger.exception(f"Неожиданная ошибка при получении refresh токена (хэш: {token_hash[:8]}...)")
+            raise RepositoryInternalError("Не удалось получить refresh токен из-за неожиданной ошибки") from e
 
     @staticmethod
     async def invalidate_all_refresh_tokens(user_id: int) -> None:
@@ -244,26 +211,25 @@ class RefreshTokensRepo:
                 query = delete(RefreshToken).where(RefreshToken.user_id == user_id)
                 result = await session.execute(query)
                 await session.commit()
-                logger.info(f"Успешно аннулировано {result.rowcount} refresh токенов для user_id: {user_id}.")  # type: ignore
+                logger.info(f"Аннулировано {result.rowcount} refresh токенов для user_id: {user_id}")  # type: ignore
         except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка базы данных при аннулировании refresh токенов для user_id {user_id}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось аннулировать refresh токены из-за ошибки базы данных."
-            ) from e
+            logger.exception(f"Ошибка БД при аннулировании refresh токенов для user_id {user_id}")
+            raise RepositoryInternalError("Не удалось аннулировать refresh токены из-за ошибки базы данных") from e
         except Exception as e:
-            logger.exception(
-                f"Неожиданная ошибка при аннулировании refresh токенов для user_id {user_id}: {e}"
-            )
-            raise RepositoryInternalError(
-                "Не удалось аннулировать refresh токены из-за неожиданной ошибки."
-            ) from e
+            logger.exception(f"Неожиданная ошибка при аннулировании refresh токенов для user_id {user_id}")
+            raise RepositoryInternalError("Не удалось аннулировать refresh токены из-за неожиданной ошибки") from e
 
     @staticmethod
     async def delete_refresh_token(token_obj: RefreshToken) -> None:
-        logger.debug(f"Попытка аннулировать refresh токен: {token_obj.id}")
-        async with db_manager.session_factory() as session:
-            await session.delete(token_obj)
-            await session.commit()
-            logger.info(f"Успешно аннулирован refresh токен {token_obj.id}.")
+        logger.debug(f"Попытка удалить refresh токен ID: {token_obj.id}")
+        try:
+            async with db_manager.session_factory() as session:
+                await session.delete(token_obj)
+                await session.commit()
+                logger.info(f"Удален refresh токен ID: {token_obj.id}")
+        except SQLAlchemyError as e:
+            logger.exception(f"Ошибка БД при удалении refresh токена ID: {token_obj.id}")
+            raise RepositoryInternalError("Не удалось удалить refresh токен из-за ошибки базы данных") from e
+        except Exception as e:
+            logger.exception(f"Неожиданная ошибка при удалении refresh токена ID: {token_obj.id}")
+            raise RepositoryInternalError("Не удалось удалить refresh токен из-за неожиданной ошибки") from e
