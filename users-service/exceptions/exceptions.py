@@ -82,6 +82,7 @@ class RefreshTokenNotReqiredError(BaseAPIException):
     def __init__(self, detail: str = "Refresh token not reqired"):
         super().__init__(detail=detail, status_code=status.HTTP_401_UNAUTHORIZED)
 
+
 # Исключения обработчиков данных пользователей
 class UserInactiveError(BaseAPIException):
     def __init__(self, detail: str = "User is not active"):
@@ -108,38 +109,88 @@ class NotAllowedPermisionError(BaseAPIException):
         super().__init__(detail=detail, status_code=status.HTTP_403_FORBIDDEN)
 
 
+# Исключения обработки файлов
+class EmptyFileError(BaseAPIException):
+    def __init__(self, detail: str = "File is empty"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class FilesHandlingError(BaseAPIException):
+    def __init__(self, detail: str = "Error handling files"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class InvalidFileFormatError(BaseAPIException):
+    def __init__(self, detail: str = "Invalid file format"):
+        super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class FilesUploadError(BaseAPIException):
+    def __init__(self, detail: str = "Error uploading files"):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+class FilesDeleteError(BaseAPIException):
+    def __init__(self, detail: str = "Error deleting files"):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
 # Исключения сервисов о проваленной работе
 class RegistrationFailedError(BaseAPIException):
     def __init__(self, detail: str = "Registration failed due to internal error"):
-        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class SetCookieFailedError(BaseAPIException):
     def __init__(self, detail: str = "Set cookie failed due to interanal error"):
-        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class RefreshUserTokensFailedError(BaseAPIException):
-    def __init__(self, detail: str = "Refresh user tokens failed due to interanal error"):
-        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def __init__(
+        self, detail: str = "Refresh user tokens failed due to interanal error"
+    ):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class LogoutUserFailedError(BaseAPIException):
     def __init__(self, detail: str = "logout user failed due to interanal error"):
-        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class ValidateAuthUserFailedError(BaseAPIException):
-    def __init__(self, detail: str = "Validate auth user failed due to interanal error"):
-        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def __init__(
+        self, detail: str = "Validate auth user failed due to interanal error"
+    ):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class RevokeTokenFailedError(BaseAPIException):
     def __init__(self, detail: str = "Failed to revoke token due to internal error"):
-        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 # Исключения redis
 class RedisConnectionError(BaseAPIException):
-    def __init__(self, detail: str = "Failed to connect to Redis due to internal error"):
-        super().__init__(detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def __init__(
+        self, detail: str = "Failed to connect to Redis due to internal error"
+    ):
+        super().__init__(
+            detail=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

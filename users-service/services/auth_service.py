@@ -1,3 +1,4 @@
+import integrations.files.files
 import os
 import sys
 
@@ -9,7 +10,7 @@ sys.path.insert(0, parent_dir)
 import asyncio
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Response
+from fastapi import HTTPException, Response, UploadFile
 
 from core.settings import settings
 from core.db.repositories import UsersRepo, RefreshTokensRepo
@@ -20,6 +21,7 @@ from core.schemas.users import AccessToken
 
 from exceptions.exceptions import (
     EntityNotFoundError,
+    FilesUploadError,
     InvalidPasswordError,
     LogoutUserFailedError,
     RedisConnectionError,
@@ -48,11 +50,33 @@ from api.auth_deps import (
     set_tokens_cookie,
 )
 
+from integrations.files.schemas import NSFileUploadRequest
+from integrations.files.files import (
+    MS_upload_file,
+    MS_get_file,
+    MS_delete_file,
+)
+
 from services.roles import ALL_ROLES, AccessRights
 
 
 @time_all_methods(async_timed_report())
 class AuthService:
+    async def _upload_avatar(self, upload_reguest: NSFileUploadRequest):
+        try:
+            response = await MS_upload_file(upload_reguest)
+            if not response:
+                raise FilesUploadError(
+                    f"No response for {upload_reguest.file.filename}"
+                )
+            logger.info(f"Файл {upload_reguest.file.filename} загружен в S3")
+            return response
+        except (HTTPException, FilesUploadError):
+            raise
+        except Exception as e:
+            logger.exception(f"Ошибка загрузки {upload_reguest.file.filename}: {e}")
+            raise FilesUploadError from e
+
     async def _get_user_by_user_id(self, user_id: int) -> User:
         """
         Приватный вспомогательный метод для получения пользователя из базы данных

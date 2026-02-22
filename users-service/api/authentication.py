@@ -36,6 +36,9 @@ from exceptions.exceptions import (
 from utils.logging import logger
 from utils.time_decorator import async_timed_report
 from utils.security import ACCESS_TOKEN_TYPE, decode_access_token
+
+from integrations.files.schemas import NSFileUploadRequest
+
 from core.db.repositories import UsersRepo
 
 # Роутеры для аутентификации и разработки
@@ -84,6 +87,7 @@ async def auth_register_user(
     request: Request,
     response: Response,
     register_request: RegisterRequest,
+    avatar_upload_reguest: NSFileUploadRequest,
 ):
     try:
         auth_service = AuthService()
