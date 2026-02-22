@@ -6,9 +6,9 @@ services:
     command: -p 5433
     container_name: postgres-notes_users
     environment:
-      POSTGRES_DB: ${APP__CONFIG__DB__NAME}
-      POSTGRES_USER: ${APP__CONFIG__DB__USER}
-      POSTGRES_PASSWORD: ${APP__CONFIG__DB__PWD}
+      POSTGRES_DB: ${USERS_DB_NAME}
+      POSTGRES_USER: ${USERS_DB_USER}
+      POSTGRES_PASSWORD: ${USERS_DB_PWD}
     ports:
       - "5433:5433"
     healthcheck:
@@ -17,10 +17,8 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data_users:/var/lib/postgresql/data
     restart: unless-stopped
-    tty: true
-    stdin_open: true
     networks:
       - app-network
 
@@ -36,27 +34,27 @@ services:
       retries: 5
       start_period: 10s
     volumes:
-      - redis_data:/data
+      - redis_data_users:/data
     command: redis-server --port 6380 --appendonly yes --appendfsync everysec
     networks:
       - app-network
 
-  web:
+  notes-users-service:
     build: .
     container_name: notes_users
     ports:
-      - "8001:8001"
+      - "8002:8002"
     environment:
-      APP__CONFIG__DB__HOST: postgres
-      APP__CONFIG__DB__PORT: 5433
-      APP__CONFIG__DB__NAME: ${APP__CONFIG__DB__NAME}
-      APP__CONFIG__DB__USER: ${APP__CONFIG__DB__USER}
-      APP__CONFIG__DB__PWD: ${APP__CONFIG__DB__PWD}
+      APP_MODE: ${USERS_APP_MODE}
 
-      APP__CONFIG__REDIS__HOST: redis
-      APP__CONFIG__REDIS__PORT: 6380
+      USERS_DB_HOST: postgres
+      USERS_DB_PORT: 5433
+      USERS_DB_NAME: ${USERS_DB_NAME}
+      USERS_DB_USER: ${USERS_DB_USER}
+      USERS_DB_PWD: ${USERS_DB_PWD}
 
-      APP__CONFIG__MODE: ${APP__CONFIG__MODE}
+      USERS_REDIS_HOST: redis
+      USERS_REDIS_PORT: 6380
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,11 +69,9 @@ services:
     networks:
       - app-network
 
-
 volumes:
-  postgres_data:
-    driver: local
-  redis_data:
+  postgres_data_users:
+  redis_data_users:
 
 networks:
   app-network:

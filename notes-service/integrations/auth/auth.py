@@ -34,17 +34,17 @@ async def get_current_user(request: Request):
                     detail=f"Authorization failed: {login_response.text}",
                 )
 
-            response_data = login_response.json()
+            response_data: dict = login_response.json()
             print(f"INFO:    get_current_user обработал - {response_data}")
 
             return RequestUserData(
-                user_id=response_data["user_id"],
-                username=response_data["username"],
-                email=response_data["email"],
-                is_active=response_data["is_active"],
-                jti=response_data["jti"],
-                access_expire=response_data[ACCESS_EXPIRE_NAME],
-                iat=response_data[ACCESS_ISSUED_AT_NAME],
+                user_id=response_data["user_db"]["id"],
+                username=response_data["user_db"]["username"],
+                email=response_data["user_db"]["email"],
+                is_active=response_data["user_db"]["is_active"],
+                jti=response_data["jwt_payload"]["jti"],
+                access_expire=response_data["jwt_payload"]["exp"],
+                iat=response_data["jwt_payload"]["iat"],
             )
 
         except httpx.RequestError as exc:

@@ -1,4 +1,3 @@
-import integrations.files.files
 import os
 import sys
 
@@ -7,13 +6,14 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
+from uuid import UUID
 import asyncio
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, Response, UploadFile
 
 from core.settings import settings
-from core.db.repositories import UsersRepo, RefreshTokensRepo
+from core.db.repositories import AvatarFilesRepo, UsersRepo, RefreshTokensRepo
 from core.models.users import RefreshToken, User
 from core.schemas.users import TokenResponse, UserRead
 from core.app_redis.client import get_redis_client
@@ -50,33 +50,17 @@ from api.auth_deps import (
     set_tokens_cookie,
 )
 
-from integrations.files.schemas import NSFileUploadRequest
+from integrations.files.schemas import NSFileUploadRequest, NSFileUploadResponse
 from integrations.files.files import (
     MS_upload_file,
-    MS_get_file,
-    MS_delete_file,
 )
+from integrations.files.constants import USERS_AVATAR_NAME
 
 from services.roles import ALL_ROLES, AccessRights
 
 
 @time_all_methods(async_timed_report())
 class AuthService:
-    async def _upload_avatar(self, upload_reguest: NSFileUploadRequest):
-        try:
-            response = await MS_upload_file(upload_reguest)
-            if not response:
-                raise FilesUploadError(
-                    f"No response for {upload_reguest.file.filename}"
-                )
-            logger.info(f"Файл {upload_reguest.file.filename} загружен в S3")
-            return response
-        except (HTTPException, FilesUploadError):
-            raise
-        except Exception as e:
-            logger.exception(f"Ошибка загрузки {upload_reguest.file.filename}: {e}")
-            raise FilesUploadError from e
-
     async def _get_user_by_user_id(self, user_id: int) -> User:
         """
         Приватный вспомогательный метод для получения пользователя из базы данных
@@ -299,28 +283,100 @@ class AuthService:
             logger.exception(f"Ошибка аутентификации {login!r}")
             raise ValidateAuthUserFailedError() from e
 
-    async def register_user_to_db(self, payload: dict, password: str) -> dict[str, str]:
+    async def _upload_avatar(self, file: UploadFile, entity_id: int) -> NSFileUploadResponse:
         """
-        Регистрирует нового пользователя в базе данных
+        Загружает аватар в S3 через Media Service
+        
+        Args:
+            file: Файл аватара для загрузки
+            entity_id: ID пользователя
+            
+        Returns:
+            NSFileUploadResponse: Ответ с метаданными загруженного файла
+            
+        Raises:
+            FilesUploadError: Ошибка загрузки файла в S3
+        """
+        logger.info(f"Загрузка аватара {file.filename!r} для user_id: {entity_id}")
+        try:
+            request = NSFileUploadRequest(
+                upload_context=USERS_AVATAR_NAME, file=file, entity_id=entity_id
+            )
+            response = await MS_upload_file(request)
+            if not response:
+                logger.error(f"Пустой ответ при загрузке {file.filename!r}")
+                raise FilesUploadError(f"No response for {file.filename}")
+            logger.info(f"Аватар {file.filename!r} успешно загружен в S3, UUID: {response.uuid}")
+            return response
+        except (HTTPException, FilesUploadError):
+            raise
+        except Exception as e:
+            logger.exception(f"Неожиданная ошибка загрузки аватара {file.filename!r}: {e}")
+            raise FilesUploadError from e
+
+    async def _save_file_to_db(
+        self, user_id: int, file_data: NSFileUploadResponse
+    ) -> UUID:
+        """
+        Сохраняет метаданные аватара в базу данных
+        
+        Args:
+            user_id: ID пользователя
+            file_data: Метаданные загруженного файла
+            
+        Returns:
+            UUID: Уникальный идентификатор сохраненного аватара
+            
+        Raises:
+            RepositoryInternalError: Ошибка сохранения в БД
+        """
+        logger.debug(f"Сохранение метаданных аватара {file_data.uuid} для user_id: {user_id}")
+        try:
+            result = await AvatarFilesRepo.create_avatar(
+                user_id=user_id, file_data=file_data
+            )
+            if not result:
+                logger.error(f"Не удалось сохранить аватар {file_data.uuid} в БД")
+                raise RepositoryInternalError(f"Failed to save avatar file {file_data.uuid}")
+
+            logger.info(f"Метаданные аватара {file_data.uuid} сохранены в БД")
+            return result.uuid
+        except RepositoryInternalError:
+            raise
+        except Exception as e:
+            logger.exception(f"Неожиданная ошибка сохранения аватара {file_data.uuid}: {e}")
+            raise RepositoryInternalError from e
+
+    async def register_user_to_db(
+        self, payload: dict, password: str, avatar_file: UploadFile | None = None
+    ) -> dict[str, str | UUID | None]:
+        """
+        Регистрирует нового пользователя в базе данных с опциональным аватаром
         Хеширует пароль перед сохранением
 
-        Params:
-            payload(dict): Словарь с данными пользователя (кроме пароля)
-            password(str): Пароль пользователя в открытом виде
+        Args:
+            payload: Словарь с данными пользователя (username, email, profile)
+            password: Пароль пользователя в открытом виде
+            avatar_file: Опциональный файл аватара
 
         Returns:
-            str: Имя пользователя (username) успешно зарегистрированного пользователя
+            dict: Словарь с user_id, new_username, role, avatar_uuid
 
         Raises:
-            UserAlreadyExistsError: Если пользователь с таким именем или email уже существует
-            RegistrationFailedError: Если произошла внутренняя ошибка при регистрации
+            UserAlreadyExistsError: Пользователь с таким username или email уже существует
+            RegistrationFailedError: Ошибка при регистрации
+            FilesUploadError: Ошибка загрузки аватара
         """
         username = payload.get("username", "N/A")
         email = payload.get("email", "N/A")
-        logger.info(f"Регистрация пользователя {username!r}")
+        logger.info(f"Начало регистрации пользователя {username!r}, email: {email!r}")
         try:
+            # 1. Хеширование пароля и создание пользователя
+            logger.debug(f"Хеширование пароля для {username!r}")
             hashed_password = hash_password(password)
             full_payload = {**payload, "hashed_password": hashed_password}
+            
+            logger.debug(f"Создание пользователя {username!r} в БД")
             created_user_in_db = await UsersRepo.create_user(full_payload)
 
             if not created_user_in_db:
@@ -329,16 +385,57 @@ class AuthService:
                     "User registration failed: no user returned"
                 )
 
-            logger.info(f"Пользователь {username!r} зарегистрирован")
+            logger.info(f"Пользователь {username!r} создан в БД, ID: {created_user_in_db.id}")
+
+            # 2. Обработка аватара (если есть)
+            avatar_uuid = None
+            if avatar_file:
+                logger.info(f"Обработка аватара {avatar_file.filename!r} для {username!r}")
+                try:
+                    # Загружаем в S3
+                    upload_response = await self._upload_avatar(
+                        file=avatar_file, entity_id=int(created_user_in_db.id)
+                    )
+                    if not upload_response:
+                        logger.error(f"Пустой ответ при загрузке аватара {avatar_file.filename!r}")
+                        raise FilesUploadError(
+                            f"No upload response for {avatar_file.filename}"
+                        )
+
+                    # Сохраняем в БД
+                    file_uuid = await self._save_file_to_db(
+                        user_id=int(created_user_in_db.id), file_data=upload_response
+                    )
+                    if not file_uuid:
+                        logger.error(f"Не получен UUID для аватара {avatar_file.filename!r}")
+                        raise RepositoryInternalError(
+                            f"No UUID returned for {avatar_file.filename}"
+                        )
+
+                    avatar_uuid = file_uuid
+                    logger.info(
+                        f"Аватар {avatar_file.filename!r} успешно обработан, UUID: {avatar_uuid}"
+                    )
+                except (FilesUploadError, RepositoryInternalError) as e:
+                    logger.error(f"Ошибка обработки аватара для {username!r}: {e}")
+                    raise
+            else:
+                logger.debug(f"Аватар не предоставлен для {username!r}")
+
+            logger.info(
+                f"Регистрация {username!r} завершена успешно, роль: {created_user_in_db.role}, аватар: {avatar_uuid or 'нет'}"
+            )
             return {
+                "user_id": str(created_user_in_db.id),
                 "new_username": created_user_in_db.username,
                 "role": created_user_in_db.role,
+                "avatar_uuid": avatar_uuid,
             }
 
-        except UserAlreadyExistsError:
+        except (UserAlreadyExistsError, FilesUploadError, RepositoryInternalError):
             raise
         except Exception as e:
-            logger.exception(f"Ошибка регистрации {username!r}")
+            logger.exception(f"Неожиданная ошибка регистрации {username!r}: {e}")
             raise RegistrationFailedError(
                 f"Internal error during registration: {e}"
             ) from e

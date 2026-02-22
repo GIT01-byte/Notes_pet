@@ -1,6 +1,6 @@
-# TODO ДОБАВИТЬ БОЛЬШЕ ФУНКЦИОНАЛА (АВЫ)
-# TODO соединить микросервис файлов с микросервисами заметок и пользователей
-# FIXME пофиксить UUID типизацию в сервисе медии и заметок
+# TODO добавить разрешения для юзеров в сервис заметок и сервис пользователей
+# TODO внедрить SOLID на 15-20%
+# TODO сделать синхронизация сохранения фалйов в медиа сервис
 services:
   # --- БАЛАНСИРОВЩИК (Nginx) ---
   nginx:
@@ -73,7 +73,7 @@ services:
     ports:
       - "8001:8001"
     environment:
-      APP_MODE: ${NOTES_APP_MODE}
+      NOTES_APP_MODE: PROD
 
       NOTES_DB_HOST: postgres-notes
       NOTES_DB_PORT: 5432
@@ -81,11 +81,6 @@ services:
       NOTES_DB_USER: ${NOTES_DB_USER}
       NOTES_DB_PWD: ${NOTES_DB_PWD}
       NOTES_DB_ECHO: ${NOTES_DB_ECHO}
-      
-      S3_ACCESS_KEY: ${NOTES_S3_ACCESSKEY}
-      S3_SECRET_KEY: ${NOTES_S3_SECRETKEY}
-      S3_ENDPOINT_URL: ${NOTES_S3_ENDPOINTURL}
-      S3_BUCKET_NAME: ${NOTES_S3_BUCKETNAME}
     depends_on:
       postgres-notes:
         condition: service_healthy
@@ -149,7 +144,7 @@ services:
     ports:
       - "8002:8002"
     environment:
-      APP_MODE: ${USERS_APP_MODE}
+      USERS_APP_MODE: PROD
 
       USERS_DB_HOST: postgres-users
       USERS_DB_PORT: 5433
@@ -208,7 +203,7 @@ services:
     ports:
       - "8003:8003"
     environment:
-      MEDIA_APP_MODE: ${MEDIA_APP_MODE}
+      MEDIA_APP_MODE: PROD
 
       MEDIA_DB_HOST: postgres-media
       MEDIA_DB_PORT: 5434

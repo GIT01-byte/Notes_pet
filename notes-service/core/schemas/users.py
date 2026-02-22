@@ -10,5 +10,5 @@ class RequestUserData(BaseModel):
     email: EmailStr
     is_active: bool
     jti: str
-    access_expire: int
-    iat: int
+    access_expire: datetime
+    iat: datetime

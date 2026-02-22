@@ -1,35 +1,42 @@
 import os
 import sys
 
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
 from datetime import datetime
-from typing import Annotated, Any, List, Optional
+from typing import Any, List, Optional
+from uuid import UUID
 
 from fastapi import Form
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
+
+
+class AvatarFileRead(BaseModel):
+    model_config = {"from_attributes": True}
+    
+    uuid: UUID
+    s3_url: str
+    category: str
+    content_type: str
 
 
 class UserRead(BaseModel):
+    model_config = {"from_attributes": True}
+    
     id: int
     username: str
-    email: Annotated[EmailStr, None]
+    email: Optional[EmailStr] = None
+    profile: Optional[Any] = None
     is_active: bool
     role: str
-
-    model_config = {"from_attributes": True}
+    avatar: List[AvatarFileRead] = []
 
 
 class UserSelfInfo(BaseModel):
-    jti: str
-    user_id: int
-    username: str
-    email: str | None
-    is_active: bool
-    role: str
-    acess_expire: datetime
-    iat: datetime
+    jwt_payload: JWTPayload
+    user_db: UserRead
 
 
 class JWTPayload(BaseModel):
@@ -59,10 +66,3 @@ class RefreshRequest(BaseModel):
 class LoginRequest(BaseModel):
     login: str = Form()
     password: str = Form()
-
-
-class RegisterRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=64)
-    email: Optional[EmailStr] = Field(...)
-    profile: Optional[dict[str, Any]] = None
-    password: str = Field(..., min_length=8)

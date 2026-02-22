@@ -20,6 +20,7 @@ from integrations.files.schemas import (
     NSFileUploadResponse,
 )
 from integrations.files.constants import (
+    NOTES_ATTACHMENT_NAME,
     VIDEO_FILES_NAME,
     IMAGE_FILES_NAME,
     AUDIO_FILES_NAME,
@@ -35,7 +36,7 @@ class NoteService:
         """Загрузка файла в S3 через Media service"""
         try:
             request = NSFileUploadRequest(
-                upload_context="post_attachment", file=file, entity_id=entity_id
+                upload_context=NOTES_ATTACHMENT_NAME, file=file, entity_id=entity_id
             )
             response = await MS_upload_file(request)
             if not response:

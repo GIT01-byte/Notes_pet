@@ -1,11 +1,10 @@
-from datetime import datetime
 import os
 import sys
 
-from core.schemas.users import UserSelfInfo
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
+
+from core.schemas.users import UserRead, UserSelfInfo
 
 from fastapi import Depends, Response
 from fastapi.security import OAuth2PasswordBearer
@@ -24,14 +23,12 @@ from exceptions.exceptions import (
 from utils.security import (
     REFRESH_TOKEN_TYPE,
     ACCESS_TOKEN_TYPE,
-    ACCESS_EXPIRE_NAME, 
-    ACCESS_ISSUED_AT_NAME,
     decode_access_token,
 )
 
 from core.settings import settings
 from utils.logging import logger
-from utils.time_decorator import time_all_methods, sync_timed_report, async_timed_report
+from utils.time_decorator import sync_timed_report, async_timed_report
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login/")
 
@@ -113,21 +110,15 @@ async def get_current_user_from_token(
             raise AccessTokenRevokedError()
 
         # Запрашиваем пользователя из базы данных
-        user = await UsersRepo.select_user_by_user_id(int(payload.sub))
+        db_user = await UsersRepo.select_user_by_user_id(int(payload.sub))
 
         # Проверяем полученного user'а
-        if not user:
+        if not db_user:
             raise UserNotFoundError()
 
         return UserSelfInfo(
-            jti=payload.jti,
-            user_id=int(user.id),
-            username=user.username,
-            email=user.email,
-            is_active=user.is_active,
-            role=payload.role,
-            acess_expire=payload.exp,
-            iat=payload.iat,
+            jwt_payload=payload,
+            user_db=UserRead.model_validate(db_user),
         )
 
     except PyJWTError as err:
@@ -146,6 +137,6 @@ async def get_current_active_user(
     :raises UserInactiveError: Если пользователь неактивен
     :return: Активный пользователь
     """
-    if current_user.is_active == True:
+    if current_user.user_db.is_active == True:
         return current_user
     raise UserInactiveError()

@@ -10,6 +10,10 @@
         <div :class="healthStatus.users ? 'bg-green-500' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
         <span>Users Service</span>
       </div>
+      <div class="flex items-center space-x-1">
+        <div :class="healthStatus.media ? 'bg-green-500' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
+        <span>Media Service</span>
+      </div>
     </div>
 
     <!-- Login/Register View -->
@@ -69,15 +73,19 @@
                      class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-purple-400 transition placeholder-gray-400">
             </div>
             <div class="relative">
-              <i class="fas fa-image absolute left-4 top-4 text-gray-300"></i>
-              <input v-model="forms.register.profile" type="url" placeholder="Ссылка на фото профиля (опционально)"
-                     class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-purple-400 transition placeholder-gray-400">
-            </div>
-            <div class="relative">
               <i class="fas fa-lock absolute left-4 top-4 text-gray-300"></i>
               <input v-model="forms.register.password" type="password" placeholder="Пароль (минимум 8 символов)" required
                      minlength="8"
                      class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-800 text-white border-0 outline-none focus:ring-2 focus:ring-purple-400 transition placeholder-gray-400">
+            </div>
+            <div class="relative">
+              <button type="button" @click="modals.avatarUpload = true" class="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-800 text-white border-0 outline-none hover:ring-2 hover:ring-purple-400 transition">
+                <div class="flex items-center space-x-3">
+                  <i class="fas fa-image text-gray-300"></i>
+                  <span class="text-gray-300">{{ forms.register.avatarFile ? forms.register.avatarFile.name : 'Загрузить аватар (опционально)' }}</span>
+                </div>
+                <i class="fas fa-upload text-purple-400"></i>
+              </button>
             </div>
             <button type="submit" :disabled="loading || !isHealthy"
                     class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-4 rounded-2xl transition hover:shadow-lg disabled:opacity-50">
@@ -376,8 +384,11 @@
           </button>
         </div>
         <div v-if="user" class="text-center">
-          <div class="w-20 h-20 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-            {{ user.username.charAt(0).toUpperCase() }}
+          <div class="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden border-4 border-cyan-400">
+            <img v-if="user?.profile?.avatar_url" :src="user.profile.avatar_url" class="w-full h-full object-cover" :alt="user.username">
+            <div v-else class="w-full h-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">
+              {{ user.username.charAt(0).toUpperCase() }}
+            </div>
           </div>
           <h3 class="text-xl font-bold mb-2 text-white">{{ user.username }}</h3>
           <p class="text-gray-300 mb-4">{{ user.email }}</p>
@@ -391,6 +402,10 @@
               <span :class="user.is_active ? 'text-green-400' : 'text-red-400'">
                 {{ user.is_active ? 'Активен' : 'Неактивен' }}
               </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-300">Роль:</span>
+              <span class="font-bold text-white">{{ user.role }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-300">Заметок:</span>
@@ -587,6 +602,53 @@
         </div>
       </div>
     </div>
+
+    <!-- Avatar Upload Modal -->
+    <div v-if="modals.avatarUpload" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="modals.avatarUpload = false">
+      <div @click.stop class="glass rounded-3xl p-8 w-full max-w-md">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-white">
+            <i class="fas fa-image mr-2"></i>Загрузить аватар
+          </h2>
+          <button @click="modals.avatarUpload = false" class="text-gray-300 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <!-- Preview -->
+          <div v-if="avatarPreview" class="flex justify-center">
+            <div class="relative">
+              <img :src="avatarPreview" class="w-32 h-32 rounded-full object-cover border-4 border-purple-400">
+              <button @click="removeAvatar" class="absolute top-0 right-0 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Upload Zone -->
+          <div @click="$refs.avatarInput.click()" 
+               @dragover.prevent 
+               @drop="dropAvatar" 
+               class="drop-zone rounded-2xl p-8 text-center cursor-pointer min-h-[150px] flex flex-col items-center justify-center">
+            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+            <p class="text-sm font-medium text-gray-300">Нажмите или перетащите файл</p>
+            <p class="text-xs text-gray-400 mt-1">PNG, JPG, WebP (макс 5MB)</p>
+          </div>
+          <input ref="avatarInput" @change="selectAvatar" type="file" accept="image/*" class="hidden">
+
+          <!-- Actions -->
+          <div class="flex space-x-4">
+            <button @click="modals.avatarUpload = false" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition">
+              Отмена
+            </button>
+            <button @click="confirmAvatar" :disabled="!forms.register.avatarFile" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 rounded-xl transition disabled:opacity-50">
+              Подтвердить
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -635,6 +697,7 @@ export default {
       noteDetail: null,
       confirmDelete: false,
       deleteNoteId: null,
+      avatarUpload: false,
       mediaViewer: {
         show: false,
         type: '',
@@ -645,9 +708,11 @@ export default {
 
     const forms = reactive({
       login: { username: '', password: '' },
-      register: { username: '', email: '', password: '', profile: '', showRegister: false },
+      register: { username: '', email: '', password: '', profile: '', avatarFile: null, showRegister: false },
       note: { title: '', content: '' }
     })
+
+    const avatarPreview = ref(null)
 
     const files = reactive({
       video_files: [],
@@ -657,7 +722,8 @@ export default {
 
     const healthStatus = reactive({
       notes: false,
-      users: false
+      users: false,
+      media: false
     })
 
     const showNotification = (message, type = 'info') => {
@@ -697,12 +763,14 @@ export default {
 
     const checkHealth = async () => {
       try {
-        const [notesRes, usersRes] = await Promise.all([
+        const [notesRes, usersRes, mediaRes] = await Promise.all([
           fetch(`${API}/notes_service/health_check/`),
-          fetch(`${API}/users_service/health_check/`)
+          fetch(`${API}/users_service/health_check/`),
+          fetch(`${API}/media_service/health_check/`)
         ])
         healthStatus.notes = notesRes.ok
         healthStatus.users = usersRes.ok
+        healthStatus.media = mediaRes.ok
       } catch (error) {
         console.error('Health check failed:', error)
       }
@@ -745,20 +813,18 @@ export default {
     const register = async () => {
       loading.value = true
       try {
-        const payload = {
-          username: forms.register.username,
-          email: forms.register.email,
-          password: forms.register.password
-        }
+        const formData = new FormData()
+        formData.append('username', forms.register.username)
+        formData.append('email', forms.register.email)
+        formData.append('password', forms.register.password)
         
-        if (forms.register.profile) {
-          payload.profile = { avatar_url: forms.register.profile }
+        if (forms.register.avatarFile) {
+          formData.append('avatar_file', forms.register.avatarFile)
         }
 
         const res = await fetch(`${API}/user/register/`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: formData
         })
 
         if (res.ok) {
@@ -851,7 +917,18 @@ export default {
         })
 
         if (res.ok) {
-          user.value = await res.json()
+          const data = await res.json()
+          user.value = {
+            user_id: data.user_db.id,
+            username: data.user_db.username,
+            email: data.user_db.email,
+            is_active: data.user_db.is_active,
+            role: data.user_db.role,
+            profile: {
+              avatar_url: data.user_db.avatar?.[0]?.s3_url || null
+            },
+            jti: data.jwt_payload.jti
+          }
         }
       } catch (error) {
         console.error('Failed to get user info:', error)
@@ -1071,6 +1148,36 @@ export default {
       showNotification(success ? 'Токен обновлен' : 'Ошибка обновления токена', success ? 'success' : 'error')
     }
 
+    const selectAvatar = (event) => {
+      const file = event.target.files[0]
+      if (file && file.size <= 5 * 1024 * 1024) {
+        forms.register.avatarFile = file
+        avatarPreview.value = URL.createObjectURL(file)
+      } else {
+        showNotification('Файл слишком большой (макс 5MB)', 'error')
+      }
+    }
+
+    const dropAvatar = (event) => {
+      event.preventDefault()
+      const file = event.dataTransfer.files[0]
+      if (file && file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
+        forms.register.avatarFile = file
+        avatarPreview.value = URL.createObjectURL(file)
+      } else {
+        showNotification('Неверный формат или размер файла', 'error')
+      }
+    }
+
+    const removeAvatar = () => {
+      forms.register.avatarFile = null
+      avatarPreview.value = null
+    }
+
+    const confirmAvatar = () => {
+      modals.avatarUpload = false
+    }
+
     onMounted(async () => {
       await checkHealth()
       
@@ -1090,13 +1197,14 @@ export default {
       }
     })
 
-    const isHealthy = computed(() => healthStatus.notes && healthStatus.users)
+    const isHealthy = computed(() => healthStatus.notes && healthStatus.users && healthStatus.media)
 
     return {
-      currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy, zoom,
+      currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy, zoom, avatarPreview,
       login, register, logout, loadNotes, deleteNote, confirmDeleteNote, viewNote, createNote,
       addFiles, dropFiles, removeFile, openLightbox, openMediaViewer, closeMobileSidebar, 
-      openZoom, zoomIn, zoomOut, handleZoomWheel, startDrag, drag, endDrag, pauseOtherMedia, testTokenRefresh
+      openZoom, zoomIn, zoomOut, handleZoomWheel, startDrag, drag, endDrag, pauseOtherMedia, testTokenRefresh,
+      selectAvatar, dropAvatar, removeAvatar, confirmAvatar
     }
   }
 }

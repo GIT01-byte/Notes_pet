@@ -6,13 +6,12 @@ sys.path.append(current_dir)
 
 from pydantic import ValidationError
 
-from typing import Annotated
-from fastapi import APIRouter, Depends, Request, Response
+from typing import Annotated, Optional
+from fastapi import APIRouter, Depends, File, Form, Request, Response, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 
 from core.schemas.users import (
     RefreshRequest,
-    RegisterRequest,
     TokenResponse,
     UserSelfInfo,
 )
@@ -36,8 +35,6 @@ from exceptions.exceptions import (
 from utils.logging import logger
 from utils.time_decorator import async_timed_report
 from utils.security import ACCESS_TOKEN_TYPE, decode_access_token
-
-from integrations.files.schemas import NSFileUploadRequest
 
 from core.db.repositories import UsersRepo
 
@@ -86,8 +83,11 @@ async def auth_login(
 async def auth_register_user(
     request: Request,
     response: Response,
-    register_request: RegisterRequest,
-    avatar_upload_reguest: NSFileUploadRequest,
+    username: str = Form(..., min_length=3, max_length=64),
+    email: Optional[str] = Form(None),
+    password: str = Form(..., min_length=8),
+    profile: Optional[str] = Form(None),
+    avatar_file: Optional[UploadFile] = File(None),
 ):
     try:
         auth_service = AuthService()
@@ -113,24 +113,38 @@ async def auth_register_user(
                 pass
 
         # 2. Регистрируем нового пользователя
-        # Подготовленные данные пользователя без пароля (пароль хешируется отдельно)
+        import json
+
+        profile_dict = None
+        if profile:
+            try:
+                profile_dict = json.loads(profile)
+            except json.JSONDecodeError:
+                logger.warning(f"Некорректный JSON в profile: {profile}")
+                profile_dict = None
+
         payload = {
-            "username": register_request.username,
-            "email": register_request.email,
-            "profile": register_request.profile,
+            "username": username,
+            "email": email,
+            "profile": profile_dict,
         }
+
         new_user = await auth_service.register_user_to_db(
-            payload=payload, password=register_request.password
+            payload=payload, password=password, avatar_file=avatar_file
         )
 
         return {
             "ok": True,
-            "message": f"Регистрация пользователя: {new_user["new_username"]!r} с ролью {new_user["role"]!r} прошла успешно!",
+            "user_id": new_user["user_id"],
+            "new_username": new_user["new_username"],
+            "role": new_user["role"],
+            "avatar_uuid": new_user["avatar_uuid"],
         }
 
-    # Обрабатываем уникальные ошибки регистрации и ошибки валидации #FIXME
+    # Обрабатываем уникальные ошибки регистрации и ошибки валидации
     except ValidationError as e:
         logger.error(f"Ошибка валидации RegisterRequest: {e.errors()}")
+        raise RegistrationFailedError(detail="Ошибка валидации данных")
     except ValueError as e:
         err_msg = str(e)
         if "уже существует" in err_msg:
@@ -141,7 +155,7 @@ async def auth_register_user(
         err_msg = str(e)
         if "уже существует" in err_msg:
             raise UserAlreadyExistsError()
-        logger.error(f'Ошибка регистрации, exc_info="{err_msg}"')
+        logger.exception(f"Ошибка регистрации: {e}")
         raise RegistrationFailedError()
 
 

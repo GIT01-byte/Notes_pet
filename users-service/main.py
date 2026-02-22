@@ -88,6 +88,6 @@ if __name__ == "__main__":
         "main:main_app",
         host=settings.app.host,
         port=settings.app.port,
-        reload=True,
-        log_level="debug",
+        reload=settings.app.mode == "DEV",
+        log_level="info",
     )
