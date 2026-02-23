@@ -10,7 +10,8 @@
     },
     "security/cors": {
       "allow_origins": [
-        "http://127.0.0.1:80"
+        "http://127.0.0.1:80",
+        "http://178.72.155.75:80"
       ],
       "allow_methods": [
         "GET",
