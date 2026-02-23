@@ -655,7 +655,9 @@
 <script>
 import { ref, reactive, onMounted, computed } from 'vue'
 
-const API = "http://127.0.0.1:80/api-gateway"
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? "http://127.0.0.1:80/api-gateway"
+  : `http://${window.location.hostname}/api-gateway`
 
 export default {
   name: 'App',

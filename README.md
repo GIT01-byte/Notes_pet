@@ -135,18 +135,12 @@ MEDIA_S3_BUCKETNAME=your_bucket_name
 
 4. **Запустите приложение**
 ```bash
-# Для Docker Compose v2.x (рекомендуется)
 docker compose up -d
-
-# Или для старой версии v1.x
-docker-compose up -d
 ```
 
 5. **Проверьте статус сервисов**
 ```bash
-docker compose ps  # для v2.x
-# или
-docker-compose ps  # для v1.x
+docker compose ps
 ```
 
 6. **Откройте приложение**
@@ -419,15 +413,15 @@ Notes_pet/
 ```bash
 # Notes Service
 cd notes-service
-docker-compose up -d
+docker compose up -d
 
 # Users Service
 cd users-service
-docker-compose up -d
+docker compose up -d
 
 # Media Service
 cd media-service
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Локальная разработка (без Docker)
@@ -463,17 +457,17 @@ alembic upgrade head
 ### Логи сервисов
 ```bash
 # Все сервисы
-docker-compose logs -f
+docker compose logs -f
 
 # Конкретный сервис
-docker-compose logs -f notes-service
-docker-compose logs -f notes-users-service
-docker-compose logs -f notes-media-service
+docker compose logs -f notes-service
+docker compose logs -f notes-users-service
+docker compose logs -f notes-media-service
 ```
 
 ### Статус контейнеров
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ### Проверка здоровья сервисов
