@@ -12,6 +12,9 @@ indent_var = contextvars.ContextVar("indent", default=0)
 base_path = Path(__file__).parent.parent
 full_path_dir = f"{base_path}/reports"
 
+# Создание директории reports если не существует
+Path(full_path_dir).mkdir(parents=True, exist_ok=True)
+
 
 def time_all_methods(decorator):
     """Декоратор класса: применяет указанный декоратор ко всем методам."""
