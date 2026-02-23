@@ -71,6 +71,7 @@ services:
       - "8001:8001"
     environment:
       NOTES_APP_MODE: PROD
+      NOTES_APP_PORT: 8001
 
       NOTES_DB_HOST: postgres-notes
       NOTES_DB_PORT: 5432
@@ -142,6 +143,7 @@ services:
       - "8002:8002"
     environment:
       USERS_APP_MODE: PROD
+      USERS_APP_PORT: 8002
 
       USERS_DB_HOST: postgres-users
       USERS_DB_PORT: 5433
@@ -201,6 +203,7 @@ services:
       - "8003:8003"
     environment:
       MEDIA_APP_MODE: PROD
+      MEDIA_APP_PORT: 8003
 
       MEDIA_DB_HOST: postgres-media
       MEDIA_DB_PORT: 5434
