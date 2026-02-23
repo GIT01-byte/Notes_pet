@@ -8,8 +8,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
-COPY ../generate_keys.py /generate_keys.py
-
-RUN cd / && python3 generate_keys.py || true
+# Create security_keys directory and generate JWT keys
+RUN mkdir -p /app/core/security_keys && \
+    python3 -c "from cryptography.hazmat.primitives.asymmetric import ed25519; \
+from cryptography.hazmat.primitives import serialization; \
+private_key = ed25519.Ed25519PrivateKey.generate(); \
+public_key = private_key.public_key(); \
+with open('/app/core/security_keys/private_key.pem', 'wb') as f: \
+    f.write(private_key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption())); \
+with open('/app/core/security_keys/public_key.pem', 'wb') as f: \
+    f.write(public_key.public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo))"
 
 EXPOSE 8002
