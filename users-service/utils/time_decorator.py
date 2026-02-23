@@ -5,15 +5,21 @@ import functools
 from datetime import datetime
 import contextvars
 
+from core.settings import settings
+
 # Переменная для хранения уровня вложенности
 indent_var = contextvars.ContextVar("indent", default=0)
+
+# Включение/выключение декораторов через переменную окружения
+ENABLE_TIME_DECORATOR = settings.app.enable_time_reports
 
 # Настройка путей
 base_path = Path(__file__).parent.parent
 full_path_dir = f"{base_path}/reports"
 
 # Создание директории reports если не существует
-Path(full_path_dir).mkdir(parents=True, exist_ok=True)
+if ENABLE_TIME_DECORATOR:
+    Path(full_path_dir).mkdir(parents=True, exist_ok=True)
 
 
 def time_all_methods(decorator):
@@ -28,6 +34,9 @@ def time_all_methods(decorator):
 
 def async_timed_report():
     def decorator(func):
+        if not ENABLE_TIME_DECORATOR:
+            return func
+        
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             indent = indent_var.get()
@@ -52,6 +61,9 @@ def async_timed_report():
 
 def sync_timed_report():
     def decorator(func):
+        if not ENABLE_TIME_DECORATOR:
+            return func
+        
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             indent = indent_var.get()

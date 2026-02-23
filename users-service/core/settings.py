@@ -18,6 +18,7 @@ class AppSettings(BaseModel):
     mode: str = 'DEV'
     host: str = '0.0.0.0'
     port: int = 8000
+    enable_time_reports: bool = False
 
 
 class JwtAuth(BaseModel):
