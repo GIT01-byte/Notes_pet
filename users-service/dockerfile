@@ -10,13 +10,15 @@ COPY . /app/
 
 # Create security_keys directory and generate JWT keys
 RUN mkdir -p /app/core/security_keys && \
-    python3 -c "from cryptography.hazmat.primitives.asymmetric import ed25519; \
-from cryptography.hazmat.primitives import serialization; \
-private_key = ed25519.Ed25519PrivateKey.generate(); \
-public_key = private_key.public_key(); \
-with open('/app/core/security_keys/private_key.pem', 'wb') as f: \
-    f.write(private_key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption())); \
-with open('/app/core/security_keys/public_key.pem', 'wb') as f: \
-    f.write(public_key.public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo))"
+    echo 'from cryptography.hazmat.primitives.asymmetric import ed25519' > /tmp/gen_keys.py && \
+    echo 'from cryptography.hazmat.primitives import serialization' >> /tmp/gen_keys.py && \
+    echo 'private_key = ed25519.Ed25519PrivateKey.generate()' >> /tmp/gen_keys.py && \
+    echo 'public_key = private_key.public_key()' >> /tmp/gen_keys.py && \
+    echo "with open('/app/core/security_keys/private_key.pem', 'wb') as f:" >> /tmp/gen_keys.py && \
+    echo "    f.write(private_key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption()))" >> /tmp/gen_keys.py && \
+    echo "with open('/app/core/security_keys/public_key.pem', 'wb') as f:" >> /tmp/gen_keys.py && \
+    echo "    f.write(public_key.public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo))" >> /tmp/gen_keys.py && \
+    python3 /tmp/gen_keys.py && \
+    rm /tmp/gen_keys.py
 
 EXPOSE 8002
