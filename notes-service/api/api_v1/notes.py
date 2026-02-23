@@ -36,7 +36,7 @@ router = APIRouter(prefix=settings.api.v1.notes, tags=["Notes"])
 async def health_check():
     return {"success": "Note service started"}
 
-
+# FIXME TypeError: 'UserSelfInfo' object is not subscriptable
 # TODO добавить обработку ошибок связанную с куки
 # TODO вынести лишную логику в сервис
 # Создание новой заметки в БД с медиафайлами

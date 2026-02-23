@@ -77,8 +77,21 @@
 
 ### Предварительные требования
 
-- Docker & Docker Compose
+- Docker & Docker Compose v2.x или выше
 - S3-совместимое хранилище (AWS S3, MinIO, etc.)
+
+**Важно:** На Linux если у вас установлен docker-compose v1.x, обновите до v2.x:
+```bash
+# Удалите старую версию
+sudo apt remove docker-compose
+
+# Установите Docker Compose v2 (плагин)
+sudo apt update
+sudo apt install docker-compose-plugin
+
+# Проверьте версию (должна быть 2.x)
+docker compose version
+```
 
 ### Установка
 
@@ -122,12 +135,18 @@ MEDIA_S3_BUCKETNAME=your_bucket_name
 
 4. **Запустите приложение**
 ```bash
+# Для Docker Compose v2.x (рекомендуется)
+docker compose up -d
+
+# Или для старой версии v1.x
 docker-compose up -d
 ```
 
 5. **Проверьте статус сервисов**
 ```bash
-docker-compose ps
+docker compose ps  # для v2.x
+# или
+docker-compose ps  # для v1.x
 ```
 
 6. **Откройте приложение**
