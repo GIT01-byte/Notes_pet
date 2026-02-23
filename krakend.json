@@ -10,8 +10,7 @@
     },
     "security/cors": {
       "allow_origins": [
-        "http://127.0.0.1:80",
-        "http://178.72.155.75:80"
+        "*"
       ],
       "allow_methods": [
         "GET",
@@ -40,7 +39,7 @@
         {
           "url_pattern": "/api/v1/notes/health_check",
           "host": [
-            "http://notes_service:8001"
+            "http://notes-service:8001"
           ]
         }
       ]
@@ -56,7 +55,7 @@
           "url_pattern": "/api/v1/notes/create",
           "method": "POST",
           "host": [
-            "http://notes_service:8001"
+            "http://notes-service:8001"
           ]
         }
       ],
@@ -70,7 +69,7 @@
         {
           "url_pattern": "/api/v1/notes/delete/{note_id}",
           "host": [
-            "http://notes_service:8001"
+            "http://notes-service:8001"
           ]
         }
       ]
@@ -83,7 +82,7 @@
         {
           "url_pattern": "/api/v1/notes/get_all_user_notes/",
           "host": [
-            "http://notes_service:8001"
+            "http://notes-service:8001"
           ]
         }
       ]
@@ -96,7 +95,7 @@
         {
           "url_pattern": "/api/v1/notes/get_user_note/{note_id}/",
           "host": [
-            "http://notes_service:8001"
+            "http://notes-service:8001"
           ]
         }
       ]
@@ -108,7 +107,7 @@
         {
           "url_pattern": "/users/health_check",
           "host": [
-            "http://notes_users:8002"
+            "http://notes-users-service:8002"
           ]
         }
       ]
@@ -121,7 +120,7 @@
         {
           "url_pattern": "/users/register/",
           "host": [
-            "http://notes_users:8002"
+            "http://notes-users-service:8002"
           ]
         }
       ]
@@ -134,7 +133,7 @@
         {
           "url_pattern": "/users/login/",
           "host": [
-            "http://notes_users:8002"
+            "http://notes-users-service:8002"
           ]
         }
       ]
@@ -148,7 +147,7 @@
         {
           "url_pattern": "/users/tokens/refresh/",
           "host": [
-            "http://notes_users:8002"
+            "http://notes-users-service:8002"
           ]
         }
       ]
@@ -162,7 +161,7 @@
         {
           "url_pattern": "/users/logout/",
           "host": [
-            "http://notes_users:8002"
+            "http://notes-users-service:8002"
           ]
         }
       ]
@@ -175,7 +174,7 @@
         {
           "url_pattern": "/users/me/",
           "host": [
-            "http://notes_users:8002"
+            "http://notes-users-service:8002"
           ]
         }
       ]
@@ -187,7 +186,7 @@
         {
           "url_pattern": "/api/v1/media_service/health_check/",
           "host": [
-            "http://notes_media:8003"
+            "http://notes-media-service:8003"
           ]
         }
       ]
@@ -202,7 +201,7 @@
         {
           "url_pattern": "/api/v1/media_service/upload",
           "host": [
-            "http://notes_media:8003"
+            "http://notes-media-service:8003"
           ]
         }
       ],
@@ -215,7 +214,7 @@
         {
           "url_pattern": "/api/v1/media_service/files/{file_uuid}/",
           "host": [
-            "http://notes_media:8003"
+            "http://notes-media-service:8003"
           ]
         }
       ],
@@ -228,7 +227,7 @@
         {
           "url_pattern": "/api/v1/media_service/files/{file_uuid}/view/",
           "host": [
-            "http://notes_media:8003"
+            "http://notes-media-service:8003"
           ]
         }
       ]
@@ -240,7 +239,7 @@
         {
           "url_pattern": "/api/v1/media_service/files/delete/{file_uuid}/",
           "host": [
-            "http://notes_media:8003"
+            "http://notes-media-service:8003"
           ]
         }
       ]
