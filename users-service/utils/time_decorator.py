@@ -43,6 +43,7 @@ def async_timed_report():
                 report_line = (f"[{timestamp}] Расположение: {func.__code__.co_filename} Функция: {func.__name__} | "
                                f"Время выполнения: {duration:.4f} сек.\n")
                 
+                Path(full_path_dir).mkdir(parents=True, exist_ok=True)
                 with open(os.path.join(full_path_dir, "async_timed_report.txt"), "a", encoding="utf-8") as f:
                     f.write(report_line)
                 indent_var.set(indent) # Возвращаем уровень назад
@@ -67,6 +68,7 @@ def sync_timed_report():
                 report_line = (f"[{timestamp}] Расположение: {func.__code__.co_filename} Функция: {func.__name__} | "
                                f"Время выполнения: {duration:.4f} сек.\n")
                 
+                Path(full_path_dir).mkdir(parents=True, exist_ok=True)
                 with open(os.path.join(full_path_dir, "sync_timed_report.txt"), "a", encoding="utf-8") as f:
                     f.write(report_line)
                 indent_var.set(indent) # Возвращаем уровень назад
