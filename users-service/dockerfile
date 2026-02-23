@@ -8,4 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
-EXPOSE 8001
+COPY ../generate_keys.py /generate_keys.py
+
+RUN cd / && python3 generate_keys.py || true
+
+EXPOSE 8002
