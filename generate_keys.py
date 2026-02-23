@@ -4,10 +4,9 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
 # 0. Определение путей и создание директорий
-BASE_DIR = Path(__file__).parent.parent
-
-NOTES_SERVICE_KEYS_DIR = BASE_DIR / "notes" / "core" / "security_keys"
-NOTES_USERS_KEYS_DIR = BASE_DIR / "users" / "core" / "security_keys"
+BASE_DIR = Path(__file__).resolve().parent
+NOTES_SERVICE_KEYS_DIR = BASE_DIR / "notes-service" / "core" / "security_keys"
+NOTES_USERS_KEYS_DIR = BASE_DIR / "users-service" / "core" / "security_keys"
 
 # Убедимся, что директории существуют
 for d in [NOTES_SERVICE_KEYS_DIR, NOTES_USERS_KEYS_DIR]:
