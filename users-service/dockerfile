@@ -8,17 +8,22 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
-# Create security_keys directory and generate JWT keys
-RUN mkdir -p /app/core/security_keys && \
-    echo 'from cryptography.hazmat.primitives.asymmetric import ed25519' > /tmp/gen_keys.py && \
+# Create security_keys directory
+RUN mkdir -p /app/core/security_keys
+
+# Create key generation script
+RUN echo 'from cryptography.hazmat.primitives.asymmetric import ed25519' > /tmp/gen_keys.py && \
     echo 'from cryptography.hazmat.primitives import serialization' >> /tmp/gen_keys.py && \
     echo 'private_key = ed25519.Ed25519PrivateKey.generate()' >> /tmp/gen_keys.py && \
     echo 'public_key = private_key.public_key()' >> /tmp/gen_keys.py && \
     echo "with open('/app/core/security_keys/private_key.pem', 'wb') as f:" >> /tmp/gen_keys.py && \
     echo "    f.write(private_key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption()))" >> /tmp/gen_keys.py && \
     echo "with open('/app/core/security_keys/public_key.pem', 'wb') as f:" >> /tmp/gen_keys.py && \
-    echo "    f.write(public_key.public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo))" >> /tmp/gen_keys.py && \
-    python3 /tmp/gen_keys.py && \
+    echo "    f.write(public_key.public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo))" >> /tmp/gen_keys.py
+
+# Generate keys and verify
+RUN python3 /tmp/gen_keys.py && \
+    ls -la /app/core/security_keys/ && \
     rm /tmp/gen_keys.py
 
 EXPOSE 8002
