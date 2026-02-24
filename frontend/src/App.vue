@@ -182,6 +182,23 @@
               </h1>
             </div>
 
+            <!-- Bulk Delete Controls -->
+            <div v-if="notes.length > 0" class="mb-6 flex items-center justify-between bg-gray-800/50 rounded-2xl p-4">
+              <div class="flex items-center space-x-4">
+                <button @click="toggleSelectAll" class="flex items-center space-x-2 text-white hover:text-cyan-400 transition">
+                  <i :class="allSelected ? 'fas fa-check-square' : 'far fa-square'" class="text-xl"></i>
+                  <span class="text-sm font-medium">{{ allSelected ? 'Снять все' : 'Выбрать все' }}</span>
+                </button>
+                <span v-if="selectedNotes.length > 0" class="text-gray-300 text-sm">
+                  Выбрано: {{ selectedNotes.length }}
+                </span>
+              </div>
+              <button v-if="selectedNotes.length > 0" @click="deleteSelectedNotes" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition flex items-center space-x-2">
+                <i class="fas fa-trash"></i>
+                <span>Удалить ({{ selectedNotes.length }})</span>
+              </button>
+            </div>
+
             <!-- Notes Grid -->
             <div v-if="loading" class="text-center py-12">
               <i class="fas fa-spinner fa-spin text-4xl text-white mb-4"></i>
@@ -191,9 +208,15 @@
             <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               <transition-group name="fade">
                 <div v-for="note in notes" :key="note.id" 
-                     @click="viewNote(note.id)"
-                     class="glass rounded-2xl md:rounded-3xl p-4 md:p-6 hover:shadow-glow transition-all duration-300 group cursor-pointer">
-                  <div class="flex justify-between items-start mb-3 md:mb-4">
+                     @click="!isNoteSelected(note.id) && viewNote(note.id)"
+                     :class="isNoteSelected(note.id) ? 'ring-4 ring-cyan-400' : ''"
+                     class="glass rounded-2xl md:rounded-3xl p-4 md:p-6 hover:shadow-glow transition-all duration-300 group cursor-pointer relative">
+                  <div class="absolute top-4 left-4 z-10">
+                    <button @click.stop="toggleNoteSelection(note.id)" class="w-6 h-6 rounded flex items-center justify-center transition" :class="isNoteSelected(note.id) ? 'bg-cyan-400 text-white' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'">
+                      <i :class="isNoteSelected(note.id) ? 'fas fa-check' : 'far fa-square'" class="text-sm"></i>
+                    </button>
+                  </div>
+                  <div class="flex justify-between items-start mb-3 md:mb-4 pl-8">
                     <h3 class="text-lg md:text-xl font-bold text-white truncate pr-2">{{ note.title }}</h3>
                     <button @click.stop="deleteNote(note.id)" 
                             class="opacity-0 group-hover:opacity-100 bg-red-100 hover:bg-red-500 text-red-500 hover:text-white p-2 rounded-full transition-all flex-shrink-0">
@@ -231,7 +254,7 @@
               <p class="text-white/70 text-lg md:text-xl mb-4">Заметок пока нет</p>
               <button @click="modals.createNote = true" 
                       class="bg-gradient-to-r from-cyan-400 to-purple-500 text-white px-6 py-3 rounded-2xl font-bold">
-                Создать первую заметку
+                Создать заметку
               </button>
             </div>
           </div>
@@ -589,7 +612,7 @@
           <div class="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
             <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
           </div>
-          <h2 class="text-2xl font-bold text-white mb-2">Удалить заметку?</h2>
+          <h2 class="text-2xl font-bold text-white mb-2">{{ modals.deleteNoteId === 'bulk' ? `Удалить ${selectedNotes.length} заметок?` : 'Удалить заметку?' }}</h2>
           <p class="text-gray-300 mb-6">Это действие нельзя отменить</p>
           <div class="flex space-x-4">
             <button @click="modals.confirmDelete = false" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition">
@@ -665,6 +688,7 @@ export default {
     const notes = ref([])
     const loading = ref(false)
     const sidebarOpen = ref(false)
+    const selectedNotes = ref([])
     
     // Mobile sidebar auto-close
     const isMobile = () => window.innerWidth < 768
@@ -967,6 +991,36 @@ export default {
       modals.confirmDelete = true
     }
 
+    const toggleNoteSelection = (id) => {
+      const index = selectedNotes.value.indexOf(id)
+      if (index > -1) {
+        selectedNotes.value.splice(index, 1)
+      } else {
+        selectedNotes.value.push(id)
+      }
+    }
+
+    const isNoteSelected = (id) => {
+      return selectedNotes.value.includes(id)
+    }
+
+    const toggleSelectAll = () => {
+      if (selectedNotes.value.length === notes.value.length) {
+        selectedNotes.value = []
+      } else {
+        selectedNotes.value = notes.value.map(n => n.id)
+      }
+    }
+
+    const allSelected = computed(() => {
+      return notes.value.length > 0 && selectedNotes.value.length === notes.value.length
+    })
+
+    const deleteSelectedNotes = () => {
+      modals.deleteNoteId = 'bulk'
+      modals.confirmDelete = true
+    }
+
     const createNote = async () => {
       loading.value = true
       try {
@@ -1008,16 +1062,39 @@ export default {
     const confirmDeleteNote = async () => {
       try {
         const token = localStorage.getItem('access_token')
-        const res = await fetch(`${API}/notes/delete/${modals.deleteNoteId}/`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-
-        if (res.ok) {
+        
+        if (modals.deleteNoteId === 'bulk') {
+          const deletePromises = selectedNotes.value.map(id => 
+            fetch(`${API}/notes/delete/${id}/`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` }
+            })
+          )
+          
+          const results = await Promise.allSettled(deletePromises)
+          const successCount = results.filter(r => r.status === 'fulfilled' && r.value.ok).length
+          const failCount = results.length - successCount
+          
           await loadNotes()
-          showNotification('Заметка удалена', 'success')
+          selectedNotes.value = []
+          
+          if (failCount === 0) {
+            showNotification(`Удалено ${successCount} заметок`, 'success')
+          } else {
+            showNotification(`Удалено ${successCount}, ошибок ${failCount}`, 'warning')
+          }
         } else {
-          showNotification('Ошибка удаления', 'error')
+          const res = await fetch(`${API}/notes/delete/${modals.deleteNoteId}/`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+
+          if (res.ok) {
+            await loadNotes()
+            showNotification('Заметка удалена', 'success')
+          } else {
+            showNotification('Ошибка удаления', 'error')
+          }
         }
       } catch (error) {
         showNotification('Ошибка сети', 'error')
@@ -1201,10 +1278,12 @@ export default {
 
     return {
       currentView, user, notes, loading, sidebarOpen, modals, forms, files, healthStatus, isHealthy, zoom, avatarPreview,
+      selectedNotes, allSelected,
       login, register, logout, loadNotes, deleteNote, confirmDeleteNote, viewNote, createNote,
       addFiles, dropFiles, removeFile, openLightbox, openMediaViewer, closeMobileSidebar, 
       openZoom, zoomIn, zoomOut, handleZoomWheel, startDrag, drag, endDrag, pauseOtherMedia, testTokenRefresh,
-      selectAvatar, dropAvatar, removeAvatar, confirmAvatar
+      selectAvatar, dropAvatar, removeAvatar, confirmAvatar,
+      toggleNoteSelection, isNoteSelected, toggleSelectAll, deleteSelectedNotes
     }
   }
 }
