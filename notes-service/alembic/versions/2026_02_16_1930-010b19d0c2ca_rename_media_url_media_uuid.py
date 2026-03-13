@@ -34,12 +34,12 @@ def upgrade() -> None:
         "notes_orms",
         sa.Column("audio_uuid", sa.ARRAY(sa.String()), nullable=True),
     )
-    
+
     # Set default empty arrays
     op.execute("UPDATE notes_orms SET video_uuid = COALESCE(video_uuid, '{}')")
     op.execute("UPDATE notes_orms SET image_uuid = COALESCE(image_uuid, '{}')")
     op.execute("UPDATE notes_orms SET audio_uuid = COALESCE(audio_uuid, '{}')")
-    
+
     # Drop old columns
     op.drop_column("notes_orms", "audio_urls")
     op.drop_column("notes_orms", "image_urls")
@@ -76,7 +76,7 @@ def downgrade() -> None:
             nullable=False,
         ),
     )
-    
+
     # Drop new columns
     op.drop_column("notes_orms", "audio_uuid")
     op.drop_column("notes_orms", "image_uuid")

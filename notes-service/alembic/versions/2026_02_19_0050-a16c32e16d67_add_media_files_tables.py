@@ -167,16 +167,10 @@ def downgrade() -> None:
             nullable=True,
         ),
     )
-    op.drop_index(
-        op.f("ix_video_files_orms_uuid"), table_name="video_files_orms"
-    )
+    op.drop_index(op.f("ix_video_files_orms_uuid"), table_name="video_files_orms")
     op.drop_table("video_files_orms")
-    op.drop_index(
-        op.f("ix_image_files_orms_uuid"), table_name="image_files_orms"
-    )
+    op.drop_index(op.f("ix_image_files_orms_uuid"), table_name="image_files_orms")
     op.drop_table("image_files_orms")
-    op.drop_index(
-        op.f("ix_audio_files_orms_uuid"), table_name="audio_files_orms"
-    )
+    op.drop_index(op.f("ix_audio_files_orms_uuid"), table_name="audio_files_orms")
     op.drop_table("audio_files_orms")
     # ### end Alembic commands ###

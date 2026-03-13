@@ -22,13 +22,13 @@ class NotesRepo:
         try:
             async with db_helper.session_factory() as session:
                 logger.debug("Попытка получить все заметки")
-                
+
                 stmt = select(NotesOrm).order_by(NotesOrm.id)
                 result = await session.scalars(stmt)
-                
+
                 if result:
                     return result.all()
-                
+
                 logger.debug("Заметки не найдены.")
                 raise NoteNotFoundError("Заметки не найдены.") from None
         except NoteNotFoundError:
@@ -135,10 +135,7 @@ class NotesRepo:
                 )
 
                 existing_note = await session.scalar(
-                    select(NotesOrm)
-                    .filter(
-                        or_(NotesOrm.title == note_to_create.title)
-                    )
+                    select(NotesOrm).filter(or_(NotesOrm.title == note_to_create.title))
                 )
                 if existing_note:
                     error_msg = f"Заметка с заголовком: {note_to_create.title!r} уже существует."
@@ -167,7 +164,7 @@ class NotesRepo:
                 f"Неожиданная ошибка при создании заметки {NoteCreate.title!r}: {e}"
             )
             raise RepositoryInternalError(
-                f"Не удалось создать заметку из-за неожиданной ошибки."
+                "Не удалось создать заметку из-за неожиданной ошибки."
             ) from e
 
     @staticmethod
@@ -225,16 +222,12 @@ class NotesRepo:
                 await session.delete(note_obj)
                 await session.commit()
         except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка базы данных при удалении заметки {note_obj}: {e}"
-            )
+            logger.exception(f"Ошибка базы данных при удалении заметки {note_obj}: {e}")
             raise RepositoryInternalError(
                 f"Не удалось удалить заметку {note_obj} из-за ошибки базы данных."
             ) from e
         except Exception as e:
-            logger.exception(
-                f"Неожиданная ошибка при удалении заметки {note_obj}: {e}"
-            )
+            logger.exception(f"Неожиданная ошибка при удалении заметки {note_obj}: {e}")
             raise RepositoryInternalError(
                 f"Не удалось удалить заметку {note_obj} из-за неожиданной ошибки."
             ) from e

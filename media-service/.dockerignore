@@ -195,5 +195,10 @@ Thumbs.db
 
 
 # Temp project files
-certs/
 logs/
+reports/
+security_keys/
+.test.env
+node_modules/
+.ruff_cache
+.amazonq

@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
     # Подключаем middleware для просмотра содержимого http запроса
     @main_app.middleware("http")
     async def log_requests(request: Request, call_next):
-        logger.info(f"\n----------- New request -----------")
+        logger.info("\n----------- New request -----------")
         logger.info(f"Request: {request.method} {request.url}")
         logger.info(f"Headers: {request.headers}")
         try:

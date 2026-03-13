@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID, uuid7
 
-from sqlalchemy import String, Table, Column, Integer, MetaData, ForeignKey
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.models_crud import (

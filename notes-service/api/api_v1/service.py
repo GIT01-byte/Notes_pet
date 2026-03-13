@@ -14,7 +14,7 @@ from exceptions.exceptions import (
     RepositoryInternalError,
 )
 
-from integrations.files.files import MS_delete_file, MS_get_file, MS_upload_file
+from integrations.files.files import MS_delete_file, MS_upload_file
 from integrations.files.schemas import (
     NSFileUploadRequest,
     NSFileUploadResponse,
@@ -144,7 +144,9 @@ class NoteService:
     async def delete_media_files_from_s3(self, note: NotesOrm):
         """Удаление всех медиафайлов заметки из S3"""
         try:
-            total_files = len(note.video_files) + len(note.image_files) + len(note.audio_files)
+            total_files = (
+                len(note.video_files) + len(note.image_files) + len(note.audio_files)
+            )
             if total_files == 0:
                 logger.info(f"Заметка {note.id} не содержит медиафайлов")
                 return {"ok": True, "message": "No media files to delete"}
@@ -166,7 +168,9 @@ class NoteService:
                     await self._delete_media_file(file_uuid=str(image_file.uuid))
                     deleted_count += 1
                 except Exception as e:
-                    logger.error(f"Не удалось удалить изображение {image_file.uuid}: {e}")
+                    logger.error(
+                        f"Не удалось удалить изображение {image_file.uuid}: {e}"
+                    )
                     failed_uuids.append(str(image_file.uuid))
 
             for audio_file in note.audio_files:
@@ -178,8 +182,12 @@ class NoteService:
                     failed_uuids.append(str(audio_file.uuid))
 
             if failed_uuids:
-                logger.warning(f"Удалено {deleted_count}/{total_files} файлов. Ошибки: {failed_uuids}")
-                raise FilesDeleteError(f"Failed to delete {len(failed_uuids)} files: {failed_uuids}")
+                logger.warning(
+                    f"Удалено {deleted_count}/{total_files} файлов. Ошибки: {failed_uuids}"
+                )
+                raise FilesDeleteError(
+                    f"Failed to delete {len(failed_uuids)} files: {failed_uuids}"
+                )
 
             logger.info(f"Все {deleted_count} медиафайлов заметки {note.id} удалены")
             return {"ok": True, "message": f"Deleted {deleted_count} media files"}

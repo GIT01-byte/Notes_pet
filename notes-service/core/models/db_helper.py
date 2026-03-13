@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from ..config import settings
-from .base import Base
+
 
 class DbHelper:
     def __init__(

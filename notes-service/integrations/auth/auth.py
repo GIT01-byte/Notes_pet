@@ -2,7 +2,6 @@ from fastapi import Request, HTTPException, status
 
 import httpx
 
-from .constants import ACCESS_EXPIRE_NAME, ACCESS_ISSUED_AT_NAME
 
 from core.schemas.users import RequestUserData
 
@@ -23,7 +22,7 @@ async def get_current_user(request: Request):
                 )
             else:
                 print("EXC:   get_current_user    Get cookie fail")
-                raise HTTPException(status_code=500, detail=f"Get cookie fail")
+                raise HTTPException(status_code=500, detail="Get cookie fail")
 
             if login_response.status_code != 200:
                 print(

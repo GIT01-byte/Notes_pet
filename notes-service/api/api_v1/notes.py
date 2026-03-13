@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends
 
 from core.config import settings
@@ -35,6 +34,7 @@ router = APIRouter(prefix=settings.api.v1.notes, tags=["Notes"])
 @router.get("/health_check")
 async def health_check():
     return {"success": "Note service started"}
+
 
 # FIXME TypeError: 'UserSelfInfo' object is not subscriptable
 # TODO добавить обработку ошибок связанную с куки

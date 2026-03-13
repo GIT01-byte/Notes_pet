@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import BaseModel, PostgresDsn
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_PATH = Path(__file__).parent.parent
@@ -8,18 +8,18 @@ ENV_PATH = BASE_PATH / ".env"
 
 
 class AppConfig(BaseModel):
-    mode: str = 'DEV'
-    host: str = '0.0.0.0'
+    mode: str = "DEV"
+    host: str = "0.0.0.0"
     port: int = 8000
 
 
 class ApiV1Prefix(BaseModel):
-    prefix: str = '/v1'
-    notes: str = '/notes'
+    prefix: str = "/v1"
+    notes: str = "/notes"
 
 
 class ApiPrefix(BaseModel):
-    prefix: str = '/api'
+    prefix: str = "/api"
     v1: ApiV1Prefix = ApiV1Prefix()
 
 
@@ -35,7 +35,7 @@ class DatabaseSettings(BaseModel):
     echo_pool: bool = False
     pool_size: int = 50
     max_overflow: int = 10
-    
+
     naming_convention: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",
         "uq": "uq_%(table_name)s_%(column_0_N_name)s",
@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     db: DatabaseSettings
 
 
-settings = Settings() # type: ignore
+settings = Settings()  # type: ignore
 print()
 print("-------- Notes Service --------")
 print(f"INFO:     Run mode: {settings.app.mode}")
