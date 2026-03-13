@@ -120,6 +120,8 @@ class UploadFileUseCase:
             # Создание метаданных
             file_metadata_in_db = await self.file_meta_repo.create_metadata(
                 file_id=data.file_id,
+                entity_id=data.entity_id,
+                upload_context=data.upload_context,
                 filename=data.unique_filename,
                 size=data.size,
                 content_type=data.content_type,

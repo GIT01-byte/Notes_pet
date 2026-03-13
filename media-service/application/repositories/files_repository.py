@@ -21,6 +21,8 @@ class FileRepository:
     async def create_metadata(
         self,
         file_id: UUID,
+        entity_id: int,
+        upload_context: str,
         filename: str,
         size: int,
         content_type: str,
@@ -39,6 +41,8 @@ class FileRepository:
 
             new_meta = FilesMetadataOrm(
                 file_id=file_id,
+                entity_id=entity_id,
+                upload_context=upload_context,
                 filename=filename,
                 size=size,
                 content_type=content_type,

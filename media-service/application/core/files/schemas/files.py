@@ -16,28 +16,38 @@ class FileProcessUCInputDTO(BaseModel):
 
 class FileProcessUCOuputDTO(BaseModel):
     validaion_status: bool
+
     file_id: UUID
+
     unique_filename: str
     category: str
+
     s3_temp_upload_key: str
     s3_upload_key: str
 
 
 class FileUploadUCInputDTO(BaseModel):
-    file_id: UUID
     file: UploadFile
+
+    file_id: UUID
+
+    upload_context: str
+    entity_id: int
+
     unique_filename: str
     size: int
-    upload_context: str
     content_type: str
     category: str
+
     s3_temp_upload_key: str
     s3_upload_key: str
 
 
 class FileUploadUCOutputDTO(BaseModel):
     upload_status: str
+
     file_id: UUID
+
     size: int
     unique_filename: str
     content_type: str
@@ -53,10 +63,16 @@ class UploadContext(str, Enum):
 class FileMetadataBase(BaseModel):
     file_id: UUID
 
+    entity_id: int
+    upload_context: UploadContext
+    s3_url: str
+
     filename: str
     size: int
     content_type: str
     category: str
+
+    status: str
 
 
 class FileMeatadataCreate(FileMetadataBase):

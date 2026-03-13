@@ -79,9 +79,10 @@ async def upload_file(
         upload_data = FileUploadUCInputDTO(
             file=data.file,
             file_id=process_file_output.file_id,
+            entity_id=data.entity_id,
+            upload_context=data.upload_context,
             unique_filename=process_file_output.unique_filename,
             size=data.file.size,
-            upload_context=data.upload_context,
             content_type=data.file.content_type,
             category=process_file_output.category,
             s3_temp_upload_key=process_file_output.s3_temp_upload_key,

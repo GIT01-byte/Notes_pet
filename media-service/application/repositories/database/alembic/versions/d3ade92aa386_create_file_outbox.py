@@ -1,8 +1,8 @@
-"""Create Files Metadata Outbox model
+"""Create file outbox
 
-Revision ID: 270901670676
-Revises: db828f969386
-Create Date: 2026-02-27 23:07:20.927049
+Revision ID: d3ade92aa386
+Revises: f4abbb13456a
+Create Date: 2026-03-13 23:55:21.531567
 
 """
 
@@ -10,12 +10,12 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 import sqlalchemy_utc
-
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "270901670676"
-down_revision: Union[str, Sequence[str], None] = "db828f969386"
+revision: str = "d3ade92aa386"
+down_revision: Union[str, Sequence[str], None] = "f4abbb13456a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -26,7 +26,7 @@ def upgrade() -> None:
     op.create_table(
         "files_outbox_orms",
         sa.Column("message_name", sa.String(), nullable=False),
-        sa.Column("body", sa.JSON(), nullable=False),
+        sa.Column("body", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("status", sa.String(), nullable=False),
         sa.Column("traceparent", sa.String(), nullable=True),
         sa.Column(

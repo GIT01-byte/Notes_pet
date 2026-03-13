@@ -17,31 +17,42 @@
        │
        ├──────────────┬──────────────┬──────────────┐
        │              │              │              │
-┌──────▼──────┐ ┌────▼─────┐ ┌──────▼──────┐ ┌────▼─────┐
-│   Notes     │ │  Users   │ │   Media     │ │ Frontend │
-│  Service    │ │ Service  │ │  Service    │ │   Vue3   │
-│   :8001     │ │  :8002   │ │   :8003     │ │  :3000   │
-└──────┬──────┘ └────┬─────┘ └──────┬──────┘ └──────────┘
+┌──────▼──────┐  ┌────▼─────┐ ┌──────▼──────┐  ┌────▼─────┐
+│   Notes     │  │  Users   │ │   Media     │  │ Frontend │
+│  Service    │  │ Service  │ │  Service    │  │   Vue3   │
+│   :8001     │  │  :8002   │ │   :8003     │  │  :3000   │
+└──────┬──────┘  └────┬─────┘ └──────┬──────┘  └──────────┘
        │              │              │
-┌──────▼──────┐ ┌────▼─────┐ ┌──────▼──────┐
-│ PostgreSQL  │ │PostgreSQL│ │ PostgreSQL  │
-│   :5432     │ │  :5433   │ │   :5434     │
-└─────────────┘ └────┬─────┘ └─────────────┘
-                     │
-                ┌────▼─────┐
-                │  Redis   │
-                │  :6380   │
-                └──────────┘
+┌──────▼──────┐  ┌────▼─────┐ ┌──────▼──────┐
+│ PostgreSQL  │  │PostgreSQL│ │ PostgreSQL  │
+│   :5432     │  │  :5433   │ │   :5434     │
+└─────────────┘  └────┬─────┘ └──────┬──────┘
+                      │              │
+                 ┌────▼─────┐   ┌────▼─────────┐
+                 │  Redis   │   │  RabbitMQ    │
+                 │  :6380   │   │  :5672       │
+                 └──────────┘   └──────┬───────┘
+                                       │
+                                ┌──────▼──────────┐
+                                │ Media Workers:  │
+                                │ - Outbox :8004  │
+                                │ - Processor:8005│
+                                └─────────────────┘
 ```
 
 ### Сервисы
 
 - **Notes Service** - Управление заметками (CRUD операции)
 - **Users Service** - Аутентификация, авторизация, управление пользователями
-- **Media Service** - Загрузка, хранение и обработка медиафайлов (S3 + ClamAV)
+- **Media Service** - Загрузка, хранение и обработка медиафайлов (S3 + ClamAV + RabbitMQ)
+  - **API Service** (:8003) - Прием файлов, валидация, сканирование, загрузка в temp S3
+  - **Outbox Worker** (:8004) - Публикация сообщений из БД в RabbitMQ
+  - **File Processor Worker** (:8005) - Обработка файлов из очереди, перенос в постоянное хранилище
 - **Frontend** - Vue 3 + Vite SPA приложение
 - **KrakenD** - API Gateway для маршрутизации запросов
 - **Nginx** - Балансировщик нагрузки и reverse proxy
+- **RabbitMQ** - Брокер сообщений для асинхронной обработки файлов
+- **Jaeger** - Распределенная трассировка запросов
 
 ## ✨ Основные возможности
 
@@ -60,11 +71,15 @@
 - ✅ Удаление заметок с каскадным удалением медиафайлов
 
 ### Медиафайлы
-- ✅ Загрузка файлов в S3-совместимое хранилище
+- ✅ Применение паттерна Transactional Outbox для гарантированной загрузки файлов в S3-совместимое хранилище
+- ✅ Асинхронная обработка файлов через RabbitMQ (3 независимых воркера)
 - ✅ Антивирусная проверка (ClamAV)
-- ✅ Валидация типов и размеров файлов
+- ✅ Валидация типов, размеров и целостности файлов (python-magic)
 - ✅ Генерация уникальных URL для доступа
 - ✅ Поддержка категорий (аватары, вложения заметок)
+- ✅ Clean Architecture с Use Cases
+- ✅ Dependency Injection (Dishka)
+- ✅ Распределенная трассировка (OpenTelemetry + Jaeger)
 
 ### Безопасность
 - ✅ JWT аутентификация (Access + Refresh токены)
@@ -131,6 +146,16 @@ MEDIA_S3_ACCESSKEY=your_access_key
 MEDIA_S3_SECRETKEY=your_secret_key
 MEDIA_S3_ENDPOINTURL=https://s3.amazonaws.com
 MEDIA_S3_BUCKETNAME=your_bucket_name
+
+# RabbitMQ настройки
+MEDIA_RABBITMQ_HOST=rabbitmq
+MEDIA_RABBITMQ_PORT=5672
+MEDIA_RABBITMQ_LOGIN=your_rabbitmq_user
+MEDIA_RABBITMQ_PASSWORD=your_rabbitmq_password
+
+# Outbox Worker настройки
+MEDIA_OUTBOX_ENABLED=True
+MEDIA_OUTBOX_POLLING_INTERVAL=1.0
 ```
 
 4. **Запустите приложение**
@@ -353,15 +378,20 @@ GET /media_service/health_check/
 
 ### Backend
 - **FastAPI** - Веб-фреймворк
-- **SQLAlchemy** - ORM
+- **SQLAlchemy 2.0** - ORM
 - **Alembic** - Миграции БД
-- **PostgreSQL** - База данных
+- **PostgreSQL 17** - База данных
 - **Redis** - Кэш и хранилище токенов
+- **RabbitMQ** - Брокер сообщений
+- **aio-pika** - Async клиент для RabbitMQ
 - **Pydantic** - Валидация данных
 - **JWT** - Аутентификация
 - **Loguru** - Логирование
 - **ClamAV** - Антивирусная проверка
-- **Boto3** - S3 клиент
+- **aioboto3** - Async S3 клиент
+- **Dishka** - Dependency Injection
+- **OpenTelemetry** - Трассировка
+- **python-magic** - Определение типов файлов
 
 ### Frontend
 - **Vue 3** - UI фреймворк
@@ -373,7 +403,8 @@ GET /media_service/health_check/
 - **Docker & Docker Compose** - Контейнеризация
 - **Nginx** - Reverse proxy
 - **KrakenD** - API Gateway
-- **S3** - Объектное хранилище
+- **S3 (Selectel)** - Объектное хранилище
+- **Jaeger** - Визуализация трейсов
 
 ## 📂 Структура проекта
 
@@ -481,15 +512,54 @@ docker compose ps
 - **ReadOnlyUser** - Только чтение
 - **GuestUser** - Гостевой доступ
 
+## 🏛️ Архитектурные решения
+
+### Media Service - Transactional Outbox Pattern
+
+Media Service использует паттерн Transactional Outbox для гарантированной доставки сообщений:
+
+**Процесс загрузки файла:**
+
+1. **API Service** (:8003):
+   - Валидирует файл (размер, тип, расширение)
+   - Сканирует на вирусы через ClamAV
+   - Загружает файл во временную папку S3 (`temp/`)
+   - Атомарно сохраняет метаданные файла и сообщение в outbox в одной транзакции БД
+
+2. **Outbox Worker** (:8004):
+   - Периодически сканирует таблицу `files_outbox` (каждые 1 сек)
+   - Публикует найденные сообщения в RabbitMQ очередь `file.upload.started`
+   - Удаляет успешно отправленные сообщения из outbox
+
+3. **File Processor Worker** (:8005):
+   - Слушает очередь RabbitMQ `file.upload.started`
+   - Переносит файл из `temp/` в постоянную папку S3
+   - Обновляет метаданные в БД (статус, S3 URL)
+
+**Преимущества:**
+- ✅ Атомарность операций (БД + сообщение в одной транзакции)
+- ✅ Гарантированная доставка сообщений (at-least-once)
+- ✅ Отказоустойчивость (если RabbitMQ недоступен, сообщения сохраняются в БД)
+- ✅ Независимое масштабирование компонентов
+- ✅ Возможность повторной обработки при сбоях
+
+### Clean Architecture & DI
+
+- **Use Cases** - бизнес-логика (ProcessFileUseCase, UploadFileUseCase, DeleteFileUseCase)
+- **Repositories** - работа с данными (FileRepository, FilesOutboxRepository, S3Client)
+- **Services** - вспомогательные сервисы (ClamavVirusScanner, FileValidator, FileCategoryDetector)
+- **Dishka** - автоматическое управление зависимостями с разделением на Scopes (APP, REQUEST)
+
 ## 🐛 Известные проблемы и TODO
 
 - [ ] Доработать систему ролей и разрешений для пользователей
 - [ ] Добавить разрешения для пользователей в сервис заметок
-- [ ] Внедрить SOLID принципы (15-20%)
-- [ ] Синхронизация сохранения файлов в медиа-сервис
+- [ ] Внедрить SOLID принципы в Notes и Users сервисы (Media Service: ✅ 80%)
 - [ ] Добавить пагинацию для списка заметок
 - [ ] Реализовать поиск по заметкам
 - [ ] Добавить теги для заметок
+- [ ] Добавить rate limiting для Media Service
+- [ ] Расширить health checks для всех сервисов
 
 ## 📝 Лицензия
 

@@ -90,7 +90,7 @@ services:
       MEDIA_RABBITMQ_PASSWORD: ${MEDIA_RABBITMQ_PASSWORD}
       
       MEDIA_OUTBOX_ENABLED: ${MEDIA_OUTBOX_ENABLED}
-      MEDIA_OUTBOX_POLLING_INTERVAL: ${MEDIA_OUTBOX_POLLING_INTERVAL}
+      MEDIA_OUTBOX_POLL_INTERVAL: ${MEDIA_OUTBOX_POLL_INTERVAL}
     ports:
       - "8004:8004"
     depends_on:
@@ -105,6 +105,7 @@ services:
     command: python -m application.outbox_worker
     networks:
       - app-network
+    restart: unless-stopped
   
   file_processor:
     build:
@@ -143,6 +144,7 @@ services:
     command: python -m application.file_process_worker
     networks:
       - app-network
+    restart: unless-stopped
   
   notes-media-service:
     build:
@@ -171,7 +173,7 @@ services:
       MEDIA_RABBITMQ_PASSWORD: ${MEDIA_RABBITMQ_PASSWORD}
       
       MEDIA_OUTBOX_ENABLED: ${MEDIA_OUTBOX_ENABLED}
-      MEDIA_OUTBOX_POLLING_INTERVAL: ${MEDIA_OUTBOX_POLLING_INTERVAL}
+      MEDIA_OUTBOX_POLL_INTERVAL: ${MEDIA_OUTBOX_POLL_INTERVAL}
     depends_on:
       postgres:
         condition: service_healthy
